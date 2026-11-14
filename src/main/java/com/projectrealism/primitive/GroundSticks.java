@@ -57,7 +57,7 @@ public final class GroundSticks {
 	private static boolean isTreeCanopy(ServerWorld world, BlockPos groundTop) {
 		BlockPos below = groundTop.down();
 		BlockState belowState = world.getBlockState(below);
-		if (!belowState.isSolidBlock(world, below)) {
+		if (belowState.isAir() || belowState.isIn(net.minecraft.registry.tag.BlockTags.LEAVES)) {
 			return false;
 		}
 

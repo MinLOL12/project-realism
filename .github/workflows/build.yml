@@ -51,18 +51,24 @@ jobs:
       - name: Summarise compile errors
         if: failure()
         run: |
-          grep -E "^[^ ]+\.java:[0-9]+: (error|warning): " gradle-build.log \
-            | sort -u \
-            | while IFS= read -r line; do
-                file="${line%%:*}"; rest="${line#*:}"; ln="${rest%%:*}"
-                echo "::error file=$file,line=$ln,title=javac::${line//$'\n'/ }"
-              done || true
-          {
-            echo "### Build failed"
-            echo '```'
-            grep -E "error: |FAILURE: |What went wrong" -A2 gradle-build.log | head -60 || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+          import re
+          try:
+              text = open('gradle-build.log', errors='ignore').read()
+          except FileNotFoundError:
+              raise SystemExit(0)
+          pattern = re.compile(r'(?m)^(\S+\.java):(\d+): (?:error|warning): (.*)((?:\n\s{2,}.*)*)')
+          for match in pattern.finditer(text):
+              detail = ' '.join([match.group(3)] + [l.strip() for l in match.group(4).splitlines()])
+              detail = ' '.join(detail.split())[:900]
+              print(f"::error file={match.group(1)},line={match.group(2)},title=javac::{detail}")
+          print("### Build failed")
+          print("```")
+          for line in text.splitlines():
+              if 'error:' in line or line.startswith('FAILURE') or 'What went wrong' in line:
+                  print(line)
+          print("```")
+          PY
 
       - name: Show what was built
         run: ls -lh build/libs

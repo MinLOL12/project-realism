@@ -20,8 +20,7 @@ public final class PrimitiveBlocks {
 			.strength(0.4f, 1.0f)
 			.sounds(BlockSoundGroup.STONE)
 			.nonOpaque()
-			.dropsNothing()
-			.replaceable();
+			.dropsNothing();
 
 	public static final Block GRANITE_ROCK = register("granite_rock",
 			new GroundRockBlock(ROCK_SETTINGS, PrimitiveItems.GRANITE_ROCK, 1));
@@ -29,7 +28,7 @@ public final class PrimitiveBlocks {
 			new GroundRockBlock(ROCK_SETTINGS.mapColor(MapColor.TERRACOTTA_WHITE),
 					PrimitiveItems.LIMESTONE_ROCK, 1));
 	public static final Block FLINT_ROCK = register("flint_rock",
-			new GroundRockBlock(ROCK_SETTINGS.mapColor(MapColor.DARK_GRAY), PrimitiveItems.FLINT_ROCK, 1));
+			new GroundRockBlock(ROCK_SETTINGS.mapColor(MapColor.DEEPSLATE_GRAY), PrimitiveItems.FLINT_ROCK, 1));
 
 	private PrimitiveBlocks() {
 	}
