@@ -44,6 +44,16 @@ jobs:
       - name: Build
         run: ./gradlew build --stacktrace --no-daemon
 
+      # Compile errors land in the log, and the log is not always downloadable. Surface anything
+      # that looks like a message from javac as a GitHub annotation so it shows up in the UI.
+      - name: Summarise compile errors
+        if: failure()
+        run: |
+          if [ -f build/reports/problems/problems-report.html ]; then
+            echo "Gradle problem report present: build/reports/problems/problems-report.html"
+          fi
+          grep -rhoE "[^ ]+\.java:[0-9]+: error: .*" build/ .gradle/ 2>/dev/null | sort -u | head -50 || true
+
       - name: Show what was built
         run: ls -lh build/libs
 
