@@ -1,0 +1,7 @@
+{
+  "project_realism.weight.free": "You are carrying nothing that hurts.",
+  "project_realism.weight.loaded": "The load is starting to pull on your shoulders.",
+  "project_realism.weight.strained": "Every step costs more than it should.",
+  "project_realism.weight.crushed": "You can barely move. Put something down.",
+  "project_realism.command.weight.header": "Weight report"
+}

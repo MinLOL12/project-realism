@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "project_realism",
+  "version": "${version}",
+  "name": "Project Realism",
+  "description": "Survival shouldn't be hard because mobs have more health. It should be hard because the world is heavy. Stage one: every block and item has a mass in kilograms, and hauling more than 30 kg slows you down.",
+  "authors": [
+    "Project Realism"
+  ],
+  "contact": {},
+  "license": "CC0-1.0",
+  "icon": "assets/project_realism/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.projectrealism.ProjectRealism"
+    ],
+    "client": [
+      "com.projectrealism.client.ProjectRealismClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}
