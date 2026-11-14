@@ -58,12 +58,7 @@ Tests run as part of `build`; `./gradlew test` runs only the curve tests.
 
 ### Build it in GitHub Actions
 
-The workflow is in [`ci/build.yml`](ci/build.yml). It is not in `.github/workflows/` yet because the
-automation that wrote this branch had no `workflows` permission — the one-time setup is two clicks:
-create `.github/workflows/build.yml` on GitHub and paste `ci/build.yml` into it
-(see [`ci/README.md`](ci/README.md)).
-
-After that, every push and pull request builds, tests and uploads the jar:
+`.github/workflows/build.yml` builds every push and pull request, runs the tests and uploads the jar:
 
 1. Push a commit (or click **Actions → Build → Run workflow** for a manual run).
 2. Open the finished run.
@@ -183,7 +178,7 @@ Build and test:
 ./gradlew test    # tests only
 ```
 
-CI: [`ci/build.yml`](ci/build.yml) — build on every push/PR, artifact per run, release on `v*` tags.
+CI: [`.github/workflows/build.yml`](.github/workflows/build.yml) — build on every push/PR, artifact per run, release on `v*` tags.
 
 ## Roadmap
 
