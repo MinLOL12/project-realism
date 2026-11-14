@@ -42,17 +42,27 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build
-        run: ./gradlew build --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew build --stacktrace --no-daemon --console=plain 2>&1 | tee gradle-build.log
 
-      # Compile errors land in the log, and the log is not always downloadable. Surface anything
-      # that looks like a message from javac as a GitHub annotation so it shows up in the UI.
+      # Compile errors land in a log that is not always downloadable from CI tooling. Turn each javac
+      # message into a workflow annotation (and a job summary) so it is visible in the UI.
       - name: Summarise compile errors
         if: failure()
         run: |
-          if [ -f build/reports/problems/problems-report.html ]; then
-            echo "Gradle problem report present: build/reports/problems/problems-report.html"
-          fi
-          grep -rhoE "[^ ]+\.java:[0-9]+: error: .*" build/ .gradle/ 2>/dev/null | sort -u | head -50 || true
+          grep -E "^[^ ]+\.java:[0-9]+: (error|warning): " gradle-build.log \
+            | sort -u \
+            | while IFS= read -r line; do
+                file="${line%%:*}"; rest="${line#*:}"; ln="${rest%%:*}"
+                echo "::error file=$file,line=$ln,title=javac::${line//$'\n'/ }"
+              done || true
+          {
+            echo "### Build failed"
+            echo '```'
+            grep -E "error: |FAILURE: |What went wrong" -A2 gradle-build.log | head -60 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Show what was built
         run: ls -lh build/libs
