@@ -301,6 +301,14 @@ W["minecraft:stone_slab"] = 2.7
 W["minecraft:stone_stairs"] = 3.7
 
 # ----------------------------------------------------------------- output ----
+# --- Project Realism's own items: stage two -------------------------------------------
+add(0.6, "project_realism:granite_rock", "project_realism:limestone_rock", "project_realism:flint_rock")
+add(0.4, "project_realism:sharp_stone", "project_realism:stone_axe_head")
+add(0.05, "project_realism:plant_fiber", "project_realism:cordage")
+add(0.5, "project_realism:stone_knife")
+add(0.9, "project_realism:stone_axe", "project_realism:stone_pickaxe")
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     out = os.path.normpath(os.path.join(

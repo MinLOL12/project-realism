@@ -1,6 +1,9 @@
 package com.projectrealism;
 
 import com.projectrealism.command.WeightCommand;
+import com.projectrealism.primitive.PrimitiveBlocks;
+import com.projectrealism.primitive.PrimitiveEvents;
+import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.weight.WeightAttributes;
 import com.projectrealism.weight.WeightManager;
 import com.projectrealism.weight.WeightPayload;
@@ -33,10 +36,21 @@ public class ProjectRealism implements ModInitializer {
 		return Identifier.of(MOD_ID, path);
 	}
 
+	/** Live config, shared with the weight system so there is exactly one source of numbers. */
+	public static RealismConfig config() {
+		return WeightManager.get().config();
+	}
+
 	@Override
 	public void onInitialize() {
 		WeightAttributes.register();
 		WeightManager.get().loadWeights();
+
+		// The primitive early game. Items and blocks must be registered before any event can reference
+		// them, and the event hooks must exist before the first chunk generates.
+		PrimitiveItems.register();
+		PrimitiveBlocks.register();
+		PrimitiveEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
 

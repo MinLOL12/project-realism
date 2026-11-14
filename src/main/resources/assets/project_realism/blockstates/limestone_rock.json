@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "stage=1": {
+      "model": "project_realism:block/limestone_rock_stage1"
+    },
+    "stage=2": {
+      "model": "project_realism:block/limestone_rock_stage2"
+    },
+    "stage=3": {
+      "model": "project_realism:block/limestone_rock_stage3"
+    }
+  }
+}
