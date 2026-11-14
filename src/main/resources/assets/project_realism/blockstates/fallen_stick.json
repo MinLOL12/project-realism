@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "count=1": {
+      "model": "project_realism:block/fallen_stick"
+    },
+    "count=2": {
+      "model": "project_realism:block/fallen_stick"
+    },
+    "count=3": {
+      "model": "project_realism:block/fallen_stick"
+    }
+  }
+}

@@ -30,6 +30,16 @@ public final class PrimitiveBlocks {
 	public static final Block FLINT_ROCK = register("flint_rock",
 			new GroundRockBlock(ROCK_SETTINGS.mapColor(MapColor.DEEPSLATE_GRAY), PrimitiveItems.FLINT_ROCK, 1));
 
+	/** A stick lying on the ground. Pops into an item entity when a player walks over it. */
+	public static final Block FALLEN_STICK = register("fallen_stick",
+			new RockDropBlock(AbstractBlock.Settings.create()
+					.mapColor(MapColor.OAK_TAN)
+					.strength(0.2f, 0.2f)
+					.sounds(BlockSoundGroup.WOOD)
+					.nonOpaque()
+					.dropsNothing(),
+					new net.minecraft.item.ItemStack(net.minecraft.item.Items.STICK, 1)));
+
 	private PrimitiveBlocks() {
 	}
 

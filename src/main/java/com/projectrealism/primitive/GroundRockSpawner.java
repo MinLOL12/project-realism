@@ -6,18 +6,21 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.random.Random;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.chunk.WorldChunk;
 
 /**
  * Populates rocks around the world.
  *
- * <p>Runs when a chunk first becomes a full chunk — the only reliable "chunk is ready" hook available
- * without a chunk-load mixin — and again on a slow timer for chunks players are standing in, which is
- * what makes rocks regrow. Rocks are placed strictly on the surface and only where the block below is a
- * plausible stone source, so they read as geology rather than loot.</p>
+ * <p><strong>Everything here must stay inside the chunk it is handed.</strong> This runs from
+ * {@code ServerChunkEvents.CHUNK_GENERATE}, i.e. while the server's chunk task executor is busy
+ * generating. Any call that asks the world to resolve a chunk — {@code world.getTopPosition(...)},
+ * {@code world.getBlockState(...)}, {@code world.setBlockState(...)}, or spawning an entity — queues
+ * work on that same executor and blocks the generation thread waiting for it. That is a deadlock: the
+ * world sits on "Generating world" at a couple of percent, forever, with nothing in the log. So reads
+ * go through the chunk's own heightmap and its own state cache, and writes go through the chunk only.</p>
  */
 public final class GroundRockSpawner {
 	private GroundRockSpawner() {
@@ -26,11 +29,11 @@ public final class GroundRockSpawner {
 	/** Called for every newly generated chunk exactly once. */
 	public static void populateNewChunk(ServerWorld world, WorldChunk chunk) {
 		RealismConfig config = ProjectRealism.config();
-		if (!config.groundRocks) {
+		if (!config.groundRocks || !config.generateRocksInNewChunks) {
 			return;
 		}
 
-		var random = world.getRandom();
+		Random random = world.getRandom();
 		for (int i = 0; i < config.rocksPerChunk; i++) {
 			if (random.nextDouble() > config.rockSpawnChance) {
 				continue;
@@ -47,18 +50,20 @@ public final class GroundRockSpawner {
 		return placeRock(world, chunk, world.getRandom());
 	}
 
-	private static boolean placeRock(ServerWorld world, WorldChunk chunk,
-									 Random random) {
+	private static boolean placeRock(ServerWorld world, WorldChunk chunk, Random random) {
 		int x = chunk.getPos().getStartX() + random.nextInt(16);
 		int z = chunk.getPos().getStartZ() + random.nextInt(16);
 
-		BlockPos surface = world.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z));
+		// The heightmap stored on the chunk itself. Deliberately not world.getTopPosition(...): that
+		// asks the world for a chunk, which deadlocks while generation holds the executor.
+		Heightmap heightmap = chunk.getHeightmap(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES);
+		int top = heightmap.get(x & 15, z & 15);
 
-		// Chunk edges get filled in by their own generation pass; writing outside the current chunk while
-		// it is still generating is how you corrupt a world.
-		if ((surface.getX() >> 4) != chunk.getPos().x || (surface.getZ() >> 4) != chunk.getPos().z) {
+		if (top <= chunk.getBottomY() || top >= chunk.getTopY()) {
 			return false;
 		}
+
+		BlockPos surface = new BlockPos(x, top, z);
 
 		BlockState groundState = chunk.getBlockState(surface.down());
 		if (!PrimitiveBlocks.isRockSurface(groundState.getBlock())) {
@@ -71,11 +76,13 @@ public final class GroundRockSpawner {
 		Block rock = pickRock(groundState.getBlock(), random);
 		BlockState state = rock.getDefaultState().with(GroundRockBlock.STAGE, 1 + random.nextInt(2));
 
-		world.setBlockState(surface, state, Block.NOTIFY_LISTENERS);
+		// setBlockState on the chunk keeps the heightmap and lighting bookkeeping consistent, and does
+		// not touch the world's chunk source.
+		chunk.setBlockState(surface, state, Block.NOTIFY_LISTENERS);
 		return true;
 	}
 
-	private static Block pickRock(Block surface, net.minecraft.util.math.random.Random random) {
+	private static Block pickRock(Block surface, Random random) {
 		int roll = random.nextInt(100);
 
 		// Granite ground yields granite; limestone is the common soft stone; flint hides in gravel.

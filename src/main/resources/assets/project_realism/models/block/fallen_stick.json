@@ -1,0 +1,77 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "project_realism:block/fallen_stick",
+    "all": "project_realism:block/fallen_stick"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        7
+      ],
+      "to": [
+        12,
+        1.2,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#all",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#all",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#all",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#all",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#all",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#all",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

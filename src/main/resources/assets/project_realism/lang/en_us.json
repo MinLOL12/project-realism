@@ -29,5 +29,6 @@
   "project_realism.assemble.knife": "You bind the blade to the handle.",
   "project_realism.assemble.axe": "You bind the axe head to the handle.",
   "project_realism.assemble.already_bound": "That is already bound.",
-  "project_realism.gate.strong_pickaxe": "A knapped pickaxe will not bite iron. You need a stronger one."
+  "project_realism.gate.strong_pickaxe": "A knapped pickaxe will not bite iron. You need a stronger one.",
+  "block.project_realism.fallen_stick": "Fallen Stick"
 }

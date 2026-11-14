@@ -173,9 +173,17 @@ public final class PrimitiveEvents {
 	// ----------------------------------------------------------------- worldgen ----
 
 	private static void registerWorldgen() {
+		// Both hooks are strictly chunk-local. Touching the world's chunk source from inside generation
+		// deadlocks it; see GroundRockSpawner for the long version.
 		ServerChunkEvents.CHUNK_GENERATE.register((world, chunk) -> {
-			GroundRockSpawner.populateNewChunk(world, chunk);
-			GroundSticks.populateNewChunk(chunk);
+			try {
+				GroundRockSpawner.populateNewChunk(world, chunk);
+				GroundSticks.populateNewChunk(chunk);
+			} catch (RuntimeException exception) {
+				// A world must never fail to load because decoration went wrong.
+				ProjectRealism.LOGGER.error("Rock/stick placement failed for chunk {}; skipping it.",
+						chunk.getPos(), exception);
+			}
 		});
 
 		// Slow regrowth: a rolling pass over chunks that actually have players in them, so rocks come
@@ -201,7 +209,11 @@ public final class PrimitiveEvents {
 
 		for (ServerWorld world : worlds) {
 			for (var player : world.getPlayers()) {
-				WorldChunk chunk = world.getChunk(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+				// getChunk (not getWorldChunk) is deliberate: the player is standing here, so the chunk
+				// is already loaded, and the call cannot trigger a synchronous load during a tick.
+				int chunkX = player.getBlockX() >> 4;
+				int chunkZ = player.getBlockZ() >> 4;
+				WorldChunk chunk = world.getChunk(chunkX, chunkZ);
 				GroundRockSpawner.tryGrowRock(world, chunk);
 			}
 		}
