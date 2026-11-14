@@ -50,6 +50,35 @@ public final class RealismConfig {
 	/** Whether creative-mode players see the readout. */
 	public boolean hudInCreative = true;
 
+	// ------------------------------------------------------------ early game ----
+
+	/** Whether logs, planks and stone demand a crafted tool before they will yield. */
+	public boolean requireTools = true;
+
+	/** Whether rocks generate on the ground as a gatherable resource. */
+	public boolean groundRocks = true;
+
+	/** Rock placement attempts per newly generated chunk. */
+	public int rocksPerChunk = 8;
+
+	/** Chance that each attempt actually places a rock. */
+	public double rockSpawnChance = 0.55;
+
+	/** Seconds between regrowth passes over loaded chunks. 0 disables regrowth. */
+	public int rockRegrowSeconds = 90;
+
+	/** Whether sticks spawn on the ground near trees. */
+	public boolean groundSticks = true;
+
+	/** Chance per chunk that a fallen stick is placed near a tree. */
+	public double stickSpawnChance = 0.5;
+
+	/** Whether tall grass and foliage yield plant fiber. */
+	public boolean plantFibers = true;
+
+	/** Whether knapping (striking two rocks) replaces the vanilla stone tool recipes. */
+	public boolean knapping = true;
+
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		RealismConfig config = new RealismConfig();
@@ -98,6 +127,18 @@ public final class RealismConfig {
 		}
 		if (exhaustionPerKgPerSecond < 0.0) {
 			exhaustionPerKgPerSecond = 0.0;
+		}
+		if (rocksPerChunk < 0 || rocksPerChunk > 64) {
+			rocksPerChunk = 8;
+		}
+		if (rockSpawnChance < 0.0 || rockSpawnChance > 1.0) {
+			rockSpawnChance = 0.55;
+		}
+		if (rockRegrowSeconds < 0) {
+			rockRegrowSeconds = 90;
+		}
+		if (stickSpawnChance < 0.0 || stickSpawnChance > 1.0) {
+			stickSpawnChance = 0.5;
 		}
 	}
 }
