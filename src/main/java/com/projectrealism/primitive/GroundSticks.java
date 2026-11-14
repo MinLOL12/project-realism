@@ -60,7 +60,7 @@ public final class GroundSticks {
 				continue;
 			}
 
-			chunk.setBlockState(surface, PrimitiveBlocks.FALLEN_STICK.getDefaultState(), 0);
+			chunk.setBlockState(surface, PrimitiveBlocks.FALLEN_STICK.getDefaultState(), false);
 			placed++;
 		}
 	}

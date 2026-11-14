@@ -78,7 +78,7 @@ public final class GroundRockSpawner {
 
 		// setBlockState on the chunk keeps the heightmap and lighting bookkeeping consistent, and does
 		// not touch the world's chunk source.
-		chunk.setBlockState(surface, state, Block.NOTIFY_LISTENERS);
+		chunk.setBlockState(surface, state, false);
 		return true;
 	}
 
