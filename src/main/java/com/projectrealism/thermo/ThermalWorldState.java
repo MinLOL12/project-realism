@@ -599,7 +599,7 @@ public final class ThermalWorldState extends PersistentState {
 		}
 		Iterator<Map.Entry<BlockPos, HotStoneFood>> it = hotStoneFoods.entrySet().iterator();
 		while (it.hasNext()) {
-			HotStoneFood hf = it.next();
+			HotStoneFood hf = it.next().getValue();
 			BlockPos stonePos = hf.stonePos;
 			if (!world.isChunkLoaded(stonePos.getX() >> 4, stonePos.getZ() >> 4)) {
 				continue;
