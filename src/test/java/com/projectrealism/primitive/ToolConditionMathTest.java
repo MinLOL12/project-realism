@@ -36,11 +36,11 @@ class ToolConditionMathTest {
 		assertEquals(1.0, cfg.woodDrySpeedMultiplier, 1.0e-6);
 
 		cfg.woodDrySpeedMultiplier = 0.01;
-		cfg.validate();
+		cfg.clamp();
 		assertEquals(0.1, cfg.woodDrySpeedMultiplier, 1.0e-6);
 
 		cfg.woodDrySpeedMultiplier = 99.0;
-		cfg.validate();
+		cfg.clamp();
 		assertEquals(20.0, cfg.woodDrySpeedMultiplier, 1.0e-6);
 	}
 }

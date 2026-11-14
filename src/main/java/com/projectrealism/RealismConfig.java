@@ -131,7 +131,7 @@ public final class RealismConfig {
 		}
 	}
 
-	private void clamp() {
+	public void clamp() {
 		if (capacityKg < 1.0) {
 			capacityKg = 1.0;
 		}
@@ -162,8 +162,10 @@ public final class RealismConfig {
 		if (stickSpawnChance < 0.0 || stickSpawnChance > 1.0) {
 			stickSpawnChance = 0.5;
 		}
-		if (woodDrySpeedMultiplier < 0.1 || woodDrySpeedMultiplier > 20.0) {
-			woodDrySpeedMultiplier = 1.0;
+		if (woodDrySpeedMultiplier < 0.1) {
+			woodDrySpeedMultiplier = 0.1;
+		} else if (woodDrySpeedMultiplier > 20.0) {
+			woodDrySpeedMultiplier = 20.0;
 		}
 	}
 }
