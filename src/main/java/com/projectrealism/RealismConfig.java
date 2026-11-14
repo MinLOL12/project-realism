@@ -87,6 +87,20 @@ public final class RealismConfig {
 	 */
 	public boolean generateRocksInNewChunks = true;
 
+	// ---------------------------------------------------- trees & woodcraft ----
+
+	/** Whether chopping trees creates notches and fells physical trees with impact damage. */
+	public boolean physicalTreeChopping = true;
+
+	/** Whether logs must be de-branched, cut, split, dried and planed before making planks. */
+	public boolean logProcessing = true;
+
+	/** Speed multiplier for moisture drying (higher = dries faster). */
+	public double woodDrySpeedMultiplier = 1.0;
+
+	/** Whether primitive tools dull, loosen bindings, and fracture with heavy use. */
+	public boolean toolDegradation = true;
+
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		RealismConfig config = new RealismConfig();
@@ -147,6 +161,9 @@ public final class RealismConfig {
 		}
 		if (stickSpawnChance < 0.0 || stickSpawnChance > 1.0) {
 			stickSpawnChance = 0.5;
+		}
+		if (woodDrySpeedMultiplier < 0.1 || woodDrySpeedMultiplier > 20.0) {
+			woodDrySpeedMultiplier = 1.0;
 		}
 	}
 }

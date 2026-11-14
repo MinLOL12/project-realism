@@ -1,0 +1,22 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "project_realism:sharp_stone"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "project_realism:plant_fiber"
+    }
+  ],
+  "result": {
+    "id": "project_realism:stone_knife",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false,
+  "init_fiber": true
+}

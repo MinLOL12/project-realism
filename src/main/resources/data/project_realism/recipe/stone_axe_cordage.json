@@ -1,0 +1,22 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "project_realism:stone_axe_head"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "project_realism:cordage"
+    }
+  ],
+  "result": {
+    "id": "project_realism:stone_axe",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false,
+  "init_cordage": true
+}

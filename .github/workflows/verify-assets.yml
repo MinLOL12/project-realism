@@ -71,6 +71,12 @@ jobs:
                       target = assets / 'textures' / (tex.removeprefix('project_realism:') + '.png')
                       if not target.exists():
                           errors.append(f"{mf} [{key}]: missing texture {target}")
+              for ov in data.get('overrides', []):
+                  ov_model = ov.get('model', '')
+                  if ov_model.startswith('project_realism:'):
+                      target = assets / 'models' / (ov_model.removeprefix('project_realism:') + '.json')
+                      if not target.exists():
+                          errors.append(f"{mf} [override]: missing model {target}")
 
           if errors:
               for err in errors:

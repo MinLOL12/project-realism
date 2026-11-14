@@ -1,5 +1,8 @@
 package com.projectrealism.primitive;
 
+import com.projectrealism.wood.FallenTrunkBlock;
+import com.projectrealism.wood.FreshLogBlock;
+import com.projectrealism.wood.NotchedLogBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.Item;
@@ -47,7 +50,10 @@ public final class ToolGate {
 			return Requirement.HAND;
 		}
 
-		if (state.isIn(BlockTags.LOGS) || state.isIn(BlockTags.PLANKS)
+		if (state.getBlock() instanceof NotchedLogBlock
+				|| state.getBlock() instanceof FallenTrunkBlock
+				|| state.getBlock() instanceof FreshLogBlock
+				|| state.isIn(BlockTags.LOGS) || state.isIn(BlockTags.PLANKS)
 				|| state.isIn(BlockTags.WOODEN_SLABS) || state.isIn(BlockTags.WOODEN_STAIRS)
 				|| state.isIn(BlockTags.WOODEN_FENCES) || state.isIn(BlockTags.WOODEN_DOORS)
 				|| state.isIn(BlockTags.WOODEN_TRAPDOORS) || state.isIn(BlockTags.WOODEN_BUTTONS)

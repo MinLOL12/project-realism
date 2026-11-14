@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "axis=y,branched=true": {
+      "model": "project_realism:block/spruce_trunk_branched"
+    },
+    "axis=z,branched=true": {
+      "model": "project_realism:block/spruce_trunk_branched",
+      "x": 90
+    },
+    "axis=x,branched=true": {
+      "model": "project_realism:block/spruce_trunk_branched",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,branched=false": {
+      "model": "project_realism:block/spruce_trunk_clean"
+    },
+    "axis=z,branched=false": {
+      "model": "project_realism:block/spruce_trunk_clean",
+      "x": 90
+    },
+    "axis=x,branched=false": {
+      "model": "project_realism:block/spruce_trunk_clean",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

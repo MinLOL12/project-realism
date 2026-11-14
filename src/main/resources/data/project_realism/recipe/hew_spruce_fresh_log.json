@@ -1,0 +1,19 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "project_realism:fresh_spruce_log"
+    }
+  ],
+  "result": {
+    "id": "project_realism:rough_spruce_plank",
+    "count": 2
+  },
+  "tool": {
+    "item": "project_realism:stone_knife"
+  },
+  "keep_tool": true,
+  "damage_tool": true,
+  "inherit_dry_wood": true
+}

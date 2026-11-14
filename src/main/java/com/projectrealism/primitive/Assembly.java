@@ -14,12 +14,7 @@ import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 
 /**
- * Assembling tool parts by hand.
- *
- * <p>This is the replacement for the vanilla crafting grid: stone tools are never a shaped recipe.
- * Hold the part and right-click with the other part in the off hand (in either order). Binding consumes
- * plant fiber (1 unit) or cordage (2 units), because a stone head on a stick is not an axe — it is
- * two objects touching.</p>
+ * Assembling tool parts by hand and re-tightening loose bindings.
  */
 public final class Assembly {
 	private Assembly() {
@@ -34,7 +29,6 @@ public final class Assembly {
 			return TypedActionResult.pass(held);
 		}
 
-		// Either hand may hold either part; players should never have to guess hand ordering.
 		if ((held.isOf(PrimitiveItems.SHARP_STONE) && other.isOf(Items.STICK))
 				|| (held.isOf(Items.STICK) && other.isOf(PrimitiveItems.SHARP_STONE))) {
 			return makeKnife(player, world, hand, offHand, held, other);
@@ -51,7 +45,7 @@ public final class Assembly {
 		}
 
 		if (isBinding(held) || isBinding(other)) {
-			return bind(player, world, held, other);
+			return bind(player, world, hand, offHand, held, other);
 		}
 
 		return TypedActionResult.pass(held);
@@ -62,24 +56,39 @@ public final class Assembly {
 	}
 
 	/**
-	 * Cordage (or fiber) plus a finished tool: the gesture exists so the mechanic is discoverable.
+	 * Cordage or fiber plus a finished tool: tightens or upgrades loose bindings.
 	 */
 	private static TypedActionResult<ItemStack> bind(PlayerEntity player, World world,
+													 Hand hand, Hand offHand,
 													 ItemStack held, ItemStack other) {
-		ItemStack tool = isBinding(held) ? other : held;
+		boolean bindingInMain = isBinding(held);
+		ItemStack binding = bindingInMain ? held : other;
+		ItemStack tool = bindingInMain ? other : held;
+		Hand bindingHand = bindingInMain ? hand : offHand;
 
-		if (!(tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(PrimitiveItems.STONE_AXE)
-				|| tool.isOf(PrimitiveItems.STONE_PICKAXE))) {
+		if (!ToolCondition.isPrimitiveTool(tool)) {
+			return TypedActionResult.pass(held);
+		}
+
+		boolean isCordage = binding.isOf(PrimitiveItems.CORDAGE);
+		int currentBind = ToolCondition.getBinding(tool);
+		if (currentBind >= 98 && (ToolCondition.isCordageBound(tool) || !isCordage)) {
+			if (!world.isClient) {
+				player.sendMessage(Text.translatable("project_realism.assemble.already_bound")
+						.formatted(Formatting.GRAY), true);
+			}
 			return TypedActionResult.pass(held);
 		}
 
 		if (world instanceof ServerWorld server) {
-			player.sendMessage(Text.translatable("project_realism.assemble.already_bound")
-					.formatted(Formatting.GRAY), true);
-			server.playSound(null, player.getBlockPos(), SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS,
-					0.5f, 1.2f);
+			ToolCondition.tightenBinding(tool, isCordage);
+			binding.decrementUnlessCreative(1, player);
+			clearIfEmpty(player, bindingHand, binding);
+			bindEffects(server, player);
+			player.sendMessage(Text.translatable("project_realism.tool.rebound",
+					ToolCondition.getBinding(tool)).formatted(Formatting.GREEN), true);
 		}
-		return TypedActionResult.pass(held);
+		return TypedActionResult.success(player.getStackInHand(hand));
 	}
 
 	private static TypedActionResult<ItemStack> makeKnife(PlayerEntity player, World world,
@@ -94,14 +103,14 @@ public final class Assembly {
 		}
 
 		if (world instanceof ServerWorld server) {
-			if (!player.isCreative()) {
-				consumeBinding(player, 1);
-			}
+			boolean usedCordage = player.isCreative() || consumeBinding(player, 1);
 			held.decrementUnlessCreative(1, player);
 			other.decrementUnlessCreative(1, player);
 			clearIfEmpty(player, hand, held);
 			clearIfEmpty(player, offHand, other);
-			give(player, new ItemStack(PrimitiveItems.STONE_KNIFE));
+			ItemStack knife = new ItemStack(PrimitiveItems.STONE_KNIFE);
+			ToolCondition.initTool(knife, usedCordage);
+			give(player, knife);
 			bindEffects(server, player);
 			player.sendMessage(Text.translatable("project_realism.assemble.knife")
 					.formatted(Formatting.YELLOW), true);
@@ -121,14 +130,14 @@ public final class Assembly {
 		}
 
 		if (world instanceof ServerWorld server) {
-			if (!player.isCreative()) {
-				consumeBinding(player, 2);
-			}
+			boolean usedCordage = player.isCreative() || consumeBinding(player, 2);
 			held.decrementUnlessCreative(1, player);
 			other.decrementUnlessCreative(1, player);
 			clearIfEmpty(player, hand, held);
 			clearIfEmpty(player, offHand, other);
-			give(player, new ItemStack(PrimitiveItems.STONE_AXE));
+			ItemStack axe = new ItemStack(PrimitiveItems.STONE_AXE);
+			ToolCondition.initTool(axe, usedCordage);
+			give(player, axe);
 			bindEffects(server, player);
 			player.sendMessage(Text.translatable("project_realism.assemble.axe")
 					.formatted(Formatting.GOLD), true);
@@ -148,14 +157,14 @@ public final class Assembly {
 		}
 
 		if (world instanceof ServerWorld server) {
-			if (!player.isCreative()) {
-				consumeBinding(player, 1);
-			}
+			boolean usedCordage = player.isCreative() || consumeBinding(player, 1);
 			held.decrementUnlessCreative(1, player);
 			other.decrementUnlessCreative(1, player);
 			clearIfEmpty(player, hand, held);
 			clearIfEmpty(player, offHand, other);
-			give(player, new ItemStack(PrimitiveItems.STONE_PICKAXE));
+			ItemStack pick = new ItemStack(PrimitiveItems.STONE_PICKAXE);
+			ToolCondition.initTool(pick, usedCordage);
+			give(player, pick);
 			bindEffects(server, player);
 			player.sendMessage(Text.translatable("project_realism.assemble.pickaxe")
 					.formatted(Formatting.GOLD), true);
@@ -176,20 +185,25 @@ public final class Assembly {
 		return units;
 	}
 
-	private static void consumeBinding(PlayerEntity player, int required) {
+	/** Returns true if cordage (strong binding) was used, false if only raw plant fiber was used. */
+	private static boolean consumeBinding(PlayerEntity player, int required) {
 		int remaining = required;
+		boolean usedCordage = false;
 
-		// For two-unit bindings, prefer consuming twisted cordage first; for one-unit bindings,
-		// prefer loose plant fiber so cordage isn't wasted unless it's the only binding available.
 		if (remaining >= 2) {
+			int before = remaining;
 			remaining = consumeItem(player, PrimitiveItems.CORDAGE, 2, remaining);
+			usedCordage = remaining < before;
 			remaining = consumeItem(player, PrimitiveItems.PLANT_FIBER, 1, remaining);
 		} else {
 			remaining = consumeItem(player, PrimitiveItems.PLANT_FIBER, 1, remaining);
 			if (remaining > 0) {
-				consumeItem(player, PrimitiveItems.CORDAGE, 2, remaining);
+				int before = remaining;
+				remaining = consumeItem(player, PrimitiveItems.CORDAGE, 2, remaining);
+				usedCordage = remaining < before;
 			}
 		}
+		return usedCordage;
 	}
 
 	private static int consumeItem(PlayerEntity player, net.minecraft.item.Item item, int unitValue, int remaining) {

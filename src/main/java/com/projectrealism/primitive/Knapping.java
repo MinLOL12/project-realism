@@ -59,6 +59,13 @@ public final class Knapping {
 		boolean otherIsSharp = other.isOf(PrimitiveItems.SHARP_STONE);
 		boolean heldIsFiber = held.isOf(PrimitiveItems.PLANT_FIBER);
 		boolean otherIsFiber = other.isOf(PrimitiveItems.PLANT_FIBER);
+		boolean heldIsTool = ToolCondition.isPrimitiveTool(held);
+		boolean otherIsTool = ToolCondition.isPrimitiveTool(other);
+
+		// A dull stone tool struck with a rock (either hand order) re-knaps its cutting edge.
+		if ((heldIsTool && otherIsRock) || (otherIsTool && heldIsRock)) {
+			return sharpenTool(player, world, hand, offHand, held, other);
+		}
 
 		// A sharp edge struck against a fresh rock (either hand order) knaps an axe head.
 		if ((heldIsSharp && otherIsRock) || (otherIsSharp && heldIsRock)) {
@@ -161,6 +168,53 @@ public final class Knapping {
 					4, 0.2, 0.2, 0.2, 0.02);
 			player.sendMessage(Text.translatable("project_realism.knapping.cordage")
 					.formatted(Formatting.GREEN), true);
+		}
+
+		return TypedActionResult.success(player.getStackInHand(hand));
+	}
+
+	private static TypedActionResult<ItemStack> sharpenTool(PlayerEntity player, World world,
+															Hand hand, Hand offHand,
+															ItemStack held, ItemStack other) {
+		boolean toolInMain = ToolCondition.isPrimitiveTool(held);
+		ItemStack tool = toolInMain ? held : other;
+		ItemStack rock = toolInMain ? other : held;
+		Hand toolHand = toolInMain ? hand : offHand;
+		Hand rockHand = toolInMain ? offHand : hand;
+
+		if (ToolCondition.getSharpness(tool) >= 98) {
+			if (!world.isClient) {
+				player.sendMessage(Text.translatable("project_realism.tool.already_sharp")
+						.formatted(Formatting.GRAY), true);
+			}
+			return TypedActionResult.consume(held);
+		}
+
+		if (!canStrike(player, world)) {
+			return TypedActionResult.consume(held);
+		}
+
+		if (world instanceof ServerWorld server) {
+			ToolCondition.SharpenResult result = ToolCondition.sharpen(tool, server.random);
+			if (server.random.nextFloat() < 0.45f) {
+				rock.decrementUnlessCreative(1, player);
+				clearIfEmpty(player, rockHand, rock);
+			}
+
+			if (result == ToolCondition.SharpenResult.SHATTERED) {
+				player.setStackInHand(toolHand, new ItemStack(Items.STICK));
+				server.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_STONE_BREAK,
+						SoundCategory.PLAYERS, 0.9f, 0.6f);
+				server.spawnParticles(ParticleTypes.CRIT,
+						player.getX(), player.getY() + 1.0, player.getZ(),
+						10, 0.2, 0.2, 0.2, 0.08);
+				player.sendMessage(Text.translatable("project_realism.tool.head_shattered")
+						.formatted(Formatting.RED), true);
+			} else {
+				effects(server, player, 1.15f);
+				player.sendMessage(Text.translatable("project_realism.tool.sharpened",
+						ToolCondition.getSharpness(tool)).formatted(Formatting.AQUA), true);
+			}
 		}
 
 		return TypedActionResult.success(player.getStackInHand(hand));

@@ -4,9 +4,15 @@ import com.projectrealism.command.WeightCommand;
 import com.projectrealism.primitive.PrimitiveBlocks;
 import com.projectrealism.primitive.PrimitiveEvents;
 import com.projectrealism.primitive.PrimitiveItems;
+import com.projectrealism.recipe.ModRecipes;
 import com.projectrealism.weight.WeightAttributes;
 import com.projectrealism.weight.WeightManager;
 import com.projectrealism.weight.WeightPayload;
+import com.projectrealism.wood.FallingTreeManager;
+import com.projectrealism.wood.TreeChopper;
+import com.projectrealism.wood.WoodBlocks;
+import com.projectrealism.wood.WoodEvents;
+import com.projectrealism.wood.WoodItems;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -50,7 +56,12 @@ public class ProjectRealism implements ModInitializer {
 		// them, and the event hooks must exist before the first chunk generates.
 		PrimitiveItems.register();
 		PrimitiveBlocks.register();
+		WoodBlocks.register();
+		WoodItems.register();
+		ModRecipes.register();
 		PrimitiveEvents.register();
+		TreeChopper.register();
+		WoodEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
 
@@ -59,13 +70,18 @@ public class ProjectRealism implements ModInitializer {
 
 		// Recompute weight every tick: inventory edits, potion effects and elytra flight all move the
 		// needle constantly, so a cached value would lie.
-		ServerTickEvents.END_SERVER_TICK.register(server -> WeightManager.get().tick(server));
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			WeightManager.get().tick(server);
+			FallingTreeManager.tick(server);
+		});
 
 		// Logging in must never inherit a stale modifier from a previous session.
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
 				WeightManager.get().onJoin(handler.getPlayer()));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
-				WeightManager.get().onDisconnect(handler.getPlayer().getUuid()));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			WeightManager.get().onDisconnect(handler.getPlayer().getUuid());
+			TreeChopper.forget(handler.getPlayer().getUuid());
+		});
 
 		// Pack authors can drop JSON weight overrides into a datapack and /reload without a restart.
 		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(

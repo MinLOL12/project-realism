@@ -1,0 +1,27 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    [
+      {
+        "item": "project_realism:granite_rock"
+      },
+      {
+        "item": "project_realism:limestone_rock"
+      },
+      {
+        "item": "project_realism:flint_rock"
+      }
+    ]
+  ],
+  "result": {
+    "id": "project_realism:stone_pickaxe",
+    "count": 1
+  },
+  "tool": {
+    "item": "project_realism:stone_pickaxe"
+  },
+  "keep_tool": false,
+  "damage_tool": false,
+  "sharpen_tool": true
+}

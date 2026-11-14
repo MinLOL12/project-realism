@@ -1,0 +1,19 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "project_realism:cordage"
+    }
+  ],
+  "result": {
+    "id": "project_realism:stone_knife",
+    "count": 1
+  },
+  "tool": {
+    "item": "project_realism:stone_knife"
+  },
+  "keep_tool": false,
+  "damage_tool": false,
+  "tighten_binding": true
+}

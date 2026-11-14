@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=north,stage=1": {
+      "model": "project_realism:block/notched_oak_log_stage1"
+    },
+    "facing=north,stage=2": {
+      "model": "project_realism:block/notched_oak_log_stage2"
+    },
+    "facing=north,stage=3": {
+      "model": "project_realism:block/notched_oak_log_stage3"
+    },
+    "facing=east,stage=1": {
+      "model": "project_realism:block/notched_oak_log_stage1",
+      "y": 90
+    },
+    "facing=east,stage=2": {
+      "model": "project_realism:block/notched_oak_log_stage2",
+      "y": 90
+    },
+    "facing=east,stage=3": {
+      "model": "project_realism:block/notched_oak_log_stage3",
+      "y": 90
+    },
+    "facing=south,stage=1": {
+      "model": "project_realism:block/notched_oak_log_stage1",
+      "y": 180
+    },
+    "facing=south,stage=2": {
+      "model": "project_realism:block/notched_oak_log_stage2",
+      "y": 180
+    },
+    "facing=south,stage=3": {
+      "model": "project_realism:block/notched_oak_log_stage3",
+      "y": 180
+    },
+    "facing=west,stage=1": {
+      "model": "project_realism:block/notched_oak_log_stage1",
+      "y": 270
+    },
+    "facing=west,stage=2": {
+      "model": "project_realism:block/notched_oak_log_stage2",
+      "y": 270
+    },
+    "facing=west,stage=3": {
+      "model": "project_realism:block/notched_oak_log_stage3",
+      "y": 270
+    }
+  }
+}
