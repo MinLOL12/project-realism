@@ -1,3 +1,6 @@
 {
-  "parent": "project_realism:block/flint_rock_stage1"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "project_realism:item/flint_rock"
+  }
 }

@@ -93,7 +93,10 @@ public class GroundRockBlock extends Block {
 
 		int count = dropCount + (state.get(STAGE) - 1);
 		if (!player.isCreative()) {
-			Block.dropStack(world, pos, new ItemStack(drop, count));
+			ItemStack collected = new ItemStack(drop, count);
+			if (!player.getInventory().insertStack(collected)) {
+				Block.dropStack(world, pos, collected);
+			}
 		}
 
 		// Items first, then the block: if the drop ever fails, the rock is still standing rather than

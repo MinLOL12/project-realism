@@ -142,27 +142,18 @@ public final class PrimitiveEvents {
 				return TypedActionResult.pass(player.getStackInHand(hand));
 			}
 
-			ItemStack held = player.getStackInHand(hand);
-
 			// Only the main hand drives the interaction; the off hand supplies the second component.
 			if (hand == Hand.OFF_HAND) {
-				return TypedActionResult.pass(held);
-			}
-
-			if (!PrimitiveItems.isKnappable(held.getItem())
-					&& !held.isOf(PrimitiveItems.SHARP_STONE)
-					&& !held.isOf(PrimitiveItems.STONE_AXE_HEAD)) {
-				TypedActionResult<ItemStack> assembled = Assembly.tryAssemble(player, world, hand);
-				if (assembled.getResult().isAccepted()) {
-					return assembled;
-				}
-				return TypedActionResult.pass(held);
+				return TypedActionResult.pass(player.getStackInHand(hand));
 			}
 
 			TypedActionResult<ItemStack> result = Knapping.tryStrike(player, world, hand);
+			if (!result.getResult().isAccepted()) {
+				result = Assembly.tryAssemble(player, world, hand);
+			}
 
-			// Client prediction: a real swing, so the strike reads as deliberate.
-			if (world.isClient && result.getResult().isAccepted()) {
+			// Client prediction: a real swing, so the strike or assembly reads as deliberate.
+			if (world.isClient && result.getResult() == ActionResult.SUCCESS) {
 				player.swingHand(hand);
 			}
 
