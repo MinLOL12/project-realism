@@ -9,7 +9,10 @@ name: Stage two
 
 on:
   push:
+    # Tags are listed separately: a v* tag must trigger the release job even though a tag push is not
+    # a branch push (and path filters are not evaluated for tags).
     branches: ['**']
+    tags: ['v*']
     paths:
       - 'src/**'
       - 'build.gradle'
