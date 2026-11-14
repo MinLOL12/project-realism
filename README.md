@@ -5,8 +5,11 @@ is hard because mobs have more health — it is interesting when it is hard beca
 physical. Food rots, water is heavy, weather is dangerous, and the wilderness is genuinely
 complicated to cross.
 
-**Stage one, implemented here: block weight.** Every item has a mass in kilograms. Carry more than
-your body comfortably supports and you slow down.
+**Stage one: block weight.** Every item has a mass in kilograms. Carry more than your body
+comfortably supports and you slow down.
+
+**Stage two, implemented here: primitive resource gathering.** There is no punching trees. The first
+axe in the world is made of rocks you picked off the ground.
 
 ```
 Dirt          2 kg
@@ -44,6 +47,57 @@ planned, bases move to the ore, chests become logistics, and an iron block is a 
 - **Tells you quietly.** A readout above the hotbar (`23.4 / 30 kg`, plus `-45% speed`), and one
   action-bar line when you tip into a worse band. No spam.
 - **Ignores creative mode** by default, so building is not a survival sim.
+
+
+## Stage two: the first day
+
+The vanilla opening — punch a tree, get wood, skip the Stone Age — is gone. The first hour is:
+
+1. **Find rocks.** Granite, limestone and flint pebbles sit on grass, dirt, gravel and stone. They are
+   real blocks, not floating items, so they stay exactly where the world put them. Right-click (or
+   punch) one and it goes in your pocket.
+2. **Gather sticks.** Sticks lie on the ground under trees, and leaves occasionally drop one when
+   broken by hand.
+3. **Collect plant fiber.** Short grass, tall grass, ferns and vines tear into fibers with your hands.
+4. **Knap stone.** Hold a rock and right-click while holding another rock in your off hand: the stones
+   knock a **sharp stone** off each other. Then strike a sharp stone against a fresh rock to knap a
+   **stone axe head**. Two plant fibers twist into **cordage** the same way.
+5. **Assemble the axe by hand.** Sharp stone + stick + fiber makes a **stone knife**; axe head + stick
+   + two fibers makes a **stone axe**. Hold the parts in your two hands and right-click — these are
+   *interactions*, not crafting recipes.
+6. **Now you may have wood.** Logs and everything made of wood demand an axe. Stone demands a
+   pickaxe. Bare hands get a dull thud and a hint, and the block takes no damage at all.
+
+Stone tools are deliberately **not** craftable in the vanilla crafting grid. The parts come from
+knapping, the assembly comes from your hands.
+
+### What is gated
+
+| Block                                    | Bare hands             |
+| ---------------------------------------- | ---------------------- |
+| Leaves, tall grass, dirt, sand, gravel    | yes                    |
+| Logs, planks, stairs, chests, crafting table | **no — needs an axe**  |
+| Stone, ores, furnace, anvil               | **no — needs a pickaxe** |
+
+Default stone-tier tools are also no longer handed to you: the primitive tools are the only ones you
+can make without a table, and they are fragile (48–96 uses) and slow, exactly like knapped stone.
+
+### Configuration
+
+| Key                | Default | Meaning                                                     |
+| ------------------ | ------- | ----------------------------------------------------------- |
+| `requireTools`     | `true`  | Gate logs/planks/stone behind crafted tools.                |
+| `groundRocks`      | `true`  | Generate gatherable rocks on the surface.                   |
+| `rocksPerChunk`    | `8`     | Placement attempts per new chunk.                           |
+| `rockSpawnChance`  | `0.55`  | Fraction of those attempts that place a rock.               |
+| `rockRegrowSeconds`| `90`    | Seconds between regrowth passes around players; `0` disables.|
+| `groundSticks`     | `true`  | Spawn fallen sticks under trees.                            |
+| `stickSpawnChance` | `0.5`   | Chance per tree probe.                                      |
+| `plantFibers`      | `true`  | Grass and foliage yield plant fiber.                        |
+| `knapping`         | `true`  | Enable rock-on-rock knapping and hand assembly.             |
+
+Rocks grow back slowly — a pebble pile can climb from stage 1 to stage 3 over a long while, and only
+in chunks where players actually are, so the resource economy is renewable without being instant.
 
 ## Build it
 
@@ -109,7 +163,7 @@ same curve, with sliders for all four values and a clickable inventory.
 
 ## Weights
 
-772 items are weighed out of the box, in `data/project_realism/project_realism/weights.json`
+782 items are weighed out of the box, in `data/project_realism/project_realism/weights.json`
 (regenerate with `python3 tools/generate_weights.py`). Anything unknown falls back to a conservative
 estimate: block items 4 kg, tools 3 kg, food 0.3 kg, everything else 0.2 kg.
 
@@ -165,6 +219,14 @@ src/main/java/com/projectrealism/
   weight/WeightPayload.java    S2C payload
   client/WeightHud.java        the readout
   command/WeightCommand.java   /realism
+  primitive/ToolGate.java      which tool a block demands
+  primitive/GroundRockBlock.java rock block: shape, pickup, regrowth
+  primitive/GroundRockSpawner.java rock placement and the regrowth pass
+  primitive/GroundSticks.java  fallen sticks under trees
+  primitive/Knapping.java      rock-on-rock knapping
+  primitive/Assembly.java      hand assembly of knife and axe
+  primitive/ToolGate + PrimitiveEvents.java  break gating, gathering, worldgen hooks
+  primitive/PrimitiveItems.java / PrimitiveBlocks.java  registrations
 src/main/resources/data/project_realism/project_realism/weights.json
 simulator/index.html           interactive tuning bench
 tools/generate_weights.py      regenerates the weight table
@@ -185,9 +247,10 @@ CI: [`.github/workflows/build.yml`](.github/workflows/build.yml) — build on ev
 Stage one is weight. The rest of the overhaul, in the order it will actually get built:
 
 1. **Weight** — done.
-2. **Encumbrance consequences** — slower block breaking, no sprinting past 1.5× capacity, fall damage
+2. **Primitive resource gathering** — done.
+3. **Encumbrance consequences** — slower block breaking, no sprinting past 1.5× capacity, fall damage
    scaling with carried mass, and dropping your load when you take a hard hit.
-3. **Water and food** — drinkable water that actually has volume, food that spoils, cooking that
+4. **Water and food** — drinkable water that actually has volume, food that spoils, cooking that
    matters.
-4. **Temperature and weather** — wet clothes, wind chill, and the reason to build a real house.
-5. **Injury** — broken bones that heal over days instead of hearts that regenerate in seconds.
+5. **Temperature and weather** — wet clothes, wind chill, and the reason to build a real house.
+6. **Injury** — broken bones that heal over days instead of hearts that regenerate in seconds.
