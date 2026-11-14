@@ -108,23 +108,31 @@ You need **JDK 21** (not 17 — Loom targets release 21). Then:
 ./gradlew build
 ```
 
-The jar lands in `build/libs/project-realism-0.1.0.jar`. Use that one, not the `-sources` jar.
+The jar lands in `build/libs/project-realism-0.2.0.jar`. Use that one, not the `-sources` jar.
 Tests run as part of `build`; `./gradlew test` runs only the curve tests.
 
 ### Build it in GitHub Actions
 
-`.github/workflows/build.yml` builds every push and pull request, runs the tests and uploads the jar:
+Two workflows exist:
+
+| Workflow | Purpose |
+| -------- | ------- |
+| `.github/workflows/build.yml` | The everyday pipeline: build, test, upload the jar. |
+| `.github/workflows/stage-two.yml` | The update pipeline: verifies the primitive-gathering feature set (files present, every JSON resource parses, stone tools absent from the grid), stamps the build as **0.2.0**, builds, and can publish a release — automatically on a `v*` tag, or by setting `make_release` on a manual run. |
+
+`build.yml` builds every push and pull request, runs the tests and uploads the jar:
 
 1. Push a commit (or click **Actions → Build → Run workflow** for a manual run).
 2. Open the finished run.
 3. Download **`project-realism-jar`** under *Artifacts* — that zip contains
-   `project-realism-0.1.0.jar`.
+   `project-realism-0.2.0.jar`. The stage-two workflow calls its artifact
+   **`project-realism-stage2-jar`** and also attaches a `project-realism-latest.jar` alias to releases.
 
 To get a permanent download link instead, tag a commit; the `release` job attaches the jar to a
 GitHub Release:
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.2.0 && git push origin v0.2.0
 ```
 
 Local build without Gradle installed at all (no, really, in Docker):
@@ -137,7 +145,7 @@ docker run --rm -v "$PWD":/work -w /work eclipse-temurin:21-jdk ./gradlew build
 
 1. Minecraft **1.21.1**, [Fabric Loader](https://fabricmc.net/use/) 0.16+.
 2. Put [Fabric API](https://modrinth.com/mod/fabric-api) in `mods/`.
-3. Drop the built `project-realism-0.1.0.jar` into `mods/` — client and server.
+3. Drop the built `project-realism-0.2.0.jar` into `mods/` — client and server.
 4. The mod **must be installed on both client and server**. Weight is computed server-side; the
    client only draws the readout. Vanilla clients can still connect to a modded server — they just
    don't get the HUD.

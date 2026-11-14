@@ -1,0 +1,292 @@
+name: Stage two
+
+# A dedicated pipeline for the primitive-gathering update. It is deliberately separate from
+# build.yml so an update can be built, tested and released without touching the main pipeline.
+#
+#   push / PR  -> verify the stage-two feature set, build the jar, upload it
+#   tag v*     -> publish a GitHub release with the versioned and unversioned jars attached
+#   manual     -> same as a push, with the option to attach a release
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
+  workflow_dispatch:
+    inputs:
+      make_release:
+        description: 'Publish a GitHub release for this build'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage-two-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  STAGE: '2.0.0'
+  VERSION_PREFIX: '0.2.0'
+  MOD_ID: project_realism
+
+jobs:
+  verify:
+    name: Verify stage two
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      # Fails fast and readably if a registration or resource file went missing, before Gradle spends
+      # a minute downloading Minecraft.
+      - name: Verify the stage two feature set is present
+        run: |
+          set -e
+          required=(
+            src/main/java/com/projectrealism/primitive/ToolGate.java
+            src/main/java/com/projectrealism/primitive/GroundRockBlock.java
+            src/main/java/com/projectrealism/primitive/GroundRockSpawner.java
+            src/main/java/com/projectrealism/primitive/GroundSticks.java
+            src/main/java/com/projectrealism/primitive/Knapping.java
+            src/main/java/com/projectrealism/primitive/Assembly.java
+            src/main/java/com/projectrealism/primitive/PrimitiveEvents.java
+            src/main/java/com/projectrealism/primitive/PrimitiveItems.java
+            src/main/java/com/projectrealism/primitive/PrimitiveBlocks.java
+            src/main/resources/data/minecraft/recipe/stone_axe.json
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::Stage two file is missing: $f"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "All ${#required[@]} stage two files present."
+
+      - name: Verify JSON resources parse
+        run: |
+          python3 - <<'PY'
+          import json, sys, pathlib
+
+          failures = 0
+          checked = 0
+          for path in sorted(pathlib.Path('src/main/resources').rglob('*.json')):
+              checked += 1
+              try:
+                  json.loads(path.read_text())
+              except Exception as exc:  # noqa: BLE001 - we want the message, not the type
+                  failures += 1
+                  print(f"::error file={path}::{exc}")
+          print(f"{checked} JSON resources checked, {failures} invalid.")
+          sys.exit(1 if failures else 0)
+          PY
+
+      - name: Verify no vanilla recipe hands out a stage two tool
+        run: |
+          # The whole point of the update is that stone tools are not craftable in the grid. Any recipe
+          # that produces one must be one of the explicitly disabled vanilla stubs.
+          python3 - <<'PY'
+          import json, pathlib, sys
+
+          tools = {
+              'project_realism:stone_axe',
+              'project_realism:stone_knife',
+              'project_realism:stone_pickaxe',
+          }
+          offenders = []
+          for path in sorted(pathlib.Path('src/main/resources/data').rglob('recipe*/*.json')):
+              try:
+                  data = json.loads(path.read_text())
+              except Exception:
+                  continue  # the JSON step already reports parse failures
+              if isinstance(data, list):
+                  entries = data
+              else:
+                  entries = [data]
+              for entry in entries:
+                  result = entry.get('result')
+                  ids = []
+                  if isinstance(result, str):
+                      ids.append(result)
+                  elif isinstance(result, dict):
+                      ids.append(result.get('id'))
+                      ids.extend(result.get('item', []) if isinstance(result.get('item'), list) else [])
+                  disabled = any(
+                      cond.get('condition') == 'fabric:false'
+                      for cond in entry.get('fabric:load_conditions', [])
+                  )
+                  for rid in ids:
+                      if rid in tools and not disabled:
+                          offenders.append((path, rid))
+
+          for path, rid in offenders:
+              print(f"::error file={path}::Recipe produces {rid} without being disabled.")
+          print(f"Checked stage two tools against recipes: {len(offenders)} craftable.")
+          sys.exit(1 if offenders else 0)
+          PY
+
+  build:
+    name: Build mod jar
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Stamp the version
+        run: |
+          # The jar must not claim to be 0.1.0 (stage one) now that it contains stage two.
+          sed -i -E "s/^mod_version=.*/mod_version=${VERSION_PREFIX}/" gradle.properties
+          echo "Building version ${VERSION_PREFIX}"
+          grep '^mod_version' gradle.properties
+
+      - name: Cache Gradle and Loom
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-stage2-${{ hashFiles('gradle.properties', 'build.gradle', 'settings.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-stage2-
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build
+        run: |
+          set -o pipefail
+          ./gradlew build --stacktrace --no-daemon --console=plain 2>&1 | tee gradle-build.log
+
+      # Logs are not always downloadable from CI tooling, so turn javac output into annotations.
+      - name: Summarise compile errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import re
+          try:
+              text = open('gradle-build.log', errors='ignore').read()
+          except FileNotFoundError:
+              raise SystemExit(0)
+          pattern = re.compile(r'(?m)^(\S+\.java):(\d+): (?:error|warning): (.*)((?:\n\s{2,}.*)*)')
+          for match in pattern.finditer(text):
+              detail = ' '.join([match.group(3)] + [l.strip() for l in match.group(4).splitlines()])
+              detail = ' '.join(detail.split())[:900]
+              print(f"::error file={match.group(1)},line={match.group(2)},title=javac::{detail}")
+          print("### Build failed")
+          print("```")
+          for line in text.splitlines():
+              if 'error:' in line or line.startswith('FAILURE') or 'What went wrong' in line:
+                  print(line)
+          print("```")
+          PY
+
+      - name: Show what was built
+        run: ls -lh build/libs
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-realism-stage2-jar
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage2-test-report
+          path: build/reports/tests/test
+          if-no-files-found: ignore
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "### Project Realism — stage ${{ env.STAGE }}"
+            echo ""
+            echo "Primitive resource gathering is built and green."
+            echo ""
+            echo "- jar: \`project-realism-${VERSION_PREFIX}.jar\`"
+            echo "- artifact: \`project-realism-stage2-jar\`"
+            echo "- rocks: granite / limestone / flint on grass, dirt, gravel, sand, stone"
+            echo "- gating: logs need an axe, stone and ores need a pickaxe, iron needs better than knapped stone"
+            echo "- crafting: knap a sharp stone, then hand-assemble the knife and axe (no vanilla grid)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.make_release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: project-realism-stage2-jar
+          path: dist
+
+      - name: Rename for a stable download link
+        run: |
+          set -e
+          versioned=$(ls dist/*.jar | grep -v sources | head -1)
+          cp "$versioned" "dist/project-realism-latest.jar"
+          echo "Publishing $versioned as project-realism-latest.jar"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Project Realism 0.2 — Primitive Resource Gathering"
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', env.VERSION_PREFIX) }}
+          files: dist/*.jar
+          generate_release_notes: true
+          body: |
+            ## Stage two: primitive resource gathering
+
+            No more punching trees. The first axe is made of rocks you picked off the ground.
+
+            1. Rocks (granite, limestone, flint) rest on grass, dirt, gravel, sand and stone — right-click to pick up.
+            2. Sticks lie under trees; leaves occasionally drop one. Grass and ferns tear into plant fiber.
+            3. Rock + rock knaps a **sharp stone**; sharp stone + rock knaps a **stone axe head**.
+            4. Sharp stone + stick + fiber makes a **stone knife**; axe head + stick + 2 fibers makes a **stone axe**.
+            5. Logs and planks need an axe, stone and ores need a pickaxe, and iron refuses a knapped one.
+
+            Vanilla recipes for crafting stone tools in the grid are disabled, and rocks grow back slowly.
