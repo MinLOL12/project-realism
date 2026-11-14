@@ -6,7 +6,6 @@ import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.particle.BlockStateParticles;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.Registries;
 import net.minecraft.item.Items;
@@ -100,7 +99,7 @@ public class GroundRockBlock extends Block {
 		world.removeBlock(pos, false);
 		world.playSound(null, pos, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS,
 				0.45f, 1.35f + world.random.nextFloat() * 0.15f);
-		server.spawnParticles(new BlockStateParticles(ParticleTypes.BLOCK, state),
+		server.spawnParticles(ParticleTypes.CRIT,
 				pos.getX() + 0.5, pos.getY() + 0.15, pos.getZ() + 0.5,
 				6, 0.18, 0.08, 0.18, 0.02);
 	}

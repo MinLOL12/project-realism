@@ -5,6 +5,8 @@ import com.projectrealism.RealismConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.chunk.WorldChunk;
@@ -46,7 +48,7 @@ public final class GroundRockSpawner {
 	}
 
 	private static boolean placeRock(ServerWorld world, WorldChunk chunk,
-									 net.minecraft.util.math.random.Random random) {
+									 Random random) {
 		int x = chunk.getPos().getStartX() + random.nextInt(16);
 		int z = chunk.getPos().getStartZ() + random.nextInt(16);
 
