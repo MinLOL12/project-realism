@@ -5,6 +5,9 @@ import com.projectrealism.primitive.PrimitiveBlocks;
 import com.projectrealism.primitive.PrimitiveEvents;
 import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.recipe.ModRecipes;
+import com.projectrealism.thermo.ThermoBlocks;
+import com.projectrealism.thermo.ThermoEvents;
+import com.projectrealism.thermo.ThermoItems;
 import com.projectrealism.weight.WeightAttributes;
 import com.projectrealism.weight.WeightManager;
 import com.projectrealism.weight.WeightPayload;
@@ -58,10 +61,13 @@ public class ProjectRealism implements ModInitializer {
 		PrimitiveBlocks.register();
 		WoodBlocks.register();
 		WoodItems.register();
+		ThermoBlocks.register();
+		ThermoItems.register();
 		ModRecipes.register();
 		PrimitiveEvents.register();
 		TreeChopper.register();
 		WoodEvents.register();
+		ThermoEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
 
@@ -73,6 +79,7 @@ public class ProjectRealism implements ModInitializer {
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			WeightManager.get().tick(server);
 			FallingTreeManager.tick(server);
+			ThermoEvents.tick(server);
 		});
 
 		// Logging in must never inherit a stale modifier from a previous session.
@@ -81,6 +88,7 @@ public class ProjectRealism implements ModInitializer {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			WeightManager.get().onDisconnect(handler.getPlayer().getUuid());
 			TreeChopper.forget(handler.getPlayer().getUuid());
+			ThermoEvents.onDisconnect(handler.getPlayer());
 		});
 
 		// Pack authors can drop JSON weight overrides into a datapack and /reload without a restart.

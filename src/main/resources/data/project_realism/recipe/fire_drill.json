@@ -1,0 +1,21 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "project_realism:sharp_stone"
+    }
+  ],
+  "result": {
+    "id": "project_realism:fire_drill",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

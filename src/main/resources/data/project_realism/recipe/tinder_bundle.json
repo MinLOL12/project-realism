@@ -1,0 +1,21 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "project_realism:plant_fiber"
+    },
+    {
+      "item": "project_realism:plant_fiber"
+    },
+    {
+      "item": "minecraft:stick"
+    }
+  ],
+  "result": {
+    "id": "project_realism:tinder_bundle",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

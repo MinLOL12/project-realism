@@ -1,5 +1,7 @@
 package com.projectrealism.wood;
 
+import com.projectrealism.ProjectRealism;
+import com.projectrealism.thermo.ThermalWorldState;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PillarBlock;
@@ -48,9 +50,13 @@ public class FreshLogBlock extends Block {
 
 	@Override
 	protected void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-		if (!world.isClient && state.get(MOISTURE) > 0) {
-			world.scheduleBlockTick(pos, this,
-					DryingWoodHelper.computeStepDelayTicks(world, pos, species, 1.0f));
+		if (world instanceof ServerWorld server && state.get(MOISTURE) > 0) {
+			if (ProjectRealism.config().thermodynamicsSimulation) {
+				ThermalWorldState.get(server).getOrCreateNode(server, pos);
+			} else {
+				world.scheduleBlockTick(pos, this,
+						DryingWoodHelper.computeStepDelayTicks(world, pos, species, 1.0f));
+			}
 		}
 	}
 
@@ -61,6 +67,10 @@ public class FreshLogBlock extends Block {
 
 	@Override
 	protected void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+		if (ProjectRealism.config().thermodynamicsSimulation) {
+			ThermalWorldState.get(world).getOrCreateNode(world, pos);
+			return;
+		}
 		if (state.get(MOISTURE) > 0 && !world.getBlockTickScheduler().isQueued(pos, this)) {
 			world.scheduleBlockTick(pos, this,
 					DryingWoodHelper.computeStepDelayTicks(world, pos, species, 1.0f));
@@ -69,6 +79,10 @@ public class FreshLogBlock extends Block {
 
 	@Override
 	protected void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+		if (ProjectRealism.config().thermodynamicsSimulation) {
+			ThermalWorldState.get(world).getOrCreateNode(world, pos);
+			return;
+		}
 		int moisture = state.get(MOISTURE);
 		if (moisture <= 0) {
 			world.setBlockState(pos, species.vanillaLog().getDefaultState()

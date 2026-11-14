@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "layers=1": {
+      "model": "project_realism:block/wood_ash_pile_layer1"
+    },
+    "layers=2": {
+      "model": "project_realism:block/wood_ash_pile_layer2"
+    },
+    "layers=3": {
+      "model": "project_realism:block/wood_ash_pile_layer3"
+    },
+    "layers=4": {
+      "model": "project_realism:block/wood_ash_pile_layer4"
+    }
+  }
+}

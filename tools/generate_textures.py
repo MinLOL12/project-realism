@@ -742,6 +742,166 @@ def make_drying_wood_block(species: str, dry: bool, is_plank: bool) -> Canvas:
 
 
 # ---------------------------------------------------------------------------
+# Firemaking, Hearth & Ash Textures
+# ---------------------------------------------------------------------------
+
+def make_tinder_bundle() -> Canvas:
+    c = Canvas(32, 32)
+    # Cozy woven nest of dry golden straw, bark shavings & cordage wrap
+    for i in range(42):
+        ang = (i / 42.0) * math.pi * 2.0
+        r0 = 3.0 + (i % 4) * 1.4
+        r1 = 10.5 + (i % 3) * 1.6
+        x0 = round(16 + math.cos(ang) * r0)
+        y0 = round(17 + math.sin(ang) * r0 * 0.72)
+        x1 = round(16 + math.cos(ang + 0.55) * r1)
+        y1 = round(17 + math.sin(ang + 0.55) * r1 * 0.72)
+        col = (214, 178, 94, 255) if i % 3 == 0 else ((178, 134, 62, 255) if i % 3 == 1 else (138, 98, 44, 255))
+        c.line(x0, y0, x1, y1, col, 1)
+    # Central tender hollow & ember tinder core
+    for y in range(13, 21):
+        for x in range(11, 21):
+            d = math.hypot(x - 16, (y - 17) * 1.25)
+            if d < 5.0:
+                n = hash_noise(x, y, 2100)
+                col = (232, 202, 128) if n > 0.45 else (196, 156, 86)
+                c.set(x, y, shade(col, 1.0 - d * 0.04))
+    # Fiber cordage binding strap across bundle
+    c.line(8, 20, 24, 15, (148, 122, 68, 255), 2)
+    c.line(8, 21, 24, 16, (108, 86, 44, 255), 1)
+    c.outline()
+    return c
+
+
+def make_fire_drill() -> Canvas:
+    c = Canvas(32, 32)
+    # Horizontal notched cedar hearthboard at base
+    c.fill_poly([(4, 22), (27, 22), (28, 27), (3, 27)],
+                lambda x, y: shade((146, 98, 52) if y < 25 else (106, 68, 34), 0.94 + 0.1 * hash_noise(x, y, 2200)))
+    # Charred notch & ember dust glow on board
+    for y in range(21, 26):
+        for x in range(14, 19):
+            if math.hypot(x - 16, y - 22.5) < 2.6:
+                c.set(x, y, (238, 114, 28, 255) if y == 22 else (56, 36, 26, 255))
+    # Angled wooden spindle stick pressed into hearthboard
+    for i in range(22):
+        t = i / 21.0
+        px = round(16 + t * 8.0)
+        py = round(22 - t * 17.0)
+        for dx in (-1, 0, 1):
+            col = (182, 134, 74) if dx < 0 else ((146, 102, 52) if dx == 0 else (104, 68, 34))
+            if i < 3:
+                col = mix(col, (48, 30, 22), 0.65)  # charred tip
+            c.set(px + dx, py, shade(col, 1.0))
+    c.outline()
+    return c
+
+
+def make_bow_drill() -> Canvas:
+    c = Canvas(32, 32)
+    # Curved wooden bow arc
+    for i in range(48):
+        t = i / 47.0
+        bx = round(6 + t * 20)
+        by = round(19 - math.sin(t * math.pi) * 12)
+        c.line(bx, by, bx, by + 1, (148, 96, 48, 255), 2)
+    # Twisted cordage bowstring wrapped around upright spindle
+    c.line(6, 19, 16, 16, (206, 186, 132, 255), 1)
+    c.line(16, 16, 26, 19, (206, 186, 132, 255), 1)
+    # Vertical spindle + top granite bearing socket + charred bottom tip
+    for y in range(6, 27):
+        col = (176, 132, 74) if y < 23 else (58, 36, 24)
+        c.set(15, y, shade(col, 1.05))
+        c.set(16, y, shade(col, 0.92))
+    # Stone handhold bearing block at top
+    c.fill_poly([(12, 3), (20, 3), (21, 7), (11, 7)],
+                lambda x, y: shade((132, 132, 138), 0.92 + 0.14 * hash_noise(x, y, 2300)))
+    # Glowing friction ember spot at base
+    c.set(15, 27, (242, 118, 28, 255))
+    c.set(16, 27, (252, 182, 52, 255))
+    c.outline()
+    return c
+
+
+def make_wood_ash_item() -> Canvas:
+    c = Canvas(32, 32)
+    c.fill_poly([(6, 23), (11, 15), (17, 13), (22, 16), (26, 23), (22, 26), (10, 26)],
+                lambda x, y: shade(
+                    (204, 206, 202) if y < 18 else ((146, 148, 146) if hash_noise(x, y, 2400) > 0.22 else (58, 56, 54)),
+                    0.94 + 0.12 * hash_noise(x, y, 2401)))
+    c.outline()
+    return c
+
+
+def make_hearth_side_block() -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            n = hash_noise(x, y, 2500)
+            if y < 22:
+                # Fieldstone ring masonry
+                stone_cell = ((x // 8) + (y // 6) * 3)
+                edge = (x % 8 == 0) or (y % 6 == 0)
+                base = (72, 70, 68) if edge else ((128, 126, 122) if stone_cell % 2 == 0 else (108, 104, 100))
+                c.set(x, y, shade(base, 0.92 + 0.16 * n))
+            else:
+                # Compacted dark earth foundation
+                base = (68, 52, 38) if n > 0.35 else (54, 40, 28)
+                c.set(x, y, shade(base, 0.95 + 0.1 * n))
+    return c
+
+
+def make_hearth_top_block(mode: str) -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            d = math.hypot(x - 15.5, y - 15.5)
+            n = hash_noise(x, y, 2600 + (1 if mode == "embers" else (2 if mode == "lit" else 0)))
+            if d > 11.5:
+                # Outer ring of river cobblestones
+                ang = math.atan2(y - 15.5, x - 15.5)
+                seg = int((ang + math.pi) / (math.pi / 4))
+                seam = abs(((ang + math.pi) % (math.pi / 4)) - (math.pi / 8)) > (math.pi / 8 - 0.11)
+                base = (66, 64, 62) if seam else ((136, 132, 128) if seg % 2 == 0 else (112, 108, 104))
+                c.set(x, y, shade(base, 0.90 + 0.18 * n))
+            else:
+                # Interior fuel & ash pit
+                if mode == "cold":
+                    base = (128, 128, 124) if n > 0.45 else (58, 54, 50)
+                elif mode == "embers":
+                    if n > 0.62:
+                        base = (232, 82, 18)
+                    elif n > 0.45:
+                        base = (164, 42, 16)
+                    else:
+                        base = (52, 48, 46)
+                else:  # lit blazing fire bed
+                    if d < 5.5 and n > 0.35:
+                        base = (255, 212, 72)
+                    elif n > 0.30:
+                        base = (242, 108, 22)
+                    else:
+                        base = (68, 42, 28)
+                c.set(x, y, shade(base, 0.94 + 0.12 * n))
+    return c
+
+
+def make_wood_ash_pile_block() -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            n = hash_noise(x, y, 2700)
+            if n < 0.09:
+                base = (48, 46, 46)  # tiny unburned charcoal fleck
+            elif n > 0.72:
+                base = (214, 216, 210)
+            else:
+                base = (176, 178, 174)
+            c.set(x, y, shade(base, 0.94 + 0.12 * n))
+    return c
+
+
+# ---------------------------------------------------------------------------
 # Registry of All Textures
 # ---------------------------------------------------------------------------
 
@@ -760,10 +920,19 @@ def build_all_textures() -> Dict[str, Canvas]:
         "item/stone_axe_dull.png": make_stone_axe(dull=True),
         "item/stone_pickaxe.png": make_stone_pickaxe(dull=False),
         "item/stone_pickaxe_dull.png": make_stone_pickaxe(dull=True),
+        "item/tinder_bundle.png": make_tinder_bundle(),
+        "item/fire_drill.png": make_fire_drill(),
+        "item/bow_drill.png": make_bow_drill(),
+        "item/wood_ash.png": make_wood_ash_item(),
         "block/granite_rock.png": make_rock_block("granite"),
         "block/limestone_rock.png": make_rock_block("limestone"),
         "block/flint_rock.png": make_rock_block("flint"),
         "block/fallen_stick.png": make_fallen_stick_block(),
+        "block/hearth_side.png": make_hearth_side_block(),
+        "block/hearth_top.png": make_hearth_top_block("cold"),
+        "block/hearth_embers.png": make_hearth_top_block("embers"),
+        "block/hearth_lit.png": make_hearth_top_block("lit"),
+        "block/wood_ash_pile.png": make_wood_ash_pile_block(),
     }
     for sp in ("oak", "birch", "spruce", "dark_oak"):
         tex[f"item/fresh_{sp}_log.png"] = make_fresh_log_item(sp)
