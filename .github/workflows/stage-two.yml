@@ -103,15 +103,49 @@ jobs:
           sys.exit(1 if failures else 0)
           PY
 
-      - name: Verify no vanilla recipes hand out stage two items
+      - name: Verify no vanilla recipe hands out a stage two tool
         run: |
-          # The whole point of the update is that stone tools are not craftable in the grid.
-          if grep -rl '"project_realism:stone_\(axe\|knife\|pickaxe\)"' \
-               src/main/resources/data --include='*.json' 2>/dev/null | grep -v '/recipe/' ; then
-            echo "::error::A stage two tool appears as a recipe result outside data/minecraft/recipe."
-            exit 1
-          fi
-          echo "Stage two tools are not obtainable from a vanilla crafting grid."
+          # The whole point of the update is that stone tools are not craftable in the grid. Any recipe
+          # that produces one must be one of the explicitly disabled vanilla stubs.
+          python3 - <<'PY'
+          import json, pathlib, sys
+
+          tools = {
+              'project_realism:stone_axe',
+              'project_realism:stone_knife',
+              'project_realism:stone_pickaxe',
+          }
+          offenders = []
+          for path in sorted(pathlib.Path('src/main/resources/data').rglob('recipe*/*.json')):
+              try:
+                  data = json.loads(path.read_text())
+              except Exception:
+                  continue  # the JSON step already reports parse failures
+              if isinstance(data, list):
+                  entries = data
+              else:
+                  entries = [data]
+              for entry in entries:
+                  result = entry.get('result')
+                  ids = []
+                  if isinstance(result, str):
+                      ids.append(result)
+                  elif isinstance(result, dict):
+                      ids.append(result.get('id'))
+                      ids.extend(result.get('item', []) if isinstance(result.get('item'), list) else [])
+                  disabled = any(
+                      cond.get('condition') == 'fabric:false'
+                      for cond in entry.get('fabric:load_conditions', [])
+                  )
+                  for rid in ids:
+                      if rid in tools and not disabled:
+                          offenders.append((path, rid))
+
+          for path, rid in offenders:
+              print(f"::error file={path}::Recipe produces {rid} without being disabled.")
+          print(f"Checked stage two tools against recipes: {len(offenders)} craftable.")
+          sys.exit(1 if offenders else 0)
+          PY
 
   build:
     name: Build mod jar
