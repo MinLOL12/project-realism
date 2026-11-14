@@ -57,12 +57,13 @@ public final class Knapping {
 			return strikeSharp(player, world, held, other);
 		}
 
-		// A rock and nothing else: tell the player what the interaction actually wants.
-		if (world.isClient) {
-			return TypedActionResult.success(held);
+		// A rock and nothing else: tell the player what the interaction actually wants, but let the
+		// right-click fall through so holding a rock never blocks opening a door or a chest.
+		if (!world.isClient && cooledDown(player)) {
+			player.sendMessage(Text.translatable("project_realism.knapping.needs_two")
+					.formatted(Formatting.GRAY), true);
 		}
-		player.sendMessage(Text.translatable("project_realism.knapping.needs_two").formatted(Formatting.GRAY), true);
-		return TypedActionResult.success(held);
+		return TypedActionResult.pass(held);
 	}
 
 	private static TypedActionResult<ItemStack> strikeSharp(PlayerEntity player, World world,
@@ -111,13 +112,16 @@ public final class Knapping {
 		return TypedActionResult.success(held);
 	}
 
-	private static boolean canStrike(PlayerEntity player) {
-		long now = System.currentTimeMillis();
+	private static boolean cooledDown(PlayerEntity player) {
 		Long last = LAST_STRIKE.get(player.getUuid());
-		if (last != null && now - last < STRIKE_COOLDOWN_MS) {
+		return last == null || System.currentTimeMillis() - last >= STRIKE_COOLDOWN_MS;
+	}
+
+	private static boolean canStrike(PlayerEntity player) {
+		if (!cooledDown(player)) {
 			return false;
 		}
-		LAST_STRIKE.put(player.getUuid(), now);
+		LAST_STRIKE.put(player.getUuid(), System.currentTimeMillis());
 		return true;
 	}
 

@@ -62,9 +62,9 @@ The vanilla opening — punch a tree, get wood, skip the Stone Age — is gone. 
 4. **Knap stone.** Hold a rock and right-click while holding another rock in your off hand: the stones
    knock a **sharp stone** off each other. Then strike a sharp stone against a fresh rock to knap a
    **stone axe head**. Two plant fibers twist into **cordage** the same way.
-5. **Assemble the axe by hand.** Sharp stone + stick + fiber makes a **stone knife**; axe head + stick
-   + two fibers makes a **stone axe**. Hold the parts in your two hands and right-click — these are
-   *interactions*, not crafting recipes.
+5. **Assemble the axe by hand.** Sharp stone + stick + at least one fiber makes a **stone knife**; axe
+   head + stick + at least two fibers makes a **stone axe**. Hold the parts in your two hands and
+   right-click — these are *interactions*, not crafting recipes.
 6. **Now you may have wood.** Logs and everything made of wood demand an axe. Stone demands a
    pickaxe. Bare hands get a dull thud and a hint, and the block takes no damage at all.
 
@@ -79,8 +79,9 @@ knapping, the assembly comes from your hands.
 | Logs, planks, stairs, chests, crafting table | **no — needs an axe**  |
 | Stone, ores, furnace, anvil               | **no — needs a pickaxe** |
 
-Default stone-tier tools are also no longer handed to you: the primitive tools are the only ones you
-can make without a table, and they are fragile (48–96 uses) and slow, exactly like knapped stone.
+The vanilla stone tool recipes are switched off as well, so the only way into the Stone Age is the
+knapping path above. The primitive tools are fragile (48–96 uses) and slow, exactly like knapped
+stone, and a knapped pickaxe will not touch iron — that still needs a real pickaxe.
 
 ### Configuration
 

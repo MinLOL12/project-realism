@@ -36,11 +36,14 @@ public final class Assembly {
 			return bind(player, world, held, other);
 		}
 
-		if (held.isOf(PrimitiveItems.SHARP_STONE) && other.isOf(Items.STICK)) {
+		// Either hand may hold the part; players do not read tooltips about ordering.
+		if ((held.isOf(PrimitiveItems.SHARP_STONE) && other.isOf(Items.STICK))
+				|| (held.isOf(Items.STICK) && other.isOf(PrimitiveItems.SHARP_STONE))) {
 			return makeKnife(player, world, held, other);
 		}
 
-		if (held.isOf(PrimitiveItems.STONE_AXE_HEAD) && other.isOf(Items.STICK)) {
+		if ((held.isOf(PrimitiveItems.STONE_AXE_HEAD) && other.isOf(Items.STICK))
+				|| (held.isOf(Items.STICK) && other.isOf(PrimitiveItems.STONE_AXE_HEAD))) {
 			return makeStoneAxe(player, world, held, other);
 		}
 
@@ -72,7 +75,7 @@ public final class Assembly {
 			server.playSound(null, player.getBlockPos(), SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS,
 					0.5f, 1.2f);
 		}
-		return TypedActionResult.success(held);
+		return TypedActionResult.pass(held);
 	}
 
 	private static TypedActionResult<ItemStack> makeKnife(PlayerEntity player, World world,
