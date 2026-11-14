@@ -79,6 +79,14 @@ public final class RealismConfig {
 	/** Whether knapping (striking two rocks) replaces the vanilla stone tool recipes. */
 	public boolean knapping = true;
 
+	/**
+	 * Whether rocks and fallen sticks are written into newly generated chunks.
+	 *
+	 * <p>Turn this off if world generation is ever suspected of misbehaving; rocks and sticks stop
+	 * being generated in new terrain and nothing during generation touches the world.</p>
+	 */
+	public boolean generateRocksInNewChunks = true;
+
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		RealismConfig config = new RealismConfig();
