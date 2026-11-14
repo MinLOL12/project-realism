@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Project Realism — Weight Tuning Bench</title>
+<style>
+  :root {
+    --bg: #14110f;
+    --panel: #1d1916;
+    --panel-2: #262019;
+    --line: #3a3027;
+    --text: #e8ddcd;
+    --muted: #a89a86;
+    --gold: #c4a06a;
+    --green: #8fce7a;
+    --yellow: #ffd166;
+    --orange: #ff9933;
+    --red: #ff5555;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(circle at 30% 0%, #221b16 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    line-height: 1.5;
+  }
+  header {
+    padding: 28px 22px 10px;
+    max-width: 1120px; margin: 0 auto;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .04em; }
+  h1 span { color: var(--gold); }
+  header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 70ch; }
+  main {
+    max-width: 1120px; margin: 0 auto; padding: 18px 22px 60px;
+    display: grid; grid-template-columns: 1.05fr .95fr; gap: 18px;
+  }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .panel {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+  }
+  .panel h2 {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--gold); margin: 0 0 12px; font-weight: 600;
+  }
+  .readout { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .readout .big { font-size: 40px; font-weight: 700; letter-spacing: -.02em; }
+  .readout .cap { color: var(--muted); font-size: 15px; }
+  .status { font-size: 13px; margin-top: 4px; min-height: 20px; }
+  .bar {
+    position: relative; height: 14px; margin: 16px 0 6px;
+    background: #0d0b0a; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  }
+  .bar > i { position: absolute; inset: 0 auto 0 0; width: 0; transition: width .12s linear; }
+  .bar > b {
+    position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--muted);
+  }
+  .bar-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
+  .item {
+    display: flex; align-items: center; gap: 8px;
+    background: #191512; border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 10px; font-size: 13px; cursor: pointer; user-select: none;
+    transition: border-color .12s, transform .06s;
+  }
+  .item:hover { border-color: #57483a; }
+  .item:active { transform: scale(.985); }
+  .item .swatch { width: 12px; height: 12px; border-radius: 3px; flex: 0 0 auto; }
+  .item .name { flex: 1; }
+  .item .kg { color: var(--muted); font-size: 11px; }
+  .item .count {
+    min-width: 26px; text-align: center; font-weight: 700; color: var(--gold);
+    background: #0f0d0b; border-radius: 6px; padding: 1px 4px;
+  }
+  .item.over .count { color: var(--red); }
+  .sliders { display: grid; gap: 14px; }
+  .slider label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .slider label b { color: var(--text); font-weight: 600; }
+  .slider input[type=range] { width: 100%; accent-color: var(--gold); }
+  .curve { width: 100%; height: 200px; display: block; }
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px; }
+  .kv span:nth-child(odd) { color: var(--muted); }
+  .kv span:nth-child(even) { text-align: right; font-weight: 600; }
+  .hint { color: var(--muted); font-size: 11px; margin-top: 10px; }
+  button.reset {
+    background: #191512; color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 12px; cursor: pointer; font-family: inherit; font-size: 12px;
+  }
+  button.reset:hover { border-color: var(--gold); color: var(--gold); }
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .examples button { font-size: 11px; padding: 5px 9px; }
+  grade { font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Project <span>Realism</span> — weight tuning bench</h1>
+  <p>Stage one of the overhaul: every block has a mass, and hauling more than 30 kg slows you down.
+     Click items to load them into an invented inventory and watch the speed penalty respond.
+     The curve below is the exact one the mod ships with.</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Carried load</h2>
+    <div class="readout">
+      <span class="big" id="total">0.0</span>
+      <span class="cap">kg / <b id="cap">30</b> kg comfortable</span>
+    </div>
+    <div class="status" id="status">Free and easy.</div>
+    <div class="bar">
+      <i id="fill"></i>
+      <b id="marker"></b>
+    </div>
+    <div class="bar-labels"><span>0 kg</span><span id="scaleMax">60 kg</span></div>
+
+    <h2 style="margin-top:20px">Goods</h2>
+    <div class="grid" id="goods"></div>
+    <div class="examples">
+      <button class="reset" id="example-mine">Mining trip</button>
+      <button class="reset" id="example-house">House builder</button>
+      <button class="reset" id="example-none">Empty hands</button>
+      <button class="reset" id="reset">Clear</button>
+    </div>
+    <p class="hint">Left click adds one, right click removes one. Counts are items, not stacks —
+       a stack of 64 cobblestone is 320 kg.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Consequence</h2>
+    <div class="kv">
+      <span>Movement speed</span><span id="speed">100%</span>
+      <span>Walk speed</span><span id="walkspeed">4.32 m/s</span>
+      <span>Over capacity by</span><span id="over">0.0 kg</span>
+      <span>Hunger drain (extra)</span><span id="hunger">none</span>
+      <span>Verdict</span><span id="verdict">—</span>
+    </div>
+
+    <h2 style="margin-top:20px">Curve</h2>
+    <canvas class="curve" id="curve" width="900" height="400"></canvas>
+    <p class="hint">X axis: carried kilograms. Y axis: movement speed. The knee sits exactly at
+       capacity, and the slope never jumps.</p>
+
+    <h2 style="margin-top:20px">Tuning</h2>
+    <div class="sliders">
+      <div class="slider">
+        <label>Comfortable capacity <b><span id="v-cap">30</span> kg</b></label>
+        <input type="range" id="s-cap" min="5" max="120" step="1" value="30" />
+      </div>
+      <div class="slider">
+        <label>Excess mass that halves speed <b><span id="v-half">20</span> kg</b></label>
+        <input type="range" id="s-half" min="5" max="120" step="1" value="20" />
+      </div>
+      <div class="slider">
+        <label>Curve exponent <b><span id="v-exp">1.25</span></b></label>
+        <input type="range" id="s-exp" min="0.5" max="3" step="0.05" value="1.25" />
+      </div>
+      <div class="slider">
+        <label>Speed floor <b><span id="v-floor">12</span>%</b></label>
+        <input type="range" id="s-floor" min="2" max="60" step="1" value="12" />
+      </div>
+    </div>
+    <p class="hint">These four numbers are the ones in <code>config/project-realism.json</code>.</p>
+  </section>
+</main>
+
+<script>
+const GOODS = [
+  { id: 'dirt',        name: 'Dirt',           kg: 2,   color: '#7a5c3e' },
+  { id: 'cobblestone', name: 'Cobblestone',    kg: 5,   color: '#8a8a8a' },
+  { id: 'oak_log',     name: 'Oak Log',        kg: 12,  color: '#8a6234' },
+  { id: 'iron_block',  name: 'Iron Block',     kg: 40,  color: '#d8d8d8' },
+  { id: 'oak_planks',  name: 'Oak Planks',     kg: 3,   color: '#b5854f' },
+  { id: 'coal',        name: 'Coal',           kg: 0.5, color: '#2b2b2b' },
+  { id: 'iron_ingot',  name: 'Iron Ingot',     kg: 4,   color: '#c9c9c9' },
+  { id: 'raw_iron_block', name: 'Raw Iron Block', kg: 4, color: '#c08a6a' },
+  { id: 'diamond_pickaxe', name: 'Diamond Pickaxe', kg: 4, color: '#5fd7d1' },
+  { id: 'iron_chestplate', name: 'Iron Chestplate', kg: 10, color: '#a8a8b0' },
+  { id: 'shulker_box', name: 'Shulker Box',    kg: 15,  color: '#9b6bb5' },
+  { id: 'anvil',       name: 'Anvil',          kg: 60,  color: '#6d6d75' },
+];
+
+const state = {
+  counts: Object.fromEntries(GOODS.map(g => [g.id, 0])),
+  cap: 30, half: 20, exp: 1.25, floor: 0.12,
+};
+
+// Must stay identical to Encumbrance.speedMultiplier in the Java source.
+function speedMultiplier(kg, cap, half, exp, floor) {
+  const over = kg - cap;
+  if (over <= 0) return 1;
+  return Math.max(floor, Math.min(1, 1 / (1 + Math.pow(over / Math.max(0.0001, half), Math.max(0.1, exp)))));
+}
+
+function severity(total, cap) {
+  const r = total / cap;
+  if (r <= 1) return { key: 'free', label: 'Free and easy.', color: '#8fce7a' };
+  if (r <= 1.25) return { key: 'loaded', label: 'The load pulls on your shoulders.', color: '#ffd166' };
+  if (r <= 1.75) return { key: 'strained', label: 'Every step costs more than it should.', color: '#ff9933' };
+  return { key: 'crushed', label: 'You can barely move. Put something down.', color: '#ff5555' };
+}
+
+const $ = sel => document.querySelector(sel);
+
+function totalKg() {
+  return GOODS.reduce((sum, g) => sum + state.counts[g.id] * g.kg, 0);
+}
+
+function renderGoods() {
+  const host = $('#goods');
+  host.innerHTML = '';
+  for (const g of GOODS) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `<span class="swatch" style="background:${g.color}"></span>
+      <span class="name">${g.name}<br><span class="kg">${g.kg} kg each</span></span>
+      <span class="count">${state.counts[g.id]}</span>`;
+    el.addEventListener('click', () => { state.counts[g.id]++; render(); });
+    el.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      state.counts[g.id] = Math.max(0, state.counts[g.id] - 1);
+      render();
+    });
+    host.appendChild(el);
+  }
+}
+
+function render() {
+  const total = totalKg();
+  const mult = speedMultiplier(total, state.cap, state.half, state.exp, state.floor);
+  const sev = severity(total, state.cap);
+  const over = Math.max(0, total - state.cap);
+  const walking = (4.317 * mult).toFixed(2);
+
+  $('#total').textContent = total.toFixed(1);
+  $('#total').style.color = sev.color;
+  $('#cap').textContent = state.cap;
+  $('#status').textContent = sev.label;
+  $('#status').style.color = sev.color;
+  $('#speed').textContent = Math.round(mult * 100) + '%';
+  $('#speed').style.color = sev.color;
+  $('#walkspeed').textContent = walking + ' m/s';
+  $('#over').textContent = over.toFixed(1) + ' kg';
+  $('#hunger').textContent = over > 0 ? 'yes — ' + (over * 0.01).toFixed(2) + ' /s walking' : 'none';
+
+  let verdict = 'You can outrun a zombie.';
+  if (mult < 0.75) verdict = 'A zombie walks faster than you.';
+  if (mult < 0.5) verdict = 'A baby zombie walks faster than you.';
+  if (mult < 0.25) verdict = 'You are effectively stationary.';
+  $('#verdict').textContent = verdict;
+
+  const barMax = Math.max(state.cap * 2, total * 1.08);
+  $('#scaleMax').textContent = Math.round(barMax) + ' kg';
+  const fill = $('#fill');
+  const pct = Math.min(100, total / barMax * 100);
+  fill.style.width = pct + '%';
+  fill.style.background = sev.color;
+  $('#marker').style.left = (state.cap / barMax * 100) + '%';
+
+  document.querySelectorAll('.item').forEach((el, i) => {
+    el.classList.toggle('over', state.counts[GOODS[i].id] * GOODS[i].kg > state.cap);
+  });
+
+  drawCurve(total);
+}
+
+function drawCurve(currentKg) {
+  const canvas = $('#curve');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 460;
+  const cssH = 200;
+  if (canvas.width !== Math.round(cssW * dpr)) {
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const maxKg = Math.max(state.cap * 2.5, currentKg * 1.2, 40);
+  const pad = { l: 34, r: 8, t: 10, b: 20 };
+  const w = cssW - pad.l - pad.r;
+  const h = cssH - pad.t - pad.b;
+  const x = kg => pad.l + (kg / maxKg) * w;
+  const y = m => pad.t + (1 - m) * h;
+
+  // grid + axis labels
+  ctx.strokeStyle = '#2c251f';
+  ctx.fillStyle = '#7d6f5f';
+  ctx.font = '10px ui-monospace, monospace';
+  ctx.lineWidth = 1;
+  for (let m = 0; m <= 1.0001; m += 0.25) {
+    ctx.beginPath(); ctx.moveTo(pad.l, y(m)); ctx.lineTo(pad.l + w, y(m)); ctx.stroke();
+    ctx.fillText(Math.round(m * 100) + '%', 4, y(m) + 3);
+  }
+  const tick = maxKg <= 40 ? 10 : maxKg <= 100 ? 20 : 50;
+  for (let kg = 0; kg <= maxKg; kg += tick) {
+    ctx.fillText(kg + '', x(kg) - 4, cssH - 4);
+  }
+
+  // capacity line
+  ctx.strokeStyle = '#5b4a37';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(x(state.cap), pad.t); ctx.lineTo(x(state.cap), pad.t + h); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // the curve
+  ctx.beginPath();
+  for (let i = 0; i <= 240; i++) {
+    const kg = (i / 240) * maxKg;
+    const m = speedMultiplier(kg, state.cap, state.half, state.exp, state.floor);
+    const px = x(kg), py = y(m);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = '#c4a06a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // current position
+  const m = speedMultiplier(currentKg, state.cap, state.half, state.exp, state.floor);
+  ctx.fillStyle = '#ff9933';
+  ctx.beginPath(); ctx.arc(x(currentKg), y(m), 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,153,51,.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x(currentKg), clampY(y(m))); ctx.lineTo(x(currentKg), pad.t + h); ctx.stroke();
+}
+
+function clampY(v) { return v; }
+
+function syncSliders() {
+  $('#s-cap').value = state.cap;
+  $('#s-half').value = state.half;
+  $('#s-exp').value = state.exp;
+  $('#s-floor').value = Math.round(state.floor * 100);
+  $('#v-cap').textContent = state.cap;
+  $('#v-half').textContent = state.half;
+  $('#v-exp').textContent = state.exp.toFixed(2);
+  $('#v-floor').textContent = Math.round(state.floor * 100);
+}
+
+function bindSliders() {
+  $('#s-cap').addEventListener('input', e => { state.cap = +e.target.value; syncSliders(); render(); });
+  $('#s-half').addEventListener('input', e => { state.half = +e.target.value; syncSliders(); render(); });
+  $('#s-exp').addEventListener('input', e => { state.exp = +e.target.value; syncSliders(); render(); });
+  $('#s-floor').addEventListener('input', e => { state.floor = +e.target.value / 100; syncSliders(); render(); });
+}
+
+function setCounts(map) {
+  for (const g of GOODS) state.counts[g.id] = map[g.id] || 0;
+  renderGoods();
+  render();
+}
+
+bindSliders();
+syncSliders();
+renderGoods();
+
+$('#example-mine').addEventListener('click', () => setCounts({ cobblestone: 6, coal: 10, iron_ingot: 4, diamond_pickaxe: 1 }));
+$('#example-house').addEventListener('click', () => setCounts({ dirt: 6, oak_planks: 6, oak_log: 0 }));
+$('#example-none').addEventListener('click', () => setCounts({}));
+$('#reset').addEventListener('click', () => setCounts({}));
+
+setCounts({ cobblestone: 4, oak_log: 1, dirt: 4 });
+window.addEventListener('resize', () => render());
+</script>
+</body>
+</html>

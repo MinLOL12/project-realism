@@ -1,0 +1,103 @@
+package com.projectrealism;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import net.fabricmc.loader.api.FabricLoader;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+/**
+ * User-tunable numbers. Everything that decides how miserable the player is lives here, so server
+ * owners can dial the misery without a recompile.
+ */
+public final class RealismConfig {
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final String FILE_NAME = "project-realism.json";
+
+	/** Mass a player can carry before anything starts to hurt, in kilograms. */
+	public double capacityKg = 30.0;
+
+	/** Extra mass, in kg, beyond capacity that halves the player's speed. */
+	public double halfLifeKg = 20.0;
+
+	/**
+	 * Shape of the slowdown curve. Larger values keep light overloads forgiving and then fall off a
+	 * cliff; smaller values slow you from the very first extra kilogram.
+	 */
+	public double curveExponent = 1.25;
+
+	/** Hard floor on the speed multiplier so a hoarder is never literally frozen in place. */
+	public double minSpeedMultiplier = 0.12;
+
+	/** Show the weight readout above the hotbar. */
+	public boolean weightHud = true;
+
+	/** How often (in ticks) the readout refreshes. 10 = twice a second. */
+	public int hudIntervalTicks = 10;
+
+	/** Heavy loads make you burn through food faster. */
+	public boolean overloadExhaustion = true;
+
+	/** Exhaustion added per second for every kilogram carried above capacity. */
+	public double exhaustionPerKgPerSecond = 0.01;
+
+	/** Whether creative-mode players are exempt from physics. */
+	public boolean affectCreative = false;
+
+	/** Whether creative-mode players see the readout. */
+	public boolean hudInCreative = true;
+
+	public static RealismConfig load() {
+		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
+		RealismConfig config = new RealismConfig();
+
+		if (Files.exists(path)) {
+			try {
+				String json = Files.readString(path);
+				RealismConfig loaded = GSON.fromJson(json, RealismConfig.class);
+				if (loaded != null) {
+					config = loaded;
+				}
+			} catch (IOException | JsonSyntaxException e) {
+				ProjectRealism.LOGGER.error("Could not read config, falling back to defaults.", e);
+			}
+		}
+
+		config.clamp();
+		config.save(path);
+		return config;
+	}
+
+	public void save(Path path) {
+		try {
+			Files.createDirectories(path.getParent());
+			Files.writeString(path, GSON.toJson(this));
+		} catch (IOException e) {
+			ProjectRealism.LOGGER.error("Could not write config.", e);
+		}
+	}
+
+	private void clamp() {
+		if (capacityKg < 1.0) {
+			capacityKg = 1.0;
+		}
+		if (halfLifeKg < 1.0) {
+			halfLifeKg = 1.0;
+		}
+		if (curveExponent < 0.1) {
+			curveExponent = 0.1;
+		}
+		if (minSpeedMultiplier < 0.0 || minSpeedMultiplier > 1.0) {
+			minSpeedMultiplier = 0.12;
+		}
+		if (hudIntervalTicks < 1) {
+			hudIntervalTicks = 10;
+		}
+		if (exhaustionPerKgPerSecond < 0.0) {
+			exhaustionPerKgPerSecond = 0.0;
+		}
+	}
+}
