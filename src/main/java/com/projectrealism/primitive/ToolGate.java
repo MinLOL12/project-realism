@@ -6,6 +6,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.item.PickaxeItem;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -28,11 +29,18 @@ public final class ToolGate {
 		/** A stone axe or better. */
 		AXE,
 		/** A pickaxe or better. */
-		PICKAXE
+		PICKAXE,
+		/** An iron-tier pickaxe or better: stone will not touch this. */
+		STRONG_PICKAXE
 	}
 
 	/** The minimum tool demanded by this block state. */
 	public static Requirement requirementFor(BlockState state) {
+		// Iron and the metals above it need a real pickaxe, not a knapped one.
+		if (state.isIn(BlockTags.NEEDS_IRON_TOOL)) {
+			return Requirement.STRONG_PICKAXE;
+		}
+
 		// The pebble blocks are themselves a resource, so they must never be gated behind the tool that
 		// they are the raw material for.
 		if (state.getBlock() instanceof GroundRockBlock) {
@@ -77,6 +85,8 @@ public final class ToolGate {
 			case HAND -> true;
 			case AXE -> isAxe(held);
 			case PICKAXE -> isPickaxe(held);
+			// Our own stone pickaxe is stone tier and must not open iron.
+			case STRONG_PICKAXE -> isPickaxe(held) && !held.isOf(PrimitiveItems.STONE_PICKAXE);
 		};
 	}
 
@@ -98,7 +108,7 @@ public final class ToolGate {
 		if (stack.isIn(ItemTags.PICKAXES)) {
 			return true;
 		}
-		return stack.getItem() instanceof net.minecraft.item.PickaxeItem;
+		return stack.getItem() instanceof PickaxeItem;
 	}
 
 	/** Human-readable "you need X" line for the action bar. */
@@ -107,6 +117,7 @@ public final class ToolGate {
 			case HAND -> Text.empty();
 			case AXE -> Text.translatable("project_realism.gate.axe");
 			case PICKAXE -> Text.translatable("project_realism.gate.pickaxe");
+			case STRONG_PICKAXE -> Text.translatable("project_realism.gate.strong_pickaxe");
 		};
 	}
 }

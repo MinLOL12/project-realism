@@ -28,5 +28,6 @@
   "project_realism.assemble.needs_two_fibers": "Binding an axe head takes two plant fibers.",
   "project_realism.assemble.knife": "You bind the blade to the handle.",
   "project_realism.assemble.axe": "You bind the axe head to the handle.",
-  "project_realism.assemble.already_bound": "That is already bound."
+  "project_realism.assemble.already_bound": "That is already bound.",
+  "project_realism.gate.strong_pickaxe": "A knapped pickaxe will not bite iron. You need a stronger one."
 }
