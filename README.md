@@ -45,11 +45,49 @@ planned, bases move to the ore, chests become logistics, and an iron block is a 
   action-bar line when you tip into a worse band. No spam.
 - **Ignores creative mode** by default, so building is not a survival sim.
 
+## Build it
+
+You need **JDK 21** (not 17 — Loom targets release 21). Then:
+
+```sh
+./gradlew build
+```
+
+The jar lands in `build/libs/project-realism-0.1.0.jar`. Use that one, not the `-sources` jar.
+Tests run as part of `build`; `./gradlew test` runs only the curve tests.
+
+### Build it in GitHub Actions
+
+The workflow is in [`ci/build.yml`](ci/build.yml). It is not in `.github/workflows/` yet because the
+automation that wrote this branch had no `workflows` permission — the one-time setup is two clicks:
+create `.github/workflows/build.yml` on GitHub and paste `ci/build.yml` into it
+(see [`ci/README.md`](ci/README.md)).
+
+After that, every push and pull request builds, tests and uploads the jar:
+
+1. Push a commit (or click **Actions → Build → Run workflow** for a manual run).
+2. Open the finished run.
+3. Download **`project-realism-jar`** under *Artifacts* — that zip contains
+   `project-realism-0.1.0.jar`.
+
+To get a permanent download link instead, tag a commit; the `release` job attaches the jar to a
+GitHub Release:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Local build without Gradle installed at all (no, really, in Docker):
+
+```sh
+docker run --rm -v "$PWD":/work -w /work eclipse-temurin:21-jdk ./gradlew build
+```
+
 ## Install
 
 1. Minecraft **1.21.1**, [Fabric Loader](https://fabricmc.net/use/) 0.16+.
 2. Put [Fabric API](https://modrinth.com/mod/fabric-api) in `mods/`.
-3. Build the mod: `./gradlew build`, then drop `build/libs/project-realism-0.1.0.jar` into `mods/`.
+3. Drop the built `project-realism-0.1.0.jar` into `mods/` — client and server.
 4. The mod **must be installed on both client and server**. Weight is computed server-side; the
    client only draws the readout. Vanilla clients can still connect to a modded server — they just
    don't get the HUD.
@@ -141,9 +179,11 @@ src/test/java/                 unit tests for the curve
 Build and test:
 
 ```sh
-./gradlew build
-./gradlew test
+./gradlew build   # jar + tests
+./gradlew test    # tests only
 ```
+
+CI: [`ci/build.yml`](ci/build.yml) — build on every push/PR, artifact per run, release on `v*` tags.
 
 ## Roadmap
 
