@@ -96,9 +96,11 @@ public class GroundRockBlock extends Block {
 			Block.dropStack(world, pos, new ItemStack(drop, count));
 		}
 
-		world.removeBlock(pos, false);
+		// Items first, then the block: if the drop ever fails, the rock is still standing rather than
+		// silently deleted.
 		world.playSound(null, pos, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS,
 				0.45f, 1.35f + world.random.nextFloat() * 0.15f);
+		world.removeBlock(pos, false);
 		server.spawnParticles(ParticleTypes.CRIT,
 				pos.getX() + 0.5, pos.getY() + 0.15, pos.getZ() + 0.5,
 				6, 0.18, 0.08, 0.18, 0.02);
