@@ -1,6 +1,14 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "minecraft:item/handheld",
   "textures": {
     "layer0": "project_realism:item/stone_pickaxe"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "project_realism:dull": 1
+      },
+      "model": "project_realism:item/stone_pickaxe_dull"
+    }
+  ]
 }

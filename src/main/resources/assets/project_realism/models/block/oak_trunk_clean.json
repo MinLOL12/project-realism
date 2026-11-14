@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "project_realism:block/notched_oak_inner",
+    "side": "minecraft:block/oak_log"
+  }
+}

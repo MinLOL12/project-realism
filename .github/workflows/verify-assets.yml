@@ -1,0 +1,170 @@
+name: Verify Assets & Build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verify-assets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-assets:
+    name: Verify models, textures & knapping
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate resource JSONs, model references and null fields
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+
+          res = pathlib.Path('src/main/resources')
+          assets = res / 'assets/project_realism'
+          errors = []
+
+          def has_null(obj):
+              if obj is None:
+                  return True
+              if isinstance(obj, dict):
+                  return any(has_null(v) for v in obj.values())
+              if isinstance(obj, list):
+                  return any(has_null(v) for v in obj)
+              return False
+
+          for path in sorted(res.rglob('*.json')):
+              try:
+                  data = json.loads(path.read_text())
+              except Exception as exc:
+                  errors.append(f"{path}: invalid JSON ({exc})")
+                  continue
+              if 'assets/project_realism/models' in path.as_posix() and has_null(data):
+                  errors.append(f"{path}: contains null JSON field (breaks Minecraft model loading)")
+
+          for bs in sorted((assets / 'blockstates').glob('*.json')):
+              data = json.loads(bs.read_text())
+              for variant, spec in data.get('variants', {}).items():
+                  model = spec.get('model', '')
+                  if model.startswith('project_realism:'):
+                      target = assets / 'models' / (model.removeprefix('project_realism:') + '.json')
+                      if not target.exists():
+                          errors.append(f"{bs} [{variant}]: missing block model {target}")
+
+          for mf in sorted((assets / 'models').rglob('*.json')):
+              data = json.loads(mf.read_text())
+              parent = data.get('parent', '')
+              if parent.startswith('project_realism:'):
+                  target = assets / 'models' / (parent.removeprefix('project_realism:') + '.json')
+                  if not target.exists():
+                      errors.append(f"{mf}: missing parent model {target}")
+              for key, tex in data.get('textures', {}).items():
+                  if tex.startswith('project_realism:'):
+                      target = assets / 'textures' / (tex.removeprefix('project_realism:') + '.png')
+                      if not target.exists():
+                          errors.append(f"{mf} [{key}]: missing texture {target}")
+              for ov in data.get('overrides', []):
+                  ov_model = ov.get('model', '')
+                  if ov_model.startswith('project_realism:'):
+                      target = assets / 'models' / (ov_model.removeprefix('project_realism:') + '.json')
+                      if not target.exists():
+                          errors.append(f"{mf} [override]: missing model {target}")
+
+          if errors:
+              for err in errors:
+                  print(f"::error::{err}")
+              sys.exit(1)
+          print("All blockstates, models, and textures validated with zero null fields or broken references.")
+          PY
+
+      - name: Verify generated pixel-art textures
+        run: python3 tools/generate_textures.py --check
+
+      - name: Verify knapping side-isolation regression guard
+        run: |
+          python3 - <<'PY'
+          import pathlib, sys
+          src = pathlib.Path('src/main/java/com/projectrealism/primitive/Knapping.java').read_text()
+          for token in ('CLIENT_LAST_STRIKE', 'SERVER_LAST_STRIKE', 'twistCordage', 'strikeAxeHead'):
+              if token not in src:
+                  print(f"::error file=Knapping.java::Missing expected knapping symbol: {token}")
+                  sys.exit(1)
+          print("Knapping client/server separation and recipes verified.")
+          PY
+
+  build:
+    name: Build & test mod jar
+    needs: verify-assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache Gradle and Loom
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-verify-${{ hashFiles('gradle.properties', 'build.gradle', 'settings.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-stage2-
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build and test
+        run: |
+          set -o pipefail
+          ./gradlew build --stacktrace --no-daemon --console=plain 2>&1 | tee gradle-build.log
+
+      - name: Summarise compile errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import re
+          try:
+              text = open('gradle-build.log', errors='ignore').read()
+          except FileNotFoundError:
+              raise SystemExit(0)
+          pattern = re.compile(r'(?m)^(\S+\.java):(\d+): (?:error|warning): (.*)((?:\n\s{2,}.*)*)')
+          for match in pattern.finditer(text):
+              detail = ' '.join([match.group(3)] + [l.strip() for l in match.group(4).splitlines()])
+              detail = ' '.join(detail.split())[:900]
+              print(f"::error file={match.group(1)},line={match.group(2)},title=javac::{detail}")
+          PY
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-realism-verified-jar
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-test-report
+          path: build/reports/tests/test
+          if-no-files-found: ignore

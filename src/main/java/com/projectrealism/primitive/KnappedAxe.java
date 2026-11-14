@@ -1,18 +1,54 @@
 package com.projectrealism.primitive;
 
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.wood.WoodSpecies;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.AxeItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+
+import java.util.List;
 
 /**
- * The two crafted tools. Both extend the vanilla tool classes so that stripping logs, mining tags and
- * enchantability all behave exactly as they do for real axes and pickaxes.
+ * A hand-lashed stone axe. Loses sharpness as it cuts, slows down when dull, and wears its binding.
  */
 public final class KnappedAxe extends AxeItem {
 	public KnappedAxe(Item.Settings settings) {
 		super(KnappedMaterial.INSTANCE, settings.maxDamage(KnappedMaterial.INSTANCE.getDurability()));
+	}
+
+	@Override
+	public float getMiningSpeed(ItemStack stack, BlockState state) {
+		float base = super.getMiningSpeed(stack, state);
+		float woodFactor = WoodSpecies.fromBlock(state.getBlock())
+				.map(sp -> 1.0f / sp.hardness())
+				.orElse(1.0f);
+		return base * ToolCondition.speedMultiplier(stack) * Math.max(0.55f, Math.min(1.35f, woodFactor));
+	}
+
+	@Override
+	public boolean postMine(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity miner) {
+		boolean mined = super.postMine(stack, world, state, pos, miner);
+		if (world instanceof ServerWorld server && miner instanceof PlayerEntity player) {
+			float hardness = WoodSpecies.fromBlock(state.getBlock()).map(WoodSpecies::hardness).orElse(1.0f);
+			ToolCondition.applyWear(player, Hand.MAIN_HAND, stack, hardness, server, false);
+		}
+		return mined;
+	}
+
+	@Override
+	public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+		super.appendTooltip(stack, context, tooltip, type);
+		ToolCondition.appendToolTooltip(stack, tooltip);
 	}
 
 	@Override
@@ -36,7 +72,7 @@ public final class KnappedAxe extends AxeItem {
 
 		@Override
 		public float getMiningSpeedMultiplier() {
-			return 2.5f;
+			return 2.6f;
 		}
 
 		@Override

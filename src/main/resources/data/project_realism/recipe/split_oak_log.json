@@ -1,0 +1,19 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:oak_log"
+    }
+  ],
+  "result": {
+    "id": "project_realism:oak_split_wood",
+    "count": 4
+  },
+  "tool": {
+    "tag": "minecraft:axes"
+  },
+  "keep_tool": true,
+  "damage_tool": true,
+  "inherit_dry_wood": true
+}

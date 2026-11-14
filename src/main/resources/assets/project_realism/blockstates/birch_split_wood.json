@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,moisture=0": {
+      "model": "project_realism:block/birch_split_wood_dry"
+    },
+    "facing=north,moisture=1": {
+      "model": "project_realism:block/birch_split_wood_wet"
+    },
+    "facing=north,moisture=2": {
+      "model": "project_realism:block/birch_split_wood_wet"
+    },
+    "facing=north,moisture=3": {
+      "model": "project_realism:block/birch_split_wood_wet"
+    },
+    "facing=east,moisture=0": {
+      "model": "project_realism:block/birch_split_wood_dry",
+      "y": 90
+    },
+    "facing=east,moisture=1": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 90
+    },
+    "facing=east,moisture=2": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 90
+    },
+    "facing=east,moisture=3": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 90
+    },
+    "facing=south,moisture=0": {
+      "model": "project_realism:block/birch_split_wood_dry",
+      "y": 180
+    },
+    "facing=south,moisture=1": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 180
+    },
+    "facing=south,moisture=2": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 180
+    },
+    "facing=south,moisture=3": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 180
+    },
+    "facing=west,moisture=0": {
+      "model": "project_realism:block/birch_split_wood_dry",
+      "y": 270
+    },
+    "facing=west,moisture=1": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 270
+    },
+    "facing=west,moisture=2": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 270
+    },
+    "facing=west,moisture=3": {
+      "model": "project_realism:block/birch_split_wood_wet",
+      "y": 270
+    }
+  }
+}

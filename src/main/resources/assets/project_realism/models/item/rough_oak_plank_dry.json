@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "project_realism:item/rough_oak_plank_dry"
+  }
+}

@@ -19,6 +19,7 @@ public final class PrimitiveBlocks {
 			.mapColor(MapColor.STONE_GRAY)
 			.strength(0.4f, 1.0f)
 			.sounds(BlockSoundGroup.STONE)
+			.noCollision()
 			.nonOpaque()
 			.dropsNothing();
 
@@ -36,6 +37,7 @@ public final class PrimitiveBlocks {
 					.mapColor(MapColor.OAK_TAN)
 					.strength(0.2f, 0.2f)
 					.sounds(BlockSoundGroup.WOOD)
+					.noCollision()
 					.nonOpaque()
 					.dropsNothing(),
 					new net.minecraft.item.ItemStack(net.minecraft.item.Items.STICK, 1)));

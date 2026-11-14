@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "project_realism:item/spruce_split_wood"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "project_realism:dry": 1
+      },
+      "model": "project_realism:item/spruce_split_wood_dry"
+    }
+  ]
+}

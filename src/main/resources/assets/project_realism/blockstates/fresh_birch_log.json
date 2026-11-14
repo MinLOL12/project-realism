@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "axis=y,moisture=0": {
+      "model": "project_realism:block/fresh_birch_log_dry"
+    },
+    "axis=z,moisture=0": {
+      "model": "project_realism:block/fresh_birch_log_dry",
+      "x": 90
+    },
+    "axis=x,moisture=0": {
+      "model": "project_realism:block/fresh_birch_log_dry",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,moisture=1": {
+      "model": "project_realism:block/fresh_birch_log_wet"
+    },
+    "axis=z,moisture=1": {
+      "model": "project_realism:block/fresh_birch_log_wet",
+      "x": 90
+    },
+    "axis=x,moisture=1": {
+      "model": "project_realism:block/fresh_birch_log_wet",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,moisture=2": {
+      "model": "project_realism:block/fresh_birch_log_wet"
+    },
+    "axis=z,moisture=2": {
+      "model": "project_realism:block/fresh_birch_log_wet",
+      "x": 90
+    },
+    "axis=x,moisture=2": {
+      "model": "project_realism:block/fresh_birch_log_wet",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,moisture=3": {
+      "model": "project_realism:block/fresh_birch_log_wet"
+    },
+    "axis=z,moisture=3": {
+      "model": "project_realism:block/fresh_birch_log_wet",
+      "x": 90
+    },
+    "axis=x,moisture=3": {
+      "model": "project_realism:block/fresh_birch_log_wet",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

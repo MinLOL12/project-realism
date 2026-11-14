@@ -1,0 +1,19 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "project_realism:rough_spruce_plank"
+    }
+  ],
+  "result": {
+    "id": "minecraft:spruce_planks",
+    "count": 1
+  },
+  "tool": {
+    "item": "project_realism:stone_knife"
+  },
+  "keep_tool": true,
+  "damage_tool": true,
+  "require_dry_wood": true
+}

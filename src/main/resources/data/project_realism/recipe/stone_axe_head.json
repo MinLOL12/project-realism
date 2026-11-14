@@ -1,0 +1,26 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "project_realism:sharp_stone"
+    },
+    [
+      {
+        "item": "project_realism:granite_rock"
+      },
+      {
+        "item": "project_realism:limestone_rock"
+      },
+      {
+        "item": "project_realism:flint_rock"
+      }
+    ]
+  ],
+  "result": {
+    "id": "project_realism:stone_axe_head",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}
