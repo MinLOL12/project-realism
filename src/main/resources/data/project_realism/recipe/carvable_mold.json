@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CCC",
+    "CCC"
+  ],
+  "key": {
+    "C": [
+      {
+        "item": "project_realism:fire_clay_ball"
+      },
+      {
+        "item": "minecraft:clay_ball"
+      }
+    ]
+  },
+  "result": {
+    "id": "project_realism:carvable_mold",
+    "count": 1
+  }
+}

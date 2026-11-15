@@ -225,6 +225,12 @@ public final class WoodEvents {
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 140.0)
 					.effectiveness() >= 0.36;
 		}
+		if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+			return com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 150.0)
+					.effectiveness() >= 0.36;
+		}
 		return !stack.isEmpty() && (stack.isIn(ItemTags.AXES) || stack.getItem() instanceof AxeItem);
 	}
 
@@ -232,6 +238,12 @@ public final class WoodEvents {
 		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
 			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
 			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 110.0)
+					.effectiveness() >= 0.32;
+		}
+		if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+			return com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 110.0)
 					.effectiveness() >= 0.32;
 		}
@@ -248,6 +260,12 @@ public final class WoodEvents {
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP,
 					140.0 * hardness, new java.util.Random(server.random.nextLong()));
 			com.projectrealism.knapping.DynamicStoneItem.writeState(stack, s);
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+			com.projectrealism.metallurgy.ContactPhysics.applyMetalWear(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP,
+					140.0 * hardness, new java.util.Random(server.random.nextLong()));
+			com.projectrealism.metallurgy.DynamicMetalItem.writeState(stack, s);
 		} else {
 			ToolCondition.applyWear(player, hand, stack, hardness, server, true);
 		}
@@ -261,6 +279,12 @@ public final class WoodEvents {
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE,
 					110.0 * hardness, new java.util.Random(server.random.nextLong()));
 			com.projectrealism.knapping.DynamicStoneItem.writeState(stack, s);
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+			com.projectrealism.metallurgy.ContactPhysics.applyMetalWear(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE,
+					110.0 * hardness, new java.util.Random(server.random.nextLong()));
+			com.projectrealism.metallurgy.DynamicMetalItem.writeState(stack, s);
 		} else if (ToolCondition.isPrimitiveTool(stack)) {
 			ToolCondition.applyWear(player, hand, stack, hardness, server, true);
 		} else if (stack.isDamageable() && !player.isCreative()) {

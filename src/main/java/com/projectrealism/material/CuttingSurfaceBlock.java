@@ -104,7 +104,8 @@ public class CuttingSurfaceBlock extends BlockWithEntity {
 			return ActionResult.SUCCESS;
 		}
 		if (be.hasHide() && (held.isOf(PrimitiveItems.STONE_KNIFE) || held.isOf(com.projectrealism.anatomy.AnatomyItems.BONE_BLADE)
-				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))) {
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+				|| held.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL))) {
 			if (player.isSneaking()) {
 				be.separateCutPiece(player, Hand.MAIN_HAND, held, world, pos);
 			} else {

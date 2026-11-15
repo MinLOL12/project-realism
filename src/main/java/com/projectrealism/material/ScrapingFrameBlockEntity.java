@@ -87,6 +87,14 @@ public class ScrapingFrameBlockEntity extends BlockEntity {
 			if (resp.gougeRisk() > 0.45) {
 				angleDeg = Math.max(angleDeg, 72.0);
 			}
+		} else if (scraper.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(scraper);
+			var resp = com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.HIDE_SCRAPE, 75.0);
+			sharpness = Math.max(0.20, Math.min(1.1, resp.effectiveness()));
+			if (resp.gougeRisk() > 0.45) {
+				angleDeg = Math.max(angleDeg, 72.0);
+			}
 		} else {
 			sharpness = MaterialItems.StoneScraperItem.getSharpness(scraper) / 100.0;
 		}
@@ -129,6 +137,12 @@ public class ScrapingFrameBlockEntity extends BlockEntity {
 							s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.HIDE_SCRAPE,
 							out.wetHide ? 50.0 : 85.0, new java.util.Random(sw.random.nextLong()));
 					com.projectrealism.knapping.DynamicStoneItem.writeState(scraper, s);
+				} else if (scraper.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+					var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(scraper);
+					com.projectrealism.metallurgy.ContactPhysics.applyMetalWear(
+							s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.HIDE_SCRAPE,
+							out.wetHide ? 50.0 : 85.0, new java.util.Random(sw.random.nextLong()));
+					com.projectrealism.metallurgy.DynamicMetalItem.writeState(scraper, s);
 				} else {
 					int curS = MaterialItems.StoneScraperItem.getSharpness(scraper);
 					int loss = out.wetHide ? 2 : 5;

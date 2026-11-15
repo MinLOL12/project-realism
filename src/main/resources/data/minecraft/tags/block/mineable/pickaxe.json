@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "project_realism:native_copper_deposit",
+    "project_realism:malachite_azurite_deposit",
+    "project_realism:chalcopyrite_deposit",
+    "project_realism:cassiterite_deposit",
+    "project_realism:arsenopyrite_deposit",
+    "project_realism:hematite_magnetite_deposit",
+    "project_realism:fired_clay_wall",
+    "project_realism:fire_clay_bricks",
+    "project_realism:smelting_basin",
+    "project_realism:placed_metal"
+  ]
+}

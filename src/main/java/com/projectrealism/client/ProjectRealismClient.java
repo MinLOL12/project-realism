@@ -35,6 +35,7 @@ public class ProjectRealismClient implements ClientModInitializer {
 		MaterialBlockRenderers.register();
 		AnatomyBlockRenderers.register();
 		KnappingBlockRenderers.register();
+		MetallurgyBlockRenderers.register();
 
 		Identifier dullId = ProjectRealism.id("dull");
 		for (Item tool : new Item[]{

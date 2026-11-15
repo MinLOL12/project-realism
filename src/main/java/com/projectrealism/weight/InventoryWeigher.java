@@ -78,6 +78,12 @@ public final class InventoryWeigher {
 			mass = com.projectrealism.anatomy.CarcassItem.massKg(stack) * stack.getCount();
 		} else if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
 			mass = com.projectrealism.knapping.DynamicStoneItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			mass = com.projectrealism.metallurgy.DynamicMetalItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.ORE_CHUNK)) {
+			mass = com.projectrealism.metallurgy.OreChunkItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.CLAY_CRUCIBLE_ITEM)) {
+			mass = com.projectrealism.metallurgy.ClayCrucibleItem.massKg(stack) * stack.getCount();
 		} else if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.RAW_BONE)) {
 			mass = com.projectrealism.anatomy.RawBoneItem.massKg(stack) * stack.getCount();
 		} else if (stack.getItem() instanceof com.projectrealism.anatomy.AnatomyMeatItem) {

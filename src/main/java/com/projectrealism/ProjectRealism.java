@@ -14,6 +14,10 @@ import com.projectrealism.knapping.DynamicKnappingItems;
 import com.projectrealism.material.MaterialBlocks;
 import com.projectrealism.material.MaterialEvents;
 import com.projectrealism.material.MaterialItems;
+import com.projectrealism.metallurgy.MetallurgyBlocks;
+import com.projectrealism.metallurgy.MetallurgyEvents;
+import com.projectrealism.metallurgy.MetallurgyItems;
+import com.projectrealism.metallurgy.OreVeinSpawner;
 import com.projectrealism.primitive.PrimitiveBlocks;
 import com.projectrealism.primitive.PrimitiveEvents;
 import com.projectrealism.primitive.PrimitiveItems;
@@ -83,8 +87,11 @@ public class ProjectRealism implements ModInitializer {
 		AnatomyItems.register();
 		DynamicKnappingBlocks.register();
 		DynamicKnappingItems.register();
+		MetallurgyBlocks.register();
+		MetallurgyItems.register();
 		ModRecipes.register();
 		PrimitiveEvents.register();
+		OreVeinSpawner.register();
 		TreeChopper.register();
 		WoodEvents.register();
 		ThermoEvents.register();
@@ -92,6 +99,7 @@ public class ProjectRealism implements ModInitializer {
 		MaterialEvents.register();
 		AnatomyEvents.register();
 		DynamicKnappingEvents.register();
+		MetallurgyEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(HydrationPayload.ID, HydrationPayload.CODEC);

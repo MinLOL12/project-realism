@@ -1374,6 +1374,185 @@ def make_bone_tool(chisel: bool = False) -> Canvas:
 # Registry of All Textures
 # ---------------------------------------------------------------------------
 
+def make_ore_deposit_block(host_rgb: RGB, vein_rgb: RGB, accent_rgb: RGB, seed: int) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(seed)
+    for y in range(32):
+        for x in range(32):
+            n = (rng.random() - 0.5) * 0.14
+            diag = math.sin(x * 0.35 + y * 0.25 + seed) * 0.5 + math.cos(x * 0.18 - y * 0.42) * 0.5
+            if diag > 0.42 and rng.random() < 0.72:
+                col = accent_rgb if rng.random() < 0.35 else vein_rgb
+                cv.set(x, y, shade(col, 0.92 + rng.random() * 0.24))
+            elif diag > 0.20 and rng.random() < 0.35:
+                cv.set(x, y, shade(vein_rgb, 0.85 + rng.random() * 0.15))
+            else:
+                cv.set(x, y, shade(host_rgb, 0.92 + n))
+    return cv
+
+
+def make_brick_wall_block(brick_rgb: RGB, mortar_rgb: RGB, seed: int) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(seed)
+    for y in range(32):
+        row = y // 8
+        offset = 8 if (row % 2) == 1 else 0
+        for x in range(32):
+            if (y % 8) == 0 or ((x + offset) % 16) == 0:
+                cv.set(x, y, shade(mortar_rgb, 0.94 + rng.random() * 0.12))
+            else:
+                v = 0.90 + rng.random() * 0.18
+                cv.set(x, y, shade(brick_rgb, v))
+    return cv
+
+
+def make_smelting_basin_top(lit: bool) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(905 if lit else 904)
+    rim: RGB = (92, 86, 82)
+    bed: RGB = (42, 34, 30) if not lit else (238, 128, 34)
+    for y in range(32):
+        for x in range(32):
+            in_basin = 4 <= x <= 27 and 4 <= y <= 27
+            if not in_basin:
+                cv.set(x, y, shade(rim, 0.92 + rng.random() * 0.16))
+            else:
+                d = math.hypot(x - 15.5, y - 15.5)
+                if lit:
+                    heat = max(0.2, 1.0 - d / 16.0)
+                    col = mix((185, 52, 16), (255, 224, 108), heat * (0.7 + 0.3 * rng.random()))
+                    cv.set(x, y, shade(col, 0.95 + rng.random() * 0.1))
+                else:
+                    cv.set(x, y, shade(bed, 0.85 + rng.random() * 0.3))
+    return cv
+
+
+def make_smelting_basin_side() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(906)
+    stone: RGB = (104, 98, 94)
+    dark: RGB = (58, 52, 48)
+    for y in range(32):
+        for x in range(32):
+            if 11 <= x <= 20 and 18 <= y <= 29:
+                cv.set(x, y, shade(dark, 0.8 + rng.random() * 0.25))
+            else:
+                cv.set(x, y, shade(stone, 0.90 + rng.random() * 0.18))
+    return cv
+
+
+def make_ore_chunk_item() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(910)
+    rock: RGB = (118, 114, 108)
+    vein: RGB = (62, 178, 122)
+    cu: RGB = (206, 118, 66)
+    for y in range(7, 25):
+        for x in range(7, 25):
+            dx = (x - 15.5) / 8.0
+            dy = (y - 16.0) / 7.2
+            if dx * dx + dy * dy + 0.15 * math.sin(x * 0.7 + y * 0.5) <= 0.92:
+                if (x + y) % 5 == 0 or (x * 2 - y) % 7 == 0:
+                    col = cu if (x + y) % 2 == 0 else vein
+                    cv.set(x, y, shade(col, 0.95 + rng.random() * 0.15))
+                else:
+                    cv.set(x, y, shade(rock, 0.88 + rng.random() * 0.22 - (dy * 0.12)))
+    return cv
+
+
+def make_slag_clump_item() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(911)
+    slag: RGB = (66, 60, 56)
+    glass: RGB = (92, 104, 98)
+    for y in range(8, 24):
+        for x in range(8, 24):
+            d = ((x - 15.5) / 7.0) ** 2 + ((y - 16.0) / 6.5) ** 2
+            if d <= 0.88 + 0.12 * math.sin(x * 0.9):
+                c = glass if (x + y * 3) % 6 == 0 else slag
+                cv.set(x, y, shade(c, 0.85 + rng.random() * 0.25))
+    return cv
+
+
+def make_clay_ball_item(col_rgb: RGB, seed: int) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(seed)
+    for y in range(7, 25):
+        for x in range(7, 25):
+            d = ((x - 15.5) / 7.5) ** 2 + ((y - 15.5) / 7.5) ** 2
+            if d <= 0.90:
+                light = 1.08 - (y - 8) * 0.015 - d * 0.15
+                cv.set(x, y, shade(col_rgb, light + rng.random() * 0.06))
+    return cv
+
+
+def make_brick_item() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(913)
+    col: RGB = (206, 184, 138)
+    for y in range(10, 22):
+        for x in range(6, 26):
+            shade_f = 1.08 if y < 14 else (0.94 if y < 19 else 0.78)
+            cv.set(x, y, shade(col, shade_f + (rng.random() - 0.5) * 0.08))
+    return cv
+
+
+def make_crucible_sprite() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(914)
+    clay: RGB = (162, 118, 86)
+    rim: RGB = (188, 144, 108)
+    for y in range(6, 26):
+        w = 8.0 - max(0, y - 16) * 0.35
+        for x in range(8, 24):
+            if abs(x - 15.5) <= w:
+                col = rim if y <= 9 else clay
+                f = 1.0 - abs(x - 15.5) * 0.035 + (rng.random() - 0.5) * 0.06
+                if y == 8 and abs(x - 15.5) < w - 1.5:
+                    col = (64, 48, 38)
+                cv.set(x, y, shade(col, f))
+    return cv
+
+
+def make_bellows_item() -> Canvas:
+    cv = Canvas()
+    wood: RGB = (146, 98, 56)
+    leather: RGB = (138, 78, 44)
+    nozzle: RGB = (142, 146, 152)
+    for y in range(9, 23):
+        for x in range(6, 21):
+            span = (x - 5) * 0.42
+            if abs(y - 15.5) <= span:
+                if abs(abs(y - 15.5) - span) < 1.3:
+                    cv.set(x, y, shade(wood, 0.95))
+                else:
+                    fold = 0.85 if (x % 3) == 0 else 1.04
+                    cv.set(x, y, shade(leather, fold))
+    for y in range(14, 18):
+        for x in range(21, 27):
+            cv.set(x, y, shade(nozzle, 0.95 if y < 16 else 0.75))
+    return cv
+
+
+def make_tongs_item() -> Canvas:
+    cv = Canvas()
+    iron: RGB = (138, 144, 152)
+    rivet: RGB = (92, 96, 102)
+    for i in range(5, 27):
+        y = 31 - i
+        cv.set(i, y, shade(iron, 1.05))
+        cv.set(i + 1, y, shade(iron, 0.92))
+        cv.set(i, y + 1, shade(iron, 0.80))
+        if i < 23:
+            cv.set(i, y - 3, shade(iron, 0.95))
+            cv.set(i + 1, y - 3, shade(iron, 0.78))
+    # Pivot rivet & gripping jaws
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            cv.set(19 + dx, 11 + dy, shade(rivet, 1.0))
+    return cv
+
+
 def build_all_textures() -> Dict[str, Canvas]:
     tex: Dict[str, Canvas] = {
         "item/granite_rock.png": make_granite_rock_item(),
@@ -1442,6 +1621,28 @@ def build_all_textures() -> Dict[str, Canvas]:
         "block/hearth_embers.png": make_hearth_top_block("embers"),
         "block/hearth_lit.png": make_hearth_top_block("lit"),
         "block/wood_ash_pile.png": make_wood_ash_pile_block(),
+        "block/native_copper_deposit.png": make_ore_deposit_block((88, 86, 92), (194, 108, 56), (228, 138, 82), 801),
+        "block/malachite_azurite_deposit.png": make_ore_deposit_block((118, 114, 108), (44, 162, 98), (48, 94, 198), 802),
+        "block/chalcopyrite_deposit.png": make_ore_deposit_block((76, 78, 84), (196, 174, 62), (154, 122, 48), 803),
+        "block/cassiterite_deposit.png": make_ore_deposit_block((134, 128, 120), (88, 62, 46), (54, 42, 36), 804),
+        "block/arsenopyrite_deposit.png": make_ore_deposit_block((94, 96, 100), (178, 184, 192), (218, 224, 228), 805),
+        "block/hematite_magnetite_deposit.png": make_ore_deposit_block((84, 80, 82), (146, 56, 46), (58, 60, 66), 806),
+        "block/limonite_bog_deposit.png": make_ore_deposit_block((108, 92, 68), (178, 118, 42), (142, 78, 32), 807),
+        "block/fire_clay_deposit.png": make_ore_deposit_block((164, 152, 132), (206, 194, 164), (186, 172, 146), 808),
+        "block/raw_clay_wall.png": make_ore_deposit_block((156, 152, 144), (168, 164, 156), (144, 140, 132), 809),
+        "block/fired_clay_wall.png": make_ore_deposit_block((164, 88, 64), (146, 76, 54), (182, 102, 74), 810),
+        "block/fire_clay_bricks.png": make_brick_wall_block((208, 186, 142), (156, 142, 114), 811),
+        "block/smelting_basin_cold.png": make_smelting_basin_top(False),
+        "block/smelting_basin_lit.png": make_smelting_basin_top(True),
+        "block/smelting_basin_side.png": make_smelting_basin_side(),
+        "block/clay_crucible.png": make_brick_wall_block((156, 114, 84), (132, 94, 68), 812),
+        "item/ore_chunk.png": make_ore_chunk_item(),
+        "item/slag_clump.png": make_slag_clump_item(),
+        "item/fire_clay_ball.png": make_clay_ball_item((202, 188, 156), 912),
+        "item/fire_clay_brick.png": make_brick_item(),
+        "item/clay_crucible.png": make_crucible_sprite(),
+        "item/leather_bellows.png": make_bellows_item(),
+        "item/iron_tongs.png": make_tongs_item(),
     }
     for sp in ("oak", "birch", "spruce", "dark_oak"):
         tex[f"item/fresh_{sp}_log.png"] = make_fresh_log_item(sp)

@@ -122,7 +122,8 @@ public class CarcassBlock extends BlockWithEntity {
 		if (held.isOf(PrimitiveItems.STONE_KNIFE) || held.isOf(AnatomyItems.BONE_BLADE)
 				|| held.isOf(MaterialItems.STONE_SCRAPER)
 				|| held.isOf(PrimitiveItems.STONE_AXE) || held.isOf(AnatomyItems.BONE_CHISEL)
-				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+				|| held.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
 			be.processRegion(region, player, Hand.MAIN_HAND, held, world, pos);
 			return ActionResult.SUCCESS;
 		}

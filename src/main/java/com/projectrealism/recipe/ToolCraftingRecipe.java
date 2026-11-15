@@ -191,6 +191,17 @@ public final class ToolCraftingRecipe implements CraftingRecipe {
 						s, StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 95.0).effectiveness() >= 0.36;
 			}
 		}
+		if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+			if (target.test(new ItemStack(PrimitiveItems.STONE_AXE))) {
+				return com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+						s, StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 150.0).effectiveness() >= 0.36;
+			}
+			if (target.test(new ItemStack(PrimitiveItems.STONE_KNIFE))) {
+				return com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+						s, StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 95.0).effectiveness() >= 0.36;
+			}
+		}
 		return DynamicKnappingItems.isKnappableRawRock(stack)
 				&& target.test(new ItemStack(PrimitiveItems.FLINT_ROCK));
 	}
@@ -296,6 +307,12 @@ public final class ToolCraftingRecipe implements CraftingRecipe {
 						s, StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 95.0,
 						new java.util.Random(System.nanoTime()));
 				DynamicStoneItem.writeState(copy, s);
+			} else if (copy.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+				var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(copy);
+				com.projectrealism.metallurgy.ContactPhysics.applyMetalWear(
+						s, StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 95.0,
+						new java.util.Random(System.nanoTime()));
+				com.projectrealism.metallurgy.DynamicMetalItem.writeState(copy, s);
 			} else {
 				ToolCondition.applyCraftingWear(copy);
 				if (copy.isDamageable() && copy.getDamage() >= copy.getMaxDamage()) {

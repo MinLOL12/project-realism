@@ -119,7 +119,13 @@ public class CarcassBlockEntity extends BlockEntity {
 						com.projectrealism.knapping.DynamicStoneItem.readState(tool),
 						com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CHISEL, 120.0)
 						.effectiveness() >= 0.45
-				&& com.projectrealism.knapping.DynamicStoneItem.readState(tool).metrics().massKg() >= 1.1);
+				&& com.projectrealism.knapping.DynamicStoneItem.readState(tool).metrics().massKg() >= 1.1)
+				|| (tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)
+				&& com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+						com.projectrealism.metallurgy.DynamicMetalItem.readState(tool),
+						com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CHISEL, 120.0)
+						.effectiveness() >= 0.45
+				&& com.projectrealism.metallurgy.DynamicMetalItem.readState(tool).totalMassKg() >= 0.9);
 		boolean scraper = tool.isOf(MaterialItems.STONE_SCRAPER);
 
 		switch (region) {
@@ -277,6 +283,12 @@ public class CarcassBlockEntity extends BlockEntity {
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.FLESH_SLICE, 85.0)
 					.effectiveness()));
 		}
+		if (tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(tool);
+			return Math.max(0.15, Math.min(1.2, com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.FLESH_SLICE, 85.0)
+					.effectiveness()));
+		}
 		return 0.75;
 	}
 
@@ -288,6 +300,12 @@ public class CarcassBlockEntity extends BlockEntity {
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.FLESH_SLICE,
 					85.0, new Random(sw.random.nextLong()));
 			com.projectrealism.knapping.DynamicStoneItem.writeState(tool, s);
+		} else if (tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(tool);
+			com.projectrealism.metallurgy.ContactPhysics.applyMetalWear(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.FLESH_SLICE,
+					85.0, new Random(sw.random.nextLong()));
+			com.projectrealism.metallurgy.DynamicMetalItem.writeState(tool, s);
 		} else if (tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(PrimitiveItems.STONE_AXE)) {
 			ToolCondition.applyWear(player, hand, tool, 0.75f, sw);
 		} else {

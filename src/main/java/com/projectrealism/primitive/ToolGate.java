@@ -39,7 +39,15 @@ public final class ToolGate {
 
 	/** The minimum tool demanded by this block state. */
 	public static Requirement requirementFor(BlockState state) {
-		// Iron and the metals above it need a real pickaxe, not a knapped one.
+		// Deep sulfide & iron bedrock veins require hardened alloy or steel; shallow weathered copper/tin need a stone pick; clay/bog is diggable by hand.
+		if (state.getBlock() instanceof com.projectrealism.metallurgy.MineralDepositBlock md) {
+			return switch (md.depositKind()) {
+				case FIRE_CLAY, LIMONITE_BOG -> Requirement.HAND;
+				case NATIVE_COPPER, MALACHITE_AZURITE, CASSITERITE -> Requirement.PICKAXE;
+				case CHALCOPYRITE, ARSENOPYRITE, HEMATITE_MAGNETITE -> Requirement.STRONG_PICKAXE;
+			};
+		}
+		// Iron and the metals above it need a real pickaxe or sufficiently hard shaped metal.
 		if (state.isIn(BlockTags.NEEDS_IRON_TOOL)) {
 			return Requirement.STRONG_PICKAXE;
 		}
@@ -91,10 +99,19 @@ public final class ToolGate {
 			case HAND -> true;
 			case AXE -> isAxe(held);
 			case PICKAXE -> isPickaxe(held);
-			// Stone pickaxes and dynamic stone tools cannot break hard iron/diamond ores.
-			case STRONG_PICKAXE -> isPickaxe(held) && !held.isOf(PrimitiveItems.STONE_PICKAXE)
-					&& !held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE);
+			// Stone pickaxes and dynamic stone tools cannot break hard iron/sulfide ores; shaped bronze/steel metal succeeds if hard enough.
+			case STRONG_PICKAXE -> isStrongMetal(held) || (isPickaxe(held) && !held.isOf(PrimitiveItems.STONE_PICKAXE)
+					&& !held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+					&& !held.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL));
 		};
+	}
+
+	private static boolean isStrongMetal(ItemStack stack) {
+		if (!stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) return false;
+		var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+		return com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+				s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.ORE_HARD, 165.0)
+				.effectiveness() >= 0.36;
 	}
 
 	private static boolean isAxe(ItemStack stack) {
@@ -105,6 +122,12 @@ public final class ToolGate {
 			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
 			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 140.0)
+					.effectiveness() >= 0.36;
+		}
+		if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+			return com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 150.0)
 					.effectiveness() >= 0.36;
 		}
 		if (stack.isIn(ItemTags.AXES)) {
@@ -122,6 +145,12 @@ public final class ToolGate {
 			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
 			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
 					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.STONE_MINE, 160.0)
+					.effectiveness() >= 0.36;
+		}
+		if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(stack);
+			return com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.STONE_MINE, 165.0)
 					.effectiveness() >= 0.36;
 		}
 		if (stack.isIn(ItemTags.PICKAXES)) {

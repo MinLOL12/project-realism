@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " S ",
+    "LCL",
+    " S "
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "L": [
+      {
+        "item": "project_realism:leather_piece"
+      },
+      {
+        "item": "minecraft:leather"
+      }
+    ],
+    "C": {
+      "item": "project_realism:cordage"
+    }
+  },
+  "result": {
+    "id": "project_realism:leather_bellows",
+    "count": 1
+  }
+}

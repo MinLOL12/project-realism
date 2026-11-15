@@ -72,7 +72,9 @@ public class WorkbenchBlockEntity extends BlockEntity {
 		}
 		if ((tool.isOf(MaterialItems.BONE_AWL)
 				|| (tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
-				&& com.projectrealism.knapping.DynamicStoneItem.readState(tool).metrics().pointScore() >= 0.35))
+				&& com.projectrealism.knapping.DynamicStoneItem.readState(tool).metrics().pointScore() >= 0.35)
+				|| (tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)
+				&& com.projectrealism.metallurgy.DynamicMetalItem.readState(tool).metrics().pointScore() >= 0.35))
 				&& gourdCarveProgress == 0) {
 			gourdCarveProgress = 1;
 			if (!player.isCreative() && tool.isDamageable()) tool.damage(1, player, EquipmentSlot.MAINHAND);
@@ -80,7 +82,8 @@ public class WorkbenchBlockEntity extends BlockEntity {
 			player.sendMessage(Text.translatable("project_realism.gourd.bored").formatted(Formatting.AQUA), true);
 			return;
 		}
-		if ((tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))
+		if ((tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+				|| tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL))
 				&& gourdCarveProgress >= 1) {
 			ItemStack flask = new ItemStack(MaterialItems.GOURD_FLASK);
 			GourdFlaskItem.writeGourdState(flask, gs);
@@ -145,6 +148,17 @@ public class WorkbenchBlockEntity extends BlockEntity {
 						s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CARVE,
 						95.0, new java.util.Random(world.random.nextLong()));
 				com.projectrealism.knapping.DynamicStoneItem.writeState(knife, s);
+			}
+		} else if (knife.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(knife);
+			sharp = Math.max(0.20, Math.min(1.2, com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CARVE, 95.0)
+					.effectiveness()));
+			if (!player.isCreative()) {
+				com.projectrealism.metallurgy.ContactPhysics.applyMetalWear(
+						s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CARVE,
+						95.0, new java.util.Random(world.random.nextLong()));
+				com.projectrealism.metallurgy.DynamicMetalItem.writeState(knife, s);
 			}
 		} else {
 			sharp = AnatomyItems.BoneToolItem.getWorkQualityPct(knife) / 100.0;
@@ -217,7 +231,9 @@ public class WorkbenchBlockEntity extends BlockEntity {
 		if (!items[slot].isOf(AnatomyItems.ANIMAL_HORN)) return;
 		if ((tool.isOf(MaterialItems.BONE_AWL)
 				|| (tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
-				&& com.projectrealism.knapping.DynamicStoneItem.readState(tool).metrics().pointScore() >= 0.35))
+				&& com.projectrealism.knapping.DynamicStoneItem.readState(tool).metrics().pointScore() >= 0.35)
+				|| (tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)
+				&& com.projectrealism.metallurgy.DynamicMetalItem.readState(tool).metrics().pointScore() >= 0.35))
 				&& gourdCarveProgress == 0) {
 			gourdCarveProgress = 1;
 			if (!player.isCreative() && tool.isDamageable()) tool.damage(1, player, EquipmentSlot.MAINHAND);
@@ -225,7 +241,8 @@ public class WorkbenchBlockEntity extends BlockEntity {
 			player.sendMessage(Text.translatable("project_realism.horn.bored").formatted(Formatting.AQUA), true);
 			return;
 		}
-		if ((tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))
+		if ((tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+				|| tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL))
 				&& gourdCarveProgress >= 1) {
 			items[slot] = new ItemStack(AnatomyItems.HORN_FLASK);
 			gourdCarveProgress = 0;

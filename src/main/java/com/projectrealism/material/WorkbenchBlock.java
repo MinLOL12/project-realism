@@ -97,6 +97,17 @@ public class WorkbenchBlock extends BlockWithEntity {
 				be.carveBone(slot, player, held, world, pos);
 				return ActionResult.SUCCESS;
 			}
+			if (held.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+				var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(held);
+				double slice = com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+						s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CARVE, 95.0).effectiveness();
+				if (slice >= 0.45 && s.metrics().primaryEdgeAngleDeg() <= 45.0) {
+					be.carveBone(slot, player, held, world, pos);
+				} else {
+					be.abradeBone(slot, player, held, world, pos);
+				}
+				return ActionResult.SUCCESS;
+			}
 			if (held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
 				var s = com.projectrealism.knapping.DynamicStoneItem.readState(held);
 				double slice = com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
@@ -119,13 +130,15 @@ public class WorkbenchBlock extends BlockWithEntity {
 		}
 		if (slotItem.isOf(AnatomyItems.ANIMAL_HORN)
 				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE)
-				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))) {
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+				|| held.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL))) {
 			be.carveHornFlask(slot, player, held, world, pos);
 			return ActionResult.SUCCESS;
 		}
 		if (slotItem.isOf(MaterialItems.RAW_GOURD)
 				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE)
-				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))) {
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+				|| held.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL))) {
 			be.carveGourd(slot, player, held, world, pos);
 			return ActionResult.SUCCESS;
 		}

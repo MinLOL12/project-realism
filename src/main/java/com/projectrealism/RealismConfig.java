@@ -154,6 +154,14 @@ public final class RealismConfig {
 	/** Whether live animals track forage fat, hydration, thermal load, fatigue, age & injuries. */
 	public boolean animalPhysiology = true;
 
+	// ---------------------------------------- physical metallurgy & geology ---
+
+	/** Whether geological copper, tin, arsenic, iron & fire-clay veins spawn in worldgen. */
+	public boolean geologicalOreVeins = true;
+
+	/** Whether freeform smelting, casting, dynamic plastic forging, alloys & microstructure run. */
+	public boolean physicalMetallurgy = true;
+
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		RealismConfig config = new RealismConfig();

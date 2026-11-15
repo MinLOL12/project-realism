@@ -845,5 +845,23 @@
     "project_realism:waterskin": 1.25,
     "project_realism:wood_ash": 0.15,
     "project_realism:wooden_workbench": 14.0
-  }
+  },
+  "project_realism:arsenopyrite_deposit": 6.0,
+  "project_realism:carvable_mold": 2.2,
+  "project_realism:cassiterite_deposit": 6.2,
+  "project_realism:chalcopyrite_deposit": 5.6,
+  "project_realism:fire_clay_ball": 0.4,
+  "project_realism:fire_clay_brick": 1.6,
+  "project_realism:fire_clay_bricks": 6.4,
+  "project_realism:fire_clay_deposit": 2.6,
+  "project_realism:fired_clay_wall": 3.8,
+  "project_realism:hematite_magnetite_deposit": 6.4,
+  "project_realism:iron_tongs": 1.1,
+  "project_realism:leather_bellows": 1.4,
+  "project_realism:limonite_bog_deposit": 4.5,
+  "project_realism:malachite_azurite_deposit": 5.4,
+  "project_realism:native_copper_deposit": 5.8,
+  "project_realism:raw_clay_wall": 4.2,
+  "project_realism:slag_clump": 0.45,
+  "project_realism:smelting_basin": 8.0
 }
