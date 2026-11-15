@@ -1,6 +1,9 @@
 package com.projectrealism.metallurgy;
 
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.anatomy.CarcassItem;
+import com.projectrealism.knapping.DynamicKnappingItems;
+import com.projectrealism.knapping.DynamicStoneItem;
 import com.projectrealism.thermo.HearthBlock;
 import com.projectrealism.thermo.HearthBlockEntity;
 import com.projectrealism.thermo.ThermoItems;
@@ -8,6 +11,7 @@ import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
@@ -18,6 +22,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
@@ -43,6 +48,34 @@ public final class MetallurgyEvents {
 			ItemStack held = player.getStackInHand(hand);
 			BlockPos pos = hit.getBlockPos();
 			BlockState state = world.getBlockState(pos);
+
+			// 0. PlacedMetalBlock: precision Shift+Right-Click hammer strikes & anti-stacking guards
+			if (state.getBlock() instanceof PlacedMetalBlock) {
+				if (player.isSneaking()) {
+					if (hand == Hand.MAIN_HAND && (DynamicKnappingItems.isStriker(held) || held.isOf(MetallurgyItems.DYNAMIC_METAL))) {
+						if (world instanceof ServerWorld && world.getBlockEntity(pos) instanceof PlacedMetalBlockEntity be) {
+							be.hammerStrike(state.get(PlacedMetalBlock.FACING), player, held, hit.getPos(), world, pos);
+						}
+						return ActionResult.SUCCESS;
+					}
+					if (!held.isEmpty() && (held.getItem() instanceof BlockItem
+							|| held.getItem() instanceof DynamicStoneItem
+							|| DynamicKnappingItems.isKnappableRawRock(held)
+							|| held.getItem() instanceof CarcassItem)) {
+						return ActionResult.FAIL;
+					}
+				} else if (held.getItem() instanceof BlockItem) {
+					return ActionResult.FAIL;
+				}
+			}
+			if (player.isSneaking() && state.getBlock() instanceof CarvableMoldBlock
+					&& held.getItem() instanceof BlockItem && !held.isOf(MetallurgyItems.CLAY_CRUCIBLE_ITEM)) {
+				return ActionResult.FAIL;
+			}
+			if (player.isSneaking() && state.getBlock() instanceof ClayCrucibleBlock
+					&& held.getItem() instanceof BlockItem) {
+				return ActionResult.FAIL;
+			}
 
 			// 1. Bellows pumping air onto HearthBlock fans ember bed higher!
 			if (held.isOf(MetallurgyItems.LEATHER_BELLOWS) && state.getBlock() instanceof HearthBlock

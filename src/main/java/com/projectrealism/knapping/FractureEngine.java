@@ -176,21 +176,38 @@ public final class FractureEngine {
 		boolean hitInclusion = grid.hasInclusion(hit.x, hit.y, hit.z);
 
 		// Soft cushion + ultra-light strike against tough rock with poor platform fails to flake
-		if (effEnergy < 0.45 * stone.material.toughness && existingCrack < 12) {
+		double minEnergyFactor = edgeExposure >= 0.35 ? 0.28 : 0.45;
+		if (effEnergy < minEnergyFactor * stone.material.toughness && existingCrack < 12) {
 			grid.addCrack(hit.x, hit.y, hit.z, 5);
 			return new KnapOutcome(OutcomeKind.NO_EFFECT, 0, List.of(), platformAngleDeg, hitCrack);
 		}
 
-		// 3. Determine failure mode: conchoidal edge flake vs overhang split vs blunt interior crush
-		double cleavageChance = stone.material.conchoidal * edgeExposure * (0.55 + 0.45 * (1.0 - Math.abs(directness - 0.58)));
-		boolean overStruck = effEnergy > (2.1 + stone.material.toughness * 2.2)
+		// 3. Determine failure mode: precision pressure-flake vs conchoidal edge flake vs split vs crumble
+		boolean precisionTap = impactEnergyJ <= 0.85 && baseSupport != SupportCondition.OVERHANG;
+		double effectiveConchoidal = edgeExposure >= 0.40
+				? Math.max(stone.material.conchoidal, 0.42 * Math.min(1.0, hardnessRatio))
+				: stone.material.conchoidal;
+		double cleavageChance = effectiveConchoidal * edgeExposure * (0.55 + 0.45 * (1.0 - Math.abs(directness - 0.58)));
+		boolean overStruck = !precisionTap && (effEnergy > (2.1 + stone.material.toughness * 2.2)
 				|| (support == SupportCondition.OVERHANG && effEnergy > 1.25 * stone.material.toughness)
-				|| (existingCrack > 24 && effEnergy > 1.1);
+				|| (existingCrack > 24 && effEnergy > 1.1));
 
 		List<int[]> toRemove = new ArrayList<>();
 		OutcomeKind kind;
 
-		if (overStruck && (support == SupportCondition.OVERHANG || existingCrack > 18 || effEnergy > 3.4)) {
+		if (precisionTap && (edgeExposure >= 0.15 || existingCrack >= 12)) {
+			// Controlled Shift+Right-Click precision pressure-flaking: cleanly removes 1..2 aimed voxels!
+			kind = OutcomeKind.CLEAN_FLAKE;
+			toRemove.add(new int[]{hit.x, hit.y, hit.z});
+			if (edgeExposure >= 0.45 && stone.material.conchoidal >= 0.55) {
+				int nx = hit.x + (int) Math.round(sDir.x);
+				int ny = hit.y + (int) Math.round(sDir.y);
+				int nz = hit.z + (int) Math.round(sDir.z);
+				if (grid.isSolid(nx, ny, nz)) {
+					toRemove.add(new int[]{nx, ny, nz});
+				}
+			}
+		} else if (overStruck && (support == SupportCondition.OVERHANG || existingCrack > 18 || effEnergy > 3.4)) {
 			// Catastrophic split / shear fracture across weakened or unsupported plane
 			kind = OutcomeKind.SPLIT_FAILURE;
 			Vec3d planeNormal = (existingCrack > 18 && outX + outY + outZ != 0)
@@ -290,7 +307,8 @@ public final class FractureEngine {
 		}
 
 		// Seed subtle radial micro-fractures around the fresh scar perimeter
-		int rimStress = kind == OutcomeKind.SPLIT_FAILURE ? 14 : (kind == OutcomeKind.CRUSHED_POWDER ? 10 : 3);
+		int rimStress = kind == OutcomeKind.SPLIT_FAILURE ? 14
+				: (kind == OutcomeKind.CRUSHED_POWDER ? 10 : (precisionTap ? 1 : 3));
 		for (int[] c : toRemove) {
 			for (int[] d : dirs) {
 				int nx = c[0] + d[0], ny = c[1] + d[1], nz = c[2] + d[2];

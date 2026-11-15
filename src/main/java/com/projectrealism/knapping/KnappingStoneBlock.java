@@ -2,7 +2,9 @@ package com.projectrealism.knapping;
 
 import com.mojang.serialization.MapCodec;
 import com.projectrealism.anatomy.AnatomyItems;
+import com.projectrealism.primitive.GroundRockBlock;
 import com.projectrealism.primitive.PrimitiveItems;
+import com.projectrealism.primitive.RockDropBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -25,6 +27,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public class KnappingStoneBlock extends BlockWithEntity {
 	public static final MapCodec<KnappingStoneBlock> CODEC = createCodec(KnappingStoneBlock::new);
 	public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
-	private static final VoxelShape SHAPE = Block.createCuboidShape(1, 0, 1, 15, 13, 15);
+	private static final VoxelShape SHAPE = Block.createCuboidShape(1, 0, 1, 15, 4, 15);
 
 	public KnappingStoneBlock(Settings settings) {
 		super(settings);
@@ -58,7 +61,23 @@ public class KnappingStoneBlock extends BlockWithEntity {
 
 	@Override
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+		if (world.getBlockEntity(pos) instanceof KnappingStoneBlockEntity be) {
+			return be.outlineShape(state.get(FACING));
+		}
 		return SHAPE;
+	}
+
+	@Override
+	protected boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
+		BlockPos down = pos.down();
+		BlockState below = world.getBlockState(down);
+		if (below.getBlock() instanceof KnappingStoneBlock
+				|| below.getBlock() instanceof GroundRockBlock
+				|| below.getBlock() instanceof RockDropBlock
+				|| below.hasBlockEntity()) {
+			return false;
+		}
+		return below.isSideSolidFullSquare(world, down, Direction.UP);
 	}
 
 	@Override

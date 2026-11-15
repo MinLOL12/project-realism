@@ -16,7 +16,8 @@ public class DynamicKnappingSimulationTest {
 		DynamicStoneState basalt = DynamicStoneState.createCobble(StoneMaterial.BASALT, 42L, 0.90);
 
 		int vox = obsidian.grid.countSolid();
-		assertTrue(vox > 300, "Generated cobble should contain substantial voxels");
+		assertTrue(vox > 180 && vox < 320,
+				"Generated starter spall should be flat and manageable (~200-300 voxels), got " + vox);
 		double expectedObsidianKg = vox * Math.pow(obsidian.voxelScaleCm, 3) * 1e-6 * StoneMaterial.OBSIDIAN.densityKgM3;
 		assertEquals(expectedObsidianKg, obsidian.metrics().massKg(), 1e-4);
 		assertTrue(basalt.metrics().massKg() > obsidian.metrics().massKg(),
@@ -216,5 +217,47 @@ public class DynamicKnappingSimulationTest {
 			g.setSolid(10, 0, z, true);
 		}
 		return new DynamicStoneState(mat, 0.90, g);
+	}
+
+	@Test
+	void starterCobblesAreFlatBeveledSpallsWithFewLayersAndPrecisionFlakeWorks() {
+		for (long seed : new long[]{1L, 7L, 42L, 99L, 500L, 1337L}) {
+			DynamicStoneState starter = DynamicStoneState.createCobble(StoneMaterial.GRANITE, seed, 0.78);
+			int maxY = -1;
+			int baseLayer = 0;
+			int topLayer = 0;
+			for (int y = 0; y < VoxelRockGrid.SIZE; y++) {
+				for (int z = 0; z < VoxelRockGrid.SIZE; z++) {
+					for (int x = 0; x < VoxelRockGrid.SIZE; x++) {
+						if (!starter.grid.isSolid(x, y, z)) continue;
+						if (y > maxY) maxY = y;
+						if (y == 0) baseLayer++;
+						if (y == 2) topLayer++;
+					}
+				}
+			}
+			assertTrue(maxY >= 1 && maxY <= 2,
+					"Starter cobble should only span 2-3 vertical layers (maxY 1..2), got maxY=" + maxY + " seed=" + seed);
+			assertTrue(baseLayer > topLayer * 2,
+					"Starter spall should sit flat with widest base tapering upward");
+		}
+
+		// Shift+Right-Click precision tap (0.68 energy) cleanly removes 1-2 aimed margin voxels on granite
+		DynamicStoneState granite = DynamicStoneState.createCobble(StoneMaterial.GRANITE, 42L, 0.80);
+		int before = granite.grid.countSolid();
+		FractureEngine.VoxelHit edgeTarget = null;
+		for (int x = VoxelRockGrid.SIZE - 1; x >= 0 && edgeTarget == null; x--) {
+			if (granite.grid.isSolid(x, 0, 7)) {
+				edgeTarget = new FractureEngine.VoxelHit(x, 0, 7, 1, 0, 0);
+			}
+		}
+		assertNotNull(edgeTarget);
+		FractureEngine.KnapOutcome tap = FractureEngine.strike(
+				granite, edgeTarget, new Vec3d(-0.6, -0.75, 0.0), StoneMaterial.QUARTZITE,
+				0.68, FractureEngine.SupportCondition.HARD_ANVIL, new Random(77L));
+		assertEquals(FractureEngine.OutcomeKind.CLEAN_FLAKE, tap.kind());
+		assertTrue(tap.removedVoxels() >= 1 && tap.removedVoxels() <= 2,
+				"Precision pressure flake should remove 1-2 targeted voxels, removed=" + tap.removedVoxels());
+		assertEquals(before - tap.removedVoxels(), granite.grid.countSolid());
 	}
 }

@@ -99,25 +99,25 @@ public final class VoxelRockGrid {
 		return g;
 	}
 
-	/** Generates a natural, asymmetric irregular river cobble / nodule seeded with cracks & inclusions. */
+	/** Generates a natural, flat beveled river spall / cobble seeded with cracks & inclusions. */
 	public static VoxelRockGrid generateNodule(StoneMaterial material, long seed, double sizeScale) {
 		VoxelRockGrid grid = new VoxelRockGrid();
 		Random rng = new Random(seed);
 		double s = Math.max(0.45, Math.min(1.0, sizeScale));
-		double rx = (5.4 + rng.nextDouble() * 1.9) * s;
-		double ry = (3.4 + rng.nextDouble() * 1.6) * s;
-		double rz = (5.6 + rng.nextDouble() * 2.0) * s;
+		double rx = (6.5 + rng.nextDouble() * 0.90) * s;
+		double ry = (2.25 + rng.nextDouble() * 0.30) * s;
+		double rz = (6.6 + rng.nextDouble() * 0.95) * s;
 
-		// Random multi-lobe harmonic asymmetry so no two rocks are identical spheres
+		// Random multi-lobe harmonic asymmetry so no two rocks are identical ovals
 		double p1 = rng.nextDouble() * Math.PI * 2.0;
 		double p2 = rng.nextDouble() * Math.PI * 2.0;
 		double a1 = 0.08 + rng.nextDouble() * 0.14;
 		double a2 = 0.05 + rng.nextDouble() * 0.10;
-		double flatBottomCut = -ry * (0.68 + rng.nextDouble() * 0.18);
+		rng.nextDouble();
 
-		for (int y = 0; y < SIZE; y++) {
-			double dy = y - 6.0;
-			if (dy < flatBottomCut) continue;
+		// Flat bottom at y=5 tapers cleanly upward (1-voxel beveled rim, 2-3 layers max height)
+		for (int y = 5; y < SIZE; y++) {
+			double dy = y - 5.0;
 			for (int z = 0; z < SIZE; z++) {
 				double dz = z - 7.5;
 				for (int x = 0; x < SIZE; x++) {
@@ -135,7 +135,7 @@ public final class VoxelRockGrid {
 			}
 		}
 
-		// Seed 1..2 subtle natural bedding / incipient fracture planes inside larger nodules
+		// Seed 1..2 subtle natural bedding / incipient fracture planes inside larger spalls
 		int planes = rng.nextInt(3);
 		for (int p = 0; p < planes; p++) {
 			double nx = rng.nextDouble() - 0.5;

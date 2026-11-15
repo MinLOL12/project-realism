@@ -1,5 +1,9 @@
 package com.projectrealism.anatomy;
 
+import com.projectrealism.knapping.KnappingStoneBlock;
+import com.projectrealism.metallurgy.PlacedMetalBlock;
+import com.projectrealism.primitive.GroundRockBlock;
+import com.projectrealism.primitive.RockDropBlock;
 import com.projectrealism.thermo.ThermalConstants;
 import net.minecraft.block.BlockState;
 import net.minecraft.component.DataComponentTypes;
@@ -16,6 +20,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 import java.util.List;
@@ -59,7 +64,20 @@ public class CarcassItem extends Item {
 	public ActionResult useOnBlock(ItemUsageContext context) {
 		World world = context.getWorld();
 		PlayerEntity player = context.getPlayer();
-		BlockPos placePos = context.getBlockPos().offset(context.getSide());
+		BlockPos clickedPos = context.getBlockPos();
+		BlockState clicked = world.getBlockState(clickedPos);
+		if (clicked.getBlock() instanceof KnappingStoneBlock
+				|| clicked.getBlock() instanceof PlacedMetalBlock
+				|| clicked.getBlock() instanceof CarcassBlock
+				|| clicked.getBlock() instanceof GroundRockBlock
+				|| clicked.getBlock() instanceof RockDropBlock
+				|| clicked.hasBlockEntity()) {
+			return ActionResult.FAIL;
+		}
+		if (context.getSide() != Direction.UP || !clicked.isSideSolidFullSquare(world, clickedPos, Direction.UP)) {
+			return ActionResult.PASS;
+		}
+		BlockPos placePos = clickedPos.up();
 		BlockState target = world.getBlockState(placePos);
 		if (!target.isAir() && !target.isReplaceable()) {
 			return ActionResult.PASS;

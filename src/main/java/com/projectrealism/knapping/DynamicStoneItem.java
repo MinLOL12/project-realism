@@ -1,5 +1,7 @@
 package com.projectrealism.knapping;
 
+import com.projectrealism.primitive.GroundRockBlock;
+import com.projectrealism.primitive.RockDropBlock;
 import com.projectrealism.wood.WoodSpecies;
 import net.minecraft.block.BlockState;
 import net.minecraft.component.DataComponentTypes;
@@ -7,7 +9,6 @@ import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.tooltip.TooltipType;
@@ -20,6 +21,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 import java.util.List;
@@ -156,17 +158,29 @@ public class DynamicStoneItem extends Item {
 		ItemStack stack = context.getStack();
 		if (player == null) return ActionResult.PASS;
 
-		// Placing stone down on a solid surface turns it into an in-world KnappingStoneBlock for shaping
-		ItemPlacementContext pCtx = new ItemPlacementContext(context);
-		BlockPos placePos = pCtx.getBlockPos();
+		BlockPos clicked = context.getBlockPos();
+		BlockState clickedState = world.getBlockState(clicked);
+		// Never stack stones on top of existing rocks, ground pebbles, sticks, or non-full block entities
+		if (clickedState.getBlock() instanceof KnappingStoneBlock
+				|| clickedState.getBlock() instanceof GroundRockBlock
+				|| clickedState.getBlock() instanceof RockDropBlock
+				|| clickedState.hasBlockEntity()) {
+			return ActionResult.FAIL;
+		}
+		if (context.getSide() != Direction.UP || !clickedState.isSideSolidFullSquare(world, clicked, Direction.UP)) {
+			return ActionResult.PASS;
+		}
+
+		// Placing stone down on a solid full surface turns it into an in-world KnappingStoneBlock for shaping
+		BlockPos placePos = clicked.up();
 		BlockState targetState = world.getBlockState(placePos);
-		BlockState belowState = world.getBlockState(placePos.down());
-		if (!belowState.isAir() && (targetState.isAir() || targetState.isReplaceable())) {
+		BlockState placed = DynamicKnappingBlocks.KNAPPING_STONE.getDefaultState()
+				.with(KnappingStoneBlock.FACING, player.getHorizontalFacing().getOpposite());
+		if ((targetState.isAir() || targetState.isReplaceable()) && placed.canPlaceAt(world, placePos)) {
 			if (!world.isClient) {
 				DynamicStoneState state = readState(stack);
 				state.grid.settleOnBase();
-				world.setBlockState(placePos, DynamicKnappingBlocks.KNAPPING_STONE.getDefaultState()
-						.with(KnappingStoneBlock.FACING, player.getHorizontalFacing().getOpposite()));
+				world.setBlockState(placePos, placed);
 				if (world.getBlockEntity(placePos) instanceof KnappingStoneBlockEntity be) {
 					be.setStone(state);
 				}

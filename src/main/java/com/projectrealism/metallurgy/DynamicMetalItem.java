@@ -1,8 +1,11 @@
 package com.projectrealism.metallurgy;
 
 import com.projectrealism.knapping.DynamicKnappingItems;
+import com.projectrealism.knapping.KnappingStoneBlock;
 import com.projectrealism.knapping.StoneInteractionPhysics;
 import com.projectrealism.knapping.VoxelRockGrid;
+import com.projectrealism.primitive.GroundRockBlock;
+import com.projectrealism.primitive.RockDropBlock;
 import com.projectrealism.wood.WoodSpecies;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -241,16 +244,27 @@ public class DynamicMetalItem extends Item {
 			return ActionResult.SUCCESS;
 		}
 
-		// Place onto solid stone/metal anvil surface for hammering & hafting
-		if (ctx.getSide() == Direction.UP && (clicked.isSolidBlock(world, pos)
-				|| clicked.isSideSolidFullSquare(world, pos, Direction.UP))) {
+		// Never stack metal bodies onto rocks, pebbles, sticks, or non-full block entities
+		if (clicked.getBlock() instanceof KnappingStoneBlock
+				|| clicked.getBlock() instanceof PlacedMetalBlock
+				|| clicked.getBlock() instanceof GroundRockBlock
+				|| clicked.getBlock() instanceof RockDropBlock
+				|| clicked.hasBlockEntity()) {
+			return ActionResult.FAIL;
+		}
+
+		// Place onto solid full stone/metal anvil surface for hammering & hafting
+		BlockState placed = MetallurgyBlocks.PLACED_METAL.getDefaultState()
+				.with(PlacedMetalBlock.FACING, player.getHorizontalFacing().getOpposite());
+		if (ctx.getSide() == Direction.UP && clicked.isSideSolidFullSquare(world, pos, Direction.UP)) {
 			BlockPos placePos = pos.up();
 			BlockState above = world.getBlockState(placePos);
-			if (!above.isAir() && !above.isReplaceable()) return ActionResult.PASS;
+			if ((!above.isAir() && !above.isReplaceable()) || !placed.canPlaceAt(world, placePos)) {
+				return ActionResult.PASS;
+			}
 			if (!world.isClient) {
 				DynamicMetalState s = readState(ctx.getStack());
-				world.setBlockState(placePos, MetallurgyBlocks.PLACED_METAL.getDefaultState()
-						.with(PlacedMetalBlock.FACING, player.getHorizontalFacing().getOpposite()));
+				world.setBlockState(placePos, placed);
 				if (world.getBlockEntity(placePos) instanceof PlacedMetalBlockEntity be) {
 					be.setMetal(s);
 				}

@@ -38,6 +38,8 @@ import java.util.Random;
 public class KnappingStoneBlockEntity extends BlockEntity {
 	private DynamicStoneState stone = DynamicStoneState.createCobble(StoneMaterial.FLINT, 1L, 0.88);
 	private boolean pickedUpOrExhausted = false;
+	private net.minecraft.util.shape.VoxelShape cachedShape;
+	private Direction cachedShapeFacing;
 
 	public KnappingStoneBlockEntity(BlockPos pos, BlockState state) {
 		super(DynamicKnappingBlocks.KNAPPING_STONE_ENTITY, pos, state);
@@ -49,7 +51,46 @@ public class KnappingStoneBlockEntity extends BlockEntity {
 
 	public void setStone(DynamicStoneState s) {
 		this.stone = s != null ? s : DynamicStoneState.createCobble(StoneMaterial.FLINT, 1L, 0.88);
+		this.cachedShape = null;
 		sync();
+	}
+
+	public net.minecraft.util.shape.VoxelShape outlineShape(Direction facing) {
+		if (cachedShape != null && cachedShapeFacing == facing) {
+			return cachedShape;
+		}
+		int minX = 16, minZ = 16, maxX = -1, maxY = -1, maxZ = -1;
+		for (int y = 0; y < VoxelRockGrid.SIZE; y++) {
+			for (int z = 0; z < VoxelRockGrid.SIZE; z++) {
+				for (int x = 0; x < VoxelRockGrid.SIZE; x++) {
+					if (!stone.grid.isSolid(x, y, z)) continue;
+					int rx, rz;
+					switch (facing) {
+						case SOUTH -> { rx = 15 - x; rz = 15 - z; }
+						case WEST  -> { rx = z; rz = 15 - x; }
+						case EAST  -> { rx = 15 - z; rz = x; }
+						default    -> { rx = x; rz = z; }
+					}
+					if (rx < minX) minX = rx;
+					if (rx > maxX) maxX = rx;
+					if (y > maxY) maxY = y;
+					if (rz < minZ) minZ = rz;
+					if (rz > maxZ) maxZ = rz;
+				}
+			}
+		}
+		if (maxX < 0) {
+			cachedShape = Block.createCuboidShape(2, 0, 2, 14, 4, 14);
+		} else {
+			double x0 = Math.max(0.5, minX);
+			double x1 = Math.min(15.5, maxX + 1.0);
+			double z0 = Math.max(0.5, minZ);
+			double z1 = Math.min(15.5, maxZ + 1.0);
+			double y1 = Math.max(2.5, Math.min(15.5, maxY + 1.25));
+			cachedShape = Block.createCuboidShape(x0, 0.0, z0, x1, y1, z1);
+		}
+		cachedShapeFacing = facing;
+		return cachedShape;
 	}
 
 	public void inspectAt(Direction facing, PlayerEntity player, Vec3d hitWorld, BlockPos pos) {
@@ -257,6 +298,7 @@ public class KnappingStoneBlockEntity extends BlockEntity {
 	}
 
 	private void sync() {
+		cachedShape = null;
 		markDirty();
 		if (world != null && !world.isClient) {
 			BlockState st = getCachedState();
@@ -275,6 +317,7 @@ public class KnappingStoneBlockEntity extends BlockEntity {
 		super.readNbt(nbt, registryLookup);
 		if (nbt.contains("Stone")) {
 			stone = DynamicStoneState.fromNbt(nbt.getCompound("Stone"));
+			cachedShape = null;
 		}
 	}
 
