@@ -118,7 +118,12 @@ public class CarcassBlockEntity extends BlockEntity {
 
 		switch (region) {
 			case HEAD_NECK -> {
-				if (carcass.hornsRemaining > 0 && (heavy || sharp > 0.55)) {
+				if (carcass.remainingBloodFrac > 0.20 && !carcass.bleedIncised && !heavy && !scraper) {
+					carcass.stickNeckToBleed();
+					sw.playSound(null, pos, SoundEvents.ITEM_BOTTLE_EMPTY, SoundCategory.BLOCKS, 0.5f, 0.85f);
+					player.sendMessage(Text.translatable("project_realism.carcass.bled",
+							(int) Math.round(carcass.remainingBloodFrac * 100.0)).formatted(Formatting.AQUA), true);
+				} else if (carcass.hornsRemaining > 0 && (heavy || sharp > 0.55)) {
 					carcass.removeOneHorn();
 					giveOrDrop(player, world, pos, new ItemStack(AnatomyItems.ANIMAL_HORN, 1));
 					sw.playSound(null, pos, SoundEvents.BLOCK_BONE_BLOCK_BREAK, SoundCategory.BLOCKS, 0.7f, 0.9f);

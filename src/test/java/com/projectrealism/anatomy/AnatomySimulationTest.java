@@ -140,4 +140,26 @@ class AnatomySimulationTest {
 		assertTrue(abused.resultingToolIntegrityPct() < goodQuality - 20,
 				"Poor workmanship & heat-brittle bone produce markedly more fragile tools");
 	}
+
+	@Test
+	void carcassHorizontalRegionMappingReachesHeadAndAllZones() {
+		net.minecraft.util.math.BlockPos pos = net.minecraft.util.math.BlockPos.ORIGIN;
+		// Facing NORTH: head is at low Z (0.10), hind at high Z (0.85), flanks/torso in middle Z (0.50)
+		var headUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+				new net.minecraft.util.math.Vec3d(0.50, 0.625, 0.10));
+		var limbUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+				new net.minecraft.util.math.Vec3d(0.50, 0.625, 0.85));
+		var gutUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+				new net.minecraft.util.math.Vec3d(0.20, 0.625, 0.50));
+		var loinUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+				new net.minecraft.util.math.Vec3d(0.80, 0.625, 0.50));
+		var torsoUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+				new net.minecraft.util.math.Vec3d(0.50, 0.625, 0.50));
+
+		assertEquals(CarcassState.Region.HEAD_NECK, CarcassBlock.regionFromUV(headUv.x, headUv.z));
+		assertEquals(CarcassState.Region.HAUNCH_LIMB, CarcassBlock.regionFromUV(limbUv.x, limbUv.z));
+		assertEquals(CarcassState.Region.VISCERA_CAVITY, CarcassBlock.regionFromUV(gutUv.x, gutUv.z));
+		assertEquals(CarcassState.Region.LOIN_RIBS, CarcassBlock.regionFromUV(loinUv.x, loinUv.z));
+		assertEquals(CarcassState.Region.COAT_TORSO, CarcassBlock.regionFromUV(torsoUv.x, torsoUv.z));
+	}
 }
