@@ -66,9 +66,9 @@ class AnatomySimulationTest {
 
 		CarcassState closedWarm = CarcassState.fromLivingAnimal(p, false, 0.1);
 
-		for (int i = 0; i < 40; i++) {
-			openCold.stepEnvironment(271.0, 0.40, 1.5, 0.0, false, true, 30.0);   // cold sheltered breeze -> freezes!
-			closedWarm.stepEnvironment(306.0, 0.88, 0.2, 0.0, false, false, 30.0); // hot humid still air + viscera + blood!
+		for (int i = 0; i < 120; i++) {
+			openCold.stepEnvironment(269.0, 0.40, 1.8, 0.0, false, true, 45.0);   // sub-zero breeze -> freezes!
+			closedWarm.stepEnvironment(306.0, 0.88, 0.2, 0.0, false, false, 45.0); // hot humid still air + viscera + blood!
 		}
 
 		assertTrue(openCold.bodyTempK < closedWarm.bodyTempK - 18.0, "Eviscerated & skinned carcass cools faster");

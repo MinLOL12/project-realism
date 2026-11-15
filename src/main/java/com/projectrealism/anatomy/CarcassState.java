@@ -155,7 +155,7 @@ public final class CarcassState {
 				+ Math.min(0.65, fatRemainingKg * 0.04)
 				+ (eviscerated ? 0.0 : 0.55);
 		double coolingSizeFactor = Math.pow(3.0 / Math.max(0.5, currentTotalMassKg()), 0.42);
-		double hConv = 0.0022 * (0.45 + airSpeedMS * 0.60) * coolingSizeFactor / (1.0 + insulation);
+		double hConv = 0.0038 * (0.45 + airSpeedMS * 0.60) * coolingSizeFactor / (1.0 + insulation);
 		bodyTempK += (effTempK - bodyTempK) * Math.min(0.35, hConv * dtSec);
 
 		// 2. Bleed-out drainage while blood remains warm & fluid (clots once chilled < 296 K)
@@ -205,7 +205,7 @@ public final class CarcassState {
 		double flyFactor = 1.0 + insectActivity * 1.45;
 		double contamFactor = 1.0 + gutContamination * 2.2 + microbialLoad * 1.25;
 
-		double rotRate = 0.000012 * q10 * bloodRotBoost * visceraRotBoost * moistureGate * flyFactor * contamFactor;
+		double rotRate = 0.0000045 * q10 * bloodRotBoost * visceraRotBoost * moistureGate * flyFactor * contamFactor;
 		spoilageFrac = Math.min(1.0, spoilageFrac + rotRate * dtSec);
 		structuralCondition = Math.max(0.05, structuralCondition - rotRate * 0.55 * dtSec);
 		if (bodyTempK >= 285.0 && bodyTempK <= 325.0) {
