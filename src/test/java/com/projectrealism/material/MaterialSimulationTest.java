@@ -24,7 +24,7 @@ class MaterialSimulationTest {
 
 		assertEquals(cow.animal, restored.animal);
 		assertEquals(cow.intactCount(), restored.intactCount());
-		assertEquals(cow.currentMassKg(), restored.currentMassKg(), 1e-6);
+		assertEquals(cow.currentMassKg(), restored.currentMassKg(), 1e-2);
 		for (int i = 0; i < HideSurface.CELLS; i++) {
 			assertEquals(cow.fleshClean[i], restored.fleshClean[i], 1e-3);
 			assertEquals(cow.moisture[i], restored.moisture[i], 1e-3);

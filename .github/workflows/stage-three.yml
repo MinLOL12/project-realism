@@ -160,16 +160,25 @@ jobs:
         if: failure()
         run: |
           python3 - <<'PY'
-          import re
+          import pathlib, re, xml.etree.ElementTree as ET
           try:
               text = open('gradle-build.log', errors='ignore').read()
           except FileNotFoundError:
-              raise SystemExit(0)
+              text = ""
           pattern = re.compile(r'(?m)^(\S+\.java):(\d+): (?:error|warning): (.*)((?:\n\s{2,}.*)*)')
           for match in pattern.finditer(text):
               detail = ' '.join([match.group(3)] + [l.strip() for l in match.group(4).splitlines()])
               detail = ' '.join(detail.split())[:900]
               print(f"::error file={match.group(1)},line={match.group(2)},title=javac::{detail}")
+          for xml_path in sorted(pathlib.Path('build/test-results/test').glob('TEST-*.xml')):
+              try:
+                  root = ET.fromstring(xml_path.read_text())
+                  for tc in root.findall('testcase'):
+                      for fail in tc.findall('failure') + tc.findall('error'):
+                          msg = (fail.get('message') or (fail.text or '')).replace('\n', ' ')[:500]
+                          print(f"::error title=JUnit {tc.get('classname')}.{tc.get('name')}::{msg}")
+              except Exception:
+                  pass
           PY
 
       - name: Upload jar

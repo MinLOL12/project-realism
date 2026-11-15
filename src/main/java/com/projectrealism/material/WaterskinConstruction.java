@@ -67,16 +67,16 @@ public final class WaterskinConstruction {
 		public double leakRateMlPerSec(double heightFraction, double fillFrac, double sloshPeak, double fluidTempK) {
 			if (fillFrac <= 0.005) return 0.0;
 			double integ = integrity();
-			if (integ >= 0.96) return 0.0;
+			if (integ >= 0.82) return 0.0;
 
 			// Water head pressure above this seam + inertial wave splash against walls
 			double head = Math.max(0.0, fillFrac - heightFraction) + sloshPeak * 0.28 * fillFrac;
 			if (head <= 0.01) return 0.0;
 
-			double defectArea = Math.pow(1.0 - integ, 1.65);
+			double defectArea = Math.pow(0.85 - integ, 1.55);
 			// Hot water softens tallow/wax seals slightly if barely sealed
 			double tempSoften = (fluidTempK > 330.0 && sealLevel < 0.75) ? 1.35 : 1.0;
-			return defectArea * head * 18.0 * tempSoften;
+			return defectArea * head * 22.0 * tempSoften;
 		}
 
 		public NbtCompound toNbt() {
