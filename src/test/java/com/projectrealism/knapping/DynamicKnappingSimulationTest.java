@@ -17,7 +17,7 @@ public class DynamicKnappingSimulationTest {
 
 		int vox = obsidian.grid.countSolid();
 		assertTrue(vox > 300, "Generated cobble should contain substantial voxels");
-		double expectedObsidianKg = vox * Math.pow(obsidian.voxelScaleCm, 3) * 1e-6 * StoneMaterial.OBSIDIAN.densityKgPerM3;
+		double expectedObsidianKg = vox * Math.pow(obsidian.voxelScaleCm, 3) * 1e-6 * StoneMaterial.OBSIDIAN.densityKgM3;
 		assertEquals(expectedObsidianKg, obsidian.metrics().massKg(), 1e-4);
 		assertTrue(basalt.metrics().massKg() > obsidian.metrics().massKg(),
 				"Basalt is denser than obsidian for identical geometry");
@@ -112,7 +112,7 @@ public class DynamicKnappingSimulationTest {
 				2.80, StoneMaterial.BASALT, FractureEngine.SupportCondition.HARD_ANVIL, new Random(11L));
 		assertTrue(splitRes.hitCrackedZone());
 		assertTrue(splitRes.removedVoxels() > 0);
-		assertTrue(limestone.material.conchoidalCleavage < flint.material.conchoidalCleavage);
+		assertTrue(limestone.material.conchoidal < flint.material.conchoidal);
 	}
 
 	@Test
