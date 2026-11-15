@@ -58,7 +58,11 @@ public final class ThermoEvents {
 							|| (held.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(held) > 0)
 							|| (held.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)
 							&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(held) > 0)
-							|| held.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP);
+							|| (held.isOf(com.projectrealism.anatomy.AnatomyItems.HORN_FLASK)
+							&& com.projectrealism.anatomy.HornFlaskItem.getVolumeMl(held) > 0)
+							|| held.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP)
+							|| held.isOf(com.projectrealism.anatomy.AnatomyItems.ANIMAL_FAT)
+							|| (held.getItem() instanceof com.projectrealism.anatomy.AnatomyMeatItem);
 					if (CookingPhysics.isFoodTrackable(held) || isWaterVessel) {
 						if (world instanceof ServerWorld && be.addFood(held)) {
 							held.decrementUnlessCreative(1, player);

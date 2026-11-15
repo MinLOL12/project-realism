@@ -54,9 +54,9 @@ public final class MaterialEvents {
 	}
 
 	public static void register() {
-		// 1. Anatomically informed raw hide drops on animal kill
+		// 1. Anatomically informed raw hide drops ONLY when carcass system is disabled
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
-			if (!ProjectRealism.config().materialProcessing) return;
+			if (!ProjectRealism.config().materialProcessing || ProjectRealism.config().carcassSystem) return;
 			if (!(entity.getWorld() instanceof ServerWorld sw)) return;
 			if (!AnimalHideType.isHideBearing(entity.getType())) return;
 
@@ -85,7 +85,9 @@ public final class MaterialEvents {
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
 			if (!ProjectRealism.config().materialProcessing || player.isSpectator()) return ActionResult.PASS;
 			ItemStack held = player.getStackInHand(hand);
-			if (!held.isOf(PrimitiveItems.STONE_KNIFE) && !held.isOf(MaterialItems.STONE_SCRAPER)) {
+			if (!held.isOf(PrimitiveItems.STONE_KNIFE) && !held.isOf(MaterialItems.STONE_SCRAPER)
+					&& !held.isOf(com.projectrealism.anatomy.AnatomyItems.BONE_BLADE)
+					&& !held.isOf(com.projectrealism.anatomy.AnatomyItems.BONE_CHISEL)) {
 				return ActionResult.PASS;
 			}
 			BlockPos pos = hit.getBlockPos();

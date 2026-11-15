@@ -1129,6 +1129,140 @@ def make_workstation_wood(seed: int, slab_top: bool = False) -> Canvas:
 
 
 # ---------------------------------------------------------------------------
+# Anatomical Carcass, Bone Processing, Sinew, Cuts, Organs & Horn Textures
+# ---------------------------------------------------------------------------
+
+def make_carcass_item() -> Canvas:
+    c = Canvas(32, 32)
+    # Clean bundled game carcass silhouette bound with cordage strap
+    for y in range(8, 25):
+        for x in range(5, 27):
+            if math.hypot((x - 16) * 0.72, (y - 17) * 1.05) < 7.6:
+                n = hash_noise(x, y, 4200)
+                col = (146, 102, 68) if y < 19 else (186, 148, 114)
+                c.set(x, y, shade(col, 0.92 + 0.14 * n))
+    c.line(12, 10, 12, 23, (176, 146, 94, 255), 2)
+    c.line(20, 10, 20, 23, (176, 146, 94, 255), 2)
+    c.outline()
+    return c
+
+
+def make_raw_bone() -> Canvas:
+    c = Canvas(32, 32)
+    # Long cortical shaft with smooth articular condyles
+    c.line(8, 24, 24, 8, (230, 222, 198, 255), 3)
+    for (cx, cy) in [(7, 23), (9, 25), (23, 7), (25, 9)]:
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                if dx * dx + dy * dy <= 4:
+                    c.set(cx + dx, cy + dy, shade((224, 214, 188), 0.96 + 0.08 * hash_noise(cx + dx, cy + dy, 4300)))
+    c.outline()
+    return c
+
+
+def make_meat_cut(kind: str) -> Canvas:
+    c = Canvas(32, 32)
+    if kind == "prime":
+        poly = [(8, 10), (22, 8), (25, 20), (12, 24), (7, 18)]
+        base, streak = (176, 86, 78), (222, 196, 182)
+    elif kind == "fatty":
+        poly = [(6, 9), (25, 10), (26, 22), (7, 23)]
+        base, streak = (168, 94, 84), (236, 222, 178)
+    else:
+        poly = [(8, 7), (21, 9), (24, 24), (11, 25), (6, 15)]
+        base, streak = (138, 68, 64), (192, 166, 152)
+    c.fill_poly(poly, lambda x, y: shade(
+        streak if ((x + y * 2) % 7 == 0 and kind != "tough") or (kind == "fatty" and y % 5 == 0) else base,
+        0.92 + 0.16 * hash_noise(x, y, 4400)))
+    c.outline()
+    return c
+
+
+def make_organ(kind: str) -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(7, 26):
+        for x in range(7, 25):
+            n = hash_noise(x, y, 4500)
+            if kind == "heart":
+                in_shape = math.hypot((x - 16) * 1.1, y - 15) < 6.8 or math.hypot((x - 16) * 1.4, y - 20) < 4.0
+                col = (148, 62, 66)
+            elif kind == "liver":
+                in_shape = math.hypot((x - 14) * 0.9, y - 16) < 6.5 or math.hypot((x - 19) * 1.1, y - 17) < 5.0
+                col = (122, 64, 58)
+            else:
+                in_shape = 4.0 < math.hypot(x - 16, y - 16) < 7.8 or math.hypot(x - 16, y - 16) < 2.8
+                col = (198, 174, 146)
+            if in_shape:
+                c.set(x, y, shade(col, 0.92 + 0.16 * n))
+    c.outline()
+    return c
+
+
+def make_animal_fat() -> Canvas:
+    c = Canvas(32, 32)
+    c.fill_poly([(7, 11), (22, 9), (26, 19), (16, 25), (6, 20)],
+                lambda x, y: shade((238, 224, 174), 0.94 + 0.12 * hash_noise(x, y, 4600)))
+    c.outline()
+    return c
+
+
+def make_connective(is_tendon: bool) -> Canvas:
+    c = Canvas(32, 32)
+    col = (212, 204, 186) if is_tendon else (228, 214, 184)
+    for s in range(-2, 3, 2):
+        c.line(7, 23 + s // 2, 24, 9 + s // 2, (col[0], col[1], col[2], 255), 2)
+    c.outline()
+    return c
+
+
+def make_raw_wool() -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(6, 26):
+        for x in range(6, 26):
+            d = min(math.hypot(x - 13, y - 14), math.hypot(x - 19, y - 14),
+                    math.hypot(x - 16, y - 19), math.hypot(x - 15, y - 11))
+            if d < 6.2:
+                n = hash_noise(x, y, 4700)
+                c.set(x, y, shade((242, 238, 226), 0.92 + 0.14 * n))
+    c.outline()
+    return c
+
+
+def make_horn(flask: bool = False) -> Canvas:
+    c = Canvas(32, 32)
+    for t_i in range(28):
+        t = t_i / 27.0
+        cx = 9 + t * 14 + math.sin(t * 2.2) * 3.0
+        cy = 24 - t * 16 - math.cos(t * 1.4) * 2.0
+        rad = (4.8 * (1.0 - t * 0.72)) if not flask else (5.2 * (1.0 - t * 0.58))
+        for dy in range(-5, 6):
+            for dx in range(-5, 6):
+                if dx * dx + dy * dy <= rad * rad:
+                    ix, iy = round(cx + dx), round(cy + dy)
+                    n = hash_noise(ix, iy, 4800)
+                    col = (194, 174, 134) if t < 0.65 else (98, 86, 72)
+                    c.set(ix, iy, shade(col, 0.92 + 0.14 * n))
+    if flask:
+        c.line(7, 21, 13, 27, (132, 88, 46, 255), 2)  # wooden stopper lip
+    c.outline()
+    return c
+
+
+def make_bone_tool(chisel: bool = False) -> Canvas:
+    c = Canvas(32, 32)
+    if chisel:
+        c.line(7, 25, 22, 10, (226, 218, 194, 255), 3)
+        c.line(21, 9, 25, 6, (242, 236, 218, 255), 4)
+        c.line(10, 20, 14, 24, (176, 152, 104, 255), 2)
+    else:
+        c.line(7, 25, 13, 19, (164, 132, 84, 255), 2)
+        c.fill_poly([(13, 19), (24, 6), (26, 9), (16, 21)],
+                    lambda x, y: shade((234, 226, 204), 0.94 + 0.10 * hash_noise(x, y, 4900)))
+    c.outline()
+    return c
+
+
+# ---------------------------------------------------------------------------
 # Registry of All Textures
 # ---------------------------------------------------------------------------
 
@@ -1168,6 +1302,22 @@ def build_all_textures() -> Dict[str, Canvas]:
         "item/gourd_flask.png": make_gourd(carved=True),
         "block/workstation_wood.png": make_workstation_wood(4000, slab_top=False),
         "block/workstation_top.png": make_workstation_wood(4100, slab_top=True),
+        "item/carcass_item.png": make_carcass_item(),
+        "item/raw_bone.png": make_raw_bone(),
+        "item/prime_cut.png": make_meat_cut("prime"),
+        "item/fatty_cut.png": make_meat_cut("fatty"),
+        "item/tough_cut.png": make_meat_cut("tough"),
+        "item/organ_heart.png": make_organ("heart"),
+        "item/organ_liver.png": make_organ("liver"),
+        "item/organ_gut.png": make_organ("gut"),
+        "item/animal_fat.png": make_animal_fat(),
+        "item/sinew.png": make_connective(is_tendon=False),
+        "item/tendon.png": make_connective(is_tendon=True),
+        "item/raw_wool.png": make_raw_wool(),
+        "item/animal_horn.png": make_horn(flask=False),
+        "item/horn_flask.png": make_horn(flask=True),
+        "item/bone_blade.png": make_bone_tool(chisel=False),
+        "item/bone_chisel.png": make_bone_tool(chisel=True),
         "block/granite_rock.png": make_rock_block("granite"),
         "block/limestone_rock.png": make_rock_block("limestone"),
         "block/flint_rock.png": make_rock_block("flint"),

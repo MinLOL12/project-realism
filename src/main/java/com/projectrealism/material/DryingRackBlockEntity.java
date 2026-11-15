@@ -1,5 +1,8 @@
 package com.projectrealism.material;
 
+import com.projectrealism.anatomy.AnatomyItems;
+import com.projectrealism.anatomy.BoneData;
+import com.projectrealism.anatomy.RawBoneItem;
 import com.projectrealism.thermo.AirGrid;
 import com.projectrealism.thermo.ThermalConstants;
 import com.projectrealism.thermo.ThermalWorldState;
@@ -32,6 +35,8 @@ public class DryingRackBlockEntity extends BlockEntity {
 	private HideSurface hide = null;
 	@Nullable
 	private MaterialAging.GourdState gourd = null;
+	@Nullable
+	private BoneData bone = null;
 	private int tickCount = 0;
 
 	public DryingRackBlockEntity(BlockPos pos, BlockState state) {
@@ -39,7 +44,7 @@ public class DryingRackBlockEntity extends BlockEntity {
 	}
 
 	public boolean hasItem() {
-		return hide != null || gourd != null;
+		return hide != null || gourd != null || bone != null;
 	}
 
 	public boolean hasHide() {
@@ -56,6 +61,11 @@ public class DryingRackBlockEntity extends BlockEntity {
 		return gourd;
 	}
 
+	@Nullable
+	public BoneData bone() {
+		return bone;
+	}
+
 	public void mountItem(ItemStack stack, PlayerEntity player) {
 		if (hasItem()) return;
 		if (stack.isOf(MaterialItems.RAW_HIDE)) {
@@ -63,6 +73,9 @@ public class DryingRackBlockEntity extends BlockEntity {
 			if (!player.isCreative()) stack.decrement(1);
 		} else if (stack.isOf(MaterialItems.RAW_GOURD)) {
 			gourd = MaterialItems.RawGourdItem.readGourdState(stack);
+			if (!player.isCreative()) stack.decrement(1);
+		} else if (stack.isOf(AnatomyItems.RAW_BONE)) {
+			bone = RawBoneItem.readBone(stack);
 			if (!player.isCreative()) stack.decrement(1);
 		}
 		sync();
@@ -77,6 +90,9 @@ public class DryingRackBlockEntity extends BlockEntity {
 			out = new ItemStack(MaterialItems.RAW_GOURD);
 			MaterialItems.RawGourdItem.writeGourdState(out, gourd);
 			gourd = null;
+		} else if (bone != null) {
+			out = RawBoneItem.create(bone);
+			bone = null;
 		}
 		if (!out.isEmpty() && !player.getInventory().insertStack(out)) {
 			Block.dropStack(world, pos, out);
@@ -141,6 +157,9 @@ public class DryingRackBlockEntity extends BlockEntity {
 		} else if (be.gourd != null) {
 			double effK = Math.max(ambK, air.temperatureK) + Math.min(1200.0, radW) / 48.0;
 			be.gourd.stepDrying(effK, rh, wind, rain, dt);
+		} else if (be.bone != null) {
+			double effK = Math.max(ambK, air.temperatureK) + Math.min(1200.0, radW) / 48.0;
+			be.bone.stepDrying(effK, rh, wind, rain, dt);
 		}
 		be.sync();
 	}
@@ -160,6 +179,13 @@ public class DryingRackBlockEntity extends BlockEntity {
 					(int) Math.round(gourd.crackSeverity * 100.0))
 					.formatted(gourd.isCuredForCarving() ? Formatting.GREEN : Formatting.GOLD);
 		}
+		if (bone != null) {
+			return Text.translatable("project_realism.drying.bone_status",
+					bone.speciesId,
+					(int) Math.round(bone.moisture * 100.0),
+					(int) Math.round(bone.brittleness * 100.0))
+					.formatted(bone.brittleness > 0.45 ? Formatting.RED : Formatting.AQUA);
+		}
 		return Text.empty();
 	}
 
@@ -173,6 +199,10 @@ public class DryingRackBlockEntity extends BlockEntity {
 			MaterialItems.RawGourdItem.writeGourdState(g, gourd);
 			Block.dropStack(world, pos, g);
 			gourd = null;
+		}
+		if (bone != null) {
+			Block.dropStack(world, pos, RawBoneItem.create(bone));
+			bone = null;
 		}
 	}
 
@@ -196,6 +226,7 @@ public class DryingRackBlockEntity extends BlockEntity {
 			g.putDouble("Seal", gourd.sealLevel);
 			nbt.put("Gourd", g);
 		}
+		if (bone != null) nbt.put("Bone", bone.toNbt());
 	}
 
 	@Override
@@ -212,6 +243,7 @@ public class DryingRackBlockEntity extends BlockEntity {
 		} else {
 			gourd = null;
 		}
+		bone = nbt.contains("Bone") ? BoneData.fromNbt(nbt.getCompound("Bone")) : null;
 	}
 
 	@Nullable

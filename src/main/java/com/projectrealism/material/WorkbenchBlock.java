@@ -1,6 +1,7 @@
 package com.projectrealism.material;
 
 import com.mojang.serialization.MapCodec;
+import com.projectrealism.anatomy.AnatomyItems;
 import com.projectrealism.primitive.PrimitiveItems;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
@@ -90,7 +91,22 @@ public class WorkbenchBlock extends BlockWithEntity {
 		ItemStack held = player.getMainHandStack();
 		ItemStack slotItem = be.getSlot(slot);
 
-		// Interact with cured raw gourd or cracked gourd flask placed on that quadrant!
+		// Interact with raw bone (carving & abrasive shaping), animal horn, or cured gourd placed on that quadrant!
+		if (slotItem.isOf(AnatomyItems.RAW_BONE)) {
+			if (held.isOf(PrimitiveItems.STONE_KNIFE) || held.isOf(AnatomyItems.BONE_BLADE)) {
+				be.carveBone(slot, player, held, world, pos);
+				return ActionResult.SUCCESS;
+			}
+			if (PrimitiveItems.isKnappable(held.getItem()) || held.isOf(PrimitiveItems.SHARP_STONE)) {
+				be.abradeBone(slot, player, held, world, pos);
+				return ActionResult.SUCCESS;
+			}
+		}
+		if (slotItem.isOf(AnatomyItems.ANIMAL_HORN)
+				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE))) {
+			be.carveHornFlask(slot, player, held, world, pos);
+			return ActionResult.SUCCESS;
+		}
 		if (slotItem.isOf(MaterialItems.RAW_GOURD)
 				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE))) {
 			be.carveGourd(slot, player, held, world, pos);

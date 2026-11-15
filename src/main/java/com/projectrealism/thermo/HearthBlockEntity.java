@@ -120,9 +120,13 @@ public class HearthBlockEntity extends BlockEntity {
 		boolean isWater = HydrationManager.isWaterBottle(stack)
 				|| (stack.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(stack) > 0)
 				|| (stack.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)
-				&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(stack) > 0);
-		boolean isRenderableScrap = stack.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP);
-		if (!CookingPhysics.isFoodTrackable(stack) && !isWater && !isRenderableScrap) {
+				&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(stack) > 0)
+				|| (stack.isOf(com.projectrealism.anatomy.AnatomyItems.HORN_FLASK)
+				&& com.projectrealism.anatomy.HornFlaskItem.getVolumeMl(stack) > 0);
+		boolean isRenderableScrap = stack.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP)
+				|| stack.isOf(com.projectrealism.anatomy.AnatomyItems.ANIMAL_FAT);
+		boolean isAnatomyMeat = stack.getItem() instanceof com.projectrealism.anatomy.AnatomyMeatItem;
+		if (!CookingPhysics.isFoodTrackable(stack) && !isWater && !isRenderableScrap && !isAnatomyMeat) {
 			return false;
 		}
 		cookingFood = stack.copyWithCount(1);
@@ -308,17 +312,31 @@ public class HearthBlockEntity extends BlockEntity {
 			thermo.radiateHeatSource(server, pos, be.temperatureK(), be.isFlaming() ? 1.4 : 0.7, dt);
 		}
 
-		// Advance food cooking, fat-scrap rendering into tallow wax, OR water heating/boiling!
+		// Advance food cooking, fat/scrap rendering into tallow wax, anatomy cut roasting, OR water boiling!
 		if (!be.cookingFood.isEmpty() && be.temperatureK() > 325.0) {
 			boolean isWater = HydrationManager.isWaterBottle(be.cookingFood)
 					|| (be.cookingFood.isOf(HydrationItems.WATERSKIN)
 					&& WaterskinItem.getVolumeMl(be.cookingFood) > 0)
 					|| (be.cookingFood.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)
-					&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(be.cookingFood) > 0);
-			if (be.cookingFood.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP)) {
+					&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(be.cookingFood) > 0)
+					|| (be.cookingFood.isOf(com.projectrealism.anatomy.AnatomyItems.HORN_FLASK)
+					&& com.projectrealism.anatomy.HornFlaskItem.getVolumeMl(be.cookingFood) > 0);
+			if (be.cookingFood.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP)
+					|| be.cookingFood.isOf(com.projectrealism.anatomy.AnatomyItems.ANIMAL_FAT)) {
 				if (be.temperatureK() >= 365.0 && be.tickCounter % 60 == 0) {
-					be.cookingFood = new ItemStack(com.projectrealism.material.MaterialItems.TALLOW_WAX, 1);
+					int waxCount = be.cookingFood.isOf(com.projectrealism.anatomy.AnatomyItems.ANIMAL_FAT) ? 2 : 1;
+					be.cookingFood = new ItemStack(com.projectrealism.material.MaterialItems.TALLOW_WAX, waxCount);
 					server.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.4f, 1.5f);
+				}
+			} else if (be.cookingFood.getItem() instanceof com.projectrealism.anatomy.AnatomyMeatItem ami) {
+				com.projectrealism.anatomy.MeatCutData m = com.projectrealism.anatomy.AnatomyMeatItem.readMeat(
+						be.cookingFood, ami.defaultKind());
+				m.stepEnvironment(be.temperatureK(), 0.25, air.speedMS(), be.isFlaming(), dt);
+				com.projectrealism.anatomy.AnatomyMeatItem.writeMeat(be.cookingFood, m);
+				if (be.tickCounter % 20 == 0) {
+					server.spawnParticles(ParticleTypes.SMOKE,
+							pos.getX() + 0.5, pos.getY() + 0.45, pos.getZ() + 0.5,
+							1, 0.08, 0.05, 0.08, 0.01);
 				}
 			} else if (isWater) {
 				WaterQuality cur = WaterQuality.read(be.cookingFood, WaterQuality.RIVER_WATER);

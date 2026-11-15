@@ -1,0 +1,18 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "project_realism:sinew"
+    },
+    {
+      "item": "project_realism:sinew"
+    }
+  ],
+  "result": {
+    "id": "project_realism:cordage",
+    "count": 3
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

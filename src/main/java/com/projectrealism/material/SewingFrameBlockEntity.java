@@ -249,18 +249,24 @@ public class SewingFrameBlockEntity extends BlockEntity {
 
 	private static boolean consumeCordage(PlayerEntity player) {
 		ItemStack off = player.getOffHandStack();
-		if (off.isOf(PrimitiveItems.CORDAGE)) {
+		if (isStitchThread(off)) {
 			off.decrement(1);
 			return true;
 		}
 		for (int i = 0; i < player.getInventory().size(); i++) {
 			ItemStack st = player.getInventory().getStack(i);
-			if (st.isOf(PrimitiveItems.CORDAGE)) {
+			if (isStitchThread(st)) {
 				st.decrement(1);
 				return true;
 			}
 		}
 		return false;
+	}
+
+	private static boolean isStitchThread(ItemStack stack) {
+		return stack.isOf(PrimitiveItems.CORDAGE)
+				|| stack.isOf(com.projectrealism.anatomy.AnatomyItems.SINEW)
+				|| stack.isOf(com.projectrealism.anatomy.AnatomyItems.TENDON);
 	}
 
 	public void dropContents(World world, BlockPos pos) {

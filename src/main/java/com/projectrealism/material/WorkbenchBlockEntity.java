@@ -1,6 +1,10 @@
 package com.projectrealism.material;
 
+import com.projectrealism.anatomy.AnatomyItems;
+import com.projectrealism.anatomy.BoneData;
+import com.projectrealism.anatomy.RawBoneItem;
 import com.projectrealism.primitive.PrimitiveItems;
+import com.projectrealism.primitive.ToolCondition;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -97,6 +101,115 @@ public class WorkbenchBlockEntity extends BlockEntity {
 		world.playSound(null, pos, SoundEvents.ITEM_HONEYCOMB_WAX_ON, SoundCategory.BLOCKS, 0.6f, 1.0f);
 		player.sendMessage(Text.translatable("project_realism.gourd.sealed").formatted(Formatting.GREEN), true);
 		sync();
+	}
+
+	public void carveBone(int slot, PlayerEntity player, ItemStack knife, World world, BlockPos pos) {
+		ItemStack stack = items[slot];
+		if (!stack.isOf(AnatomyItems.RAW_BONE)) return;
+		BoneData b = RawBoneItem.readBone(stack);
+
+		// Cycle compatible tool target when sneaking (Needle -> Awl -> Blade -> Chisel)
+		BoneData.ToolTarget target = b.target == BoneData.ToolTarget.NONE ? BoneData.ToolTarget.AWL : b.target;
+		if (player.isSneaking() || !b.canShape(target)) {
+			BoneData.ToolTarget[] opts = new BoneData.ToolTarget[]{
+					BoneData.ToolTarget.NEEDLE, BoneData.ToolTarget.AWL,
+					BoneData.ToolTarget.BLADE, BoneData.ToolTarget.CHISEL
+			};
+			int start = 0;
+			for (int i = 0; i < opts.length; i++) {
+				if (opts[i] == target) start = i;
+			}
+			for (int off = 1; off <= opts.length; off++) {
+				BoneData.ToolTarget cand = opts[(start + off) % opts.length];
+				if (b.canShape(cand)) {
+					target = cand;
+					break;
+				}
+			}
+		}
+
+		double sharp = knife.isOf(PrimitiveItems.STONE_KNIFE)
+				? ToolCondition.getSharpness(knife) / 100.0
+				: AnatomyItems.BoneToolItem.getWorkQualityPct(knife) / 100.0;
+		b.carveWithKnife(sharp, target);
+		RawBoneItem.writeBone(stack, b);
+		world.playSound(null, pos, SoundEvents.BLOCK_BONE_BLOCK_STEP, SoundCategory.BLOCKS, 0.65f, 1.2f);
+		if (b.isReadyToFinish()) {
+			finishBoneTool(slot, b, player, world, pos);
+		} else {
+			player.sendMessage(Text.translatable("project_realism.bone.carved",
+					b.target.id, (int) Math.round(b.cutProgress * 100.0),
+					(int) Math.round(b.abrasionSmooth * 100.0)).formatted(Formatting.AQUA), true);
+			sync();
+		}
+	}
+
+	public void abradeBone(int slot, PlayerEntity player, ItemStack stone, World world, BlockPos pos) {
+		ItemStack stack = items[slot];
+		if (!stack.isOf(AnatomyItems.RAW_BONE)) return;
+		BoneData b = RawBoneItem.readBone(stack);
+		if (b.target == BoneData.ToolTarget.NONE) {
+			b.target = b.canShape(BoneData.ToolTarget.AWL) ? BoneData.ToolTarget.AWL : BoneData.ToolTarget.NEEDLE;
+		}
+		b.abradeWithStone(stone.isOf(PrimitiveItems.FLINT_ROCK) || stone.isOf(PrimitiveItems.SHARP_STONE) ? 0.90 : 0.72);
+		RawBoneItem.writeBone(stack, b);
+		world.playSound(null, pos, SoundEvents.BLOCK_GRINDSTONE_USE, SoundCategory.BLOCKS, 0.55f, 1.25f);
+		if (b.isReadyToFinish()) {
+			finishBoneTool(slot, b, player, world, pos);
+		} else {
+			player.sendMessage(Text.translatable("project_realism.bone.abraded",
+					b.target.id, (int) Math.round(b.abrasionSmooth * 100.0),
+					b.resultingToolIntegrityPct()).formatted(Formatting.GOLD), true);
+			sync();
+		}
+	}
+
+	private void finishBoneTool(int slot, BoneData b, PlayerEntity player, World world, BlockPos pos) {
+		if (!b.canShape(b.target)) {
+			player.sendMessage(Text.translatable("project_realism.bone.too_small",
+					b.size.id, b.target.id).formatted(Formatting.RED), true);
+			sync();
+			return;
+		}
+		ItemStack out = switch (b.target) {
+			case NEEDLE -> new ItemStack(MaterialItems.BONE_NEEDLE);
+			case AWL -> new ItemStack(MaterialItems.BONE_AWL);
+			case BLADE -> new ItemStack(AnatomyItems.BONE_BLADE);
+			default -> new ItemStack(AnatomyItems.BONE_CHISEL);
+		};
+		int qualPct = b.resultingToolIntegrityPct();
+		if (out.isOf(AnatomyItems.BONE_BLADE) || out.isOf(AnatomyItems.BONE_CHISEL)) {
+			AnatomyItems.BoneToolItem.setWorkQualityPct(out, qualPct);
+		}
+		// Poor density or heat-brittle workmanship produces fragile tools with less remaining durability!
+		if (out.isDamageable() && qualPct < 90) {
+			int dmg = (int) Math.round(out.getMaxDamage() * (1.0 - qualPct / 100.0) * 0.75);
+			out.setDamage(Math.min(out.getMaxDamage() - 4, Math.max(0, dmg)));
+		}
+		items[slot] = out;
+		world.playSound(null, pos, SoundEvents.BLOCK_BONE_BLOCK_BREAK, SoundCategory.BLOCKS, 0.5f, 1.4f);
+		player.sendMessage(Text.translatable("project_realism.bone.finished",
+				b.target.id, qualPct).formatted(qualPct >= 70 ? Formatting.GREEN : Formatting.YELLOW), true);
+		sync();
+	}
+
+	public void carveHornFlask(int slot, PlayerEntity player, ItemStack tool, World world, BlockPos pos) {
+		if (!items[slot].isOf(AnatomyItems.ANIMAL_HORN)) return;
+		if (tool.isOf(MaterialItems.BONE_AWL) && gourdCarveProgress == 0) {
+			gourdCarveProgress = 1;
+			if (!player.isCreative()) tool.damage(1, player, EquipmentSlot.MAINHAND);
+			world.playSound(null, pos, SoundEvents.BLOCK_BONE_BLOCK_STEP, SoundCategory.BLOCKS, 0.6f, 1.3f);
+			player.sendMessage(Text.translatable("project_realism.horn.bored").formatted(Formatting.AQUA), true);
+			return;
+		}
+		if (tool.isOf(PrimitiveItems.STONE_KNIFE) && gourdCarveProgress >= 1) {
+			items[slot] = new ItemStack(AnatomyItems.HORN_FLASK);
+			gourdCarveProgress = 0;
+			if (!player.isCreative()) tool.damage(1, player, EquipmentSlot.MAINHAND);
+			world.playSound(null, pos, SoundEvents.BLOCK_BONE_BLOCK_BREAK, SoundCategory.BLOCKS, 0.6f, 1.15f);
+			player.sendMessage(Text.translatable("project_realism.horn.carved").formatted(Formatting.GREEN), true);
+			sync();
+		}
 	}
 
 	public void dropContents(World world, BlockPos pos) {

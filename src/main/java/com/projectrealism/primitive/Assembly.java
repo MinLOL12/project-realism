@@ -52,11 +52,13 @@ public final class Assembly {
 	}
 
 	private static boolean isBinding(ItemStack stack) {
-		return stack.isOf(PrimitiveItems.CORDAGE) || stack.isOf(PrimitiveItems.PLANT_FIBER);
+		return stack.isOf(PrimitiveItems.CORDAGE) || stack.isOf(PrimitiveItems.PLANT_FIBER)
+				|| stack.isOf(com.projectrealism.anatomy.AnatomyItems.SINEW)
+				|| stack.isOf(com.projectrealism.anatomy.AnatomyItems.TENDON);
 	}
 
 	/**
-	 * Cordage or fiber plus a finished tool: tightens or upgrades loose bindings.
+	 * Cordage, sinew, tendon, or fiber plus a finished tool: tightens or upgrades loose bindings.
 	 */
 	private static TypedActionResult<ItemStack> bind(PlayerEntity player, World world,
 													 Hand hand, Hand offHand,
@@ -70,9 +72,11 @@ public final class Assembly {
 			return TypedActionResult.pass(held);
 		}
 
-		boolean isCordage = binding.isOf(PrimitiveItems.CORDAGE);
+		boolean isStrong = binding.isOf(PrimitiveItems.CORDAGE)
+				|| binding.isOf(com.projectrealism.anatomy.AnatomyItems.SINEW)
+				|| binding.isOf(com.projectrealism.anatomy.AnatomyItems.TENDON);
 		int currentBind = ToolCondition.getBinding(tool);
-		if (currentBind >= 98 && (ToolCondition.isCordageBound(tool) || !isCordage)) {
+		if (currentBind >= 98 && (ToolCondition.isCordageBound(tool) || !isStrong)) {
 			if (!world.isClient) {
 				player.sendMessage(Text.translatable("project_realism.assemble.already_bound")
 						.formatted(Formatting.GRAY), true);
@@ -81,7 +85,7 @@ public final class Assembly {
 		}
 
 		if (world instanceof ServerWorld server) {
-			ToolCondition.tightenBinding(tool, isCordage);
+			ToolCondition.tightenBinding(tool, isStrong);
 			binding.decrementUnlessCreative(1, player);
 			clearIfEmpty(player, bindingHand, binding);
 			bindEffects(server, player);
@@ -178,32 +182,38 @@ public final class Assembly {
 			ItemStack stack = player.getInventory().getStack(slot);
 			if (stack.isOf(PrimitiveItems.PLANT_FIBER)) {
 				units += stack.getCount();
-			} else if (stack.isOf(PrimitiveItems.CORDAGE)) {
+			} else if (stack.isOf(PrimitiveItems.CORDAGE)
+					|| stack.isOf(com.projectrealism.anatomy.AnatomyItems.SINEW)
+					|| stack.isOf(com.projectrealism.anatomy.AnatomyItems.TENDON)) {
 				units += stack.getCount() * 2;
 			}
 		}
 		return units;
 	}
 
-	/** Returns true if cordage (strong binding) was used, false if only raw plant fiber was used. */
+	/** Returns true if cordage/sinew/tendon (strong binding) was used, false if only raw plant fiber was used. */
 	private static boolean consumeBinding(PlayerEntity player, int required) {
 		int remaining = required;
-		boolean usedCordage = false;
+		boolean usedStrong = false;
 
 		if (remaining >= 2) {
 			int before = remaining;
 			remaining = consumeItem(player, PrimitiveItems.CORDAGE, 2, remaining);
-			usedCordage = remaining < before;
+			remaining = consumeItem(player, com.projectrealism.anatomy.AnatomyItems.SINEW, 2, remaining);
+			remaining = consumeItem(player, com.projectrealism.anatomy.AnatomyItems.TENDON, 2, remaining);
+			usedStrong = remaining < before;
 			remaining = consumeItem(player, PrimitiveItems.PLANT_FIBER, 1, remaining);
 		} else {
 			remaining = consumeItem(player, PrimitiveItems.PLANT_FIBER, 1, remaining);
 			if (remaining > 0) {
 				int before = remaining;
 				remaining = consumeItem(player, PrimitiveItems.CORDAGE, 2, remaining);
-				usedCordage = remaining < before;
+				remaining = consumeItem(player, com.projectrealism.anatomy.AnatomyItems.SINEW, 2, remaining);
+				remaining = consumeItem(player, com.projectrealism.anatomy.AnatomyItems.TENDON, 2, remaining);
+				usedStrong = remaining < before;
 			}
 		}
-		return usedCordage;
+		return usedStrong;
 	}
 
 	private static int consumeItem(PlayerEntity player, net.minecraft.item.Item item, int unitValue, int remaining) {

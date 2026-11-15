@@ -1,9 +1,12 @@
 package com.projectrealism.material;
 
+import com.projectrealism.anatomy.AnatomyItems;
+import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.primitive.ToolCondition;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -95,11 +98,29 @@ public class CuttingSurfaceBlockEntity extends BlockEntity {
 		};
 	}
 
+	private static double knifeSharpness(ItemStack knife) {
+		if (knife.isOf(PrimitiveItems.STONE_KNIFE)) {
+			return ToolCondition.getSharpness(knife) / 100.0;
+		}
+		if (knife.isOf(AnatomyItems.BONE_BLADE)) {
+			return Math.max(0.35, AnatomyItems.BoneToolItem.getWorkQualityPct(knife) / 100.0);
+		}
+		return 0.80;
+	}
+
+	private static void wearKnife(PlayerEntity player, Hand hand, ItemStack knife, float hardness, ServerWorld sw) {
+		if (ToolCondition.isPrimitiveTool(knife)) {
+			ToolCondition.applyWear(player, hand, knife, hardness, sw);
+		} else if (knife.isDamageable() && !player.isCreative()) {
+			knife.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
+		}
+	}
+
 	public void cutTo(PlayerEntity player, Hand hand, ItemStack knife, double rawU, double rawV,
 					  World world, BlockPos pos) {
 		if (hide == null) return;
 		double[] uv = rotateUV(rawU, rawV);
-		double sharpness = ToolCondition.getSharpness(knife) / 100.0;
+		double sharpness = knifeSharpness(knife);
 		if (lastU < 0.0) {
 			lastU = uv[0];
 			lastV = uv[1];
@@ -117,7 +138,7 @@ public class CuttingSurfaceBlockEntity extends BlockEntity {
 					SoundCategory.BLOCKS, 0.55f, dullSnag ? 0.7f : (float) (1.1 + sharpness * 0.25));
 			sw.spawnParticles(ParticleTypes.CRIT, pos.getX() + rawU, pos.getY() + 0.78, pos.getZ() + rawV,
 					2, 0.05, 0.02, 0.05, 0.01);
-			ToolCondition.applyWear(player, hand, knife, (float) (0.6 + hide.averageThickness() * 0.5), sw);
+			wearKnife(player, hand, knife, (float) (0.6 + hide.averageThickness() * 0.5), sw);
 			player.sendMessage(Text.translatable("project_realism.cutting.tracing",
 					hide.cutMarkCount(), (int) Math.round(hide.lastCutRegularity * 100.0))
 					.formatted(dullSnag ? Formatting.YELLOW : Formatting.AQUA), true);
@@ -127,10 +148,10 @@ public class CuttingSurfaceBlockEntity extends BlockEntity {
 
 	public void separateCutPiece(PlayerEntity player, Hand hand, ItemStack knife, World world, BlockPos pos) {
 		if (hide == null) return;
-		double sharpness = ToolCondition.getSharpness(knife) / 100.0;
-		HideSurface.CutPieceProperties props = hide.extractCutPiece(sharpness);
+		double sharpness = knifeSharpness(knife);
 		lastU = -1.0;
 
+		HideSurface.CutPieceProperties props = hide.extractCutPiece(sharpness);
 		if (props != null) {
 			ItemStack piece = LeatherPieceItem.create(props);
 			if (!player.getInventory().insertStack(piece)) {
@@ -142,7 +163,7 @@ public class CuttingSurfaceBlockEntity extends BlockEntity {
 			}
 			if (world instanceof ServerWorld sw) {
 				sw.playSound(null, pos, SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.BLOCKS, 0.75f, 0.95f);
-				ToolCondition.applyWear(player, hand, knife, 0.8f, sw);
+				wearKnife(player, hand, knife, 0.8f, sw);
 			}
 			player.sendMessage(Text.translatable("project_realism.cutting.separated",
 					(int) Math.round(props.areaCm2), (int) Math.round(props.edgeRegularity * 100.0))

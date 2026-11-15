@@ -78,9 +78,17 @@ jobs:
             src/main/java/com/projectrealism/material/WorkbenchBlockEntity.java
             src/main/java/com/projectrealism/material/StorageRackBlockEntity.java
             src/main/java/com/projectrealism/client/MaterialBlockRenderers.java
+            src/main/java/com/projectrealism/anatomy/AnimalSpecies.java
+            src/main/java/com/projectrealism/anatomy/AnimalPhysiologyState.java
+            src/main/java/com/projectrealism/anatomy/CarcassState.java
+            src/main/java/com/projectrealism/anatomy/CarcassBlockEntity.java
+            src/main/java/com/projectrealism/anatomy/BoneData.java
+            src/main/java/com/projectrealism/anatomy/MeatCutData.java
+            src/main/java/com/projectrealism/client/AnatomyBlockRenderers.java
             src/test/java/com/projectrealism/thermo/ThermalMathTest.java
             src/test/java/com/projectrealism/hydration/BodyFluidMathTest.java
             src/test/java/com/projectrealism/material/MaterialSimulationTest.java
+            src/test/java/com/projectrealism/anatomy/AnatomySimulationTest.java
           )
           missing=0
           for f in "${required[@]}"; do

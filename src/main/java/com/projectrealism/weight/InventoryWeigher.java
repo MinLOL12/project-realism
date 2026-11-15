@@ -72,6 +72,14 @@ public final class InventoryWeigher {
 			mass = com.projectrealism.material.WaterskinConstruction.read(stack).totalMassKg(vol) * stack.getCount();
 		} else if (stack.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)) {
 			mass = com.projectrealism.material.GourdFlaskItem.totalMassKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.HORN_FLASK)) {
+			mass = com.projectrealism.anatomy.HornFlaskItem.totalMassKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.CARCASS_ITEM)) {
+			mass = com.projectrealism.anatomy.CarcassItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.RAW_BONE)) {
+			mass = com.projectrealism.anatomy.RawBoneItem.massKg(stack) * stack.getCount();
+		} else if (stack.getItem() instanceof com.projectrealism.anatomy.AnatomyMeatItem) {
+			mass = com.projectrealism.anatomy.AnatomyMeatItem.massKg(stack) * stack.getCount();
 		} else if (stack.isOf(com.projectrealism.material.MaterialItems.RAW_HIDE)) {
 			mass = com.projectrealism.material.RawHideItem.readSurface(stack).currentMassKg() * stack.getCount();
 		} else if (stack.isOf(com.projectrealism.material.MaterialItems.LEATHER_PIECE)) {

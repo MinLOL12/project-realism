@@ -143,6 +143,14 @@ public final class RealismConfig {
 	/** Whether anatomical hides, physical workstations, stitching, leaks, and material aging run. */
 	public boolean materialProcessing = true;
 
+	// ---------------------------------------- anatomy, carcasses & bones ---
+
+	/** Whether killed animals become persistent multi-region carcasses instead of instant loot drops. */
+	public boolean carcassSystem = true;
+
+	/** Whether live animals track forage fat, hydration, thermal load, fatigue, age & injuries. */
+	public boolean animalPhysiology = true;
+
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		RealismConfig config = new RealismConfig();

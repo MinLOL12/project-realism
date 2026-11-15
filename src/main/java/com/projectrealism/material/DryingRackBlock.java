@@ -102,7 +102,8 @@ public class DryingRackBlock extends BlockWithEntity {
 			be.takeItem(player, world, pos);
 			return ActionResult.SUCCESS;
 		}
-		if (!be.hasItem() && (held.isOf(MaterialItems.RAW_HIDE) || held.isOf(MaterialItems.RAW_GOURD))) {
+		if (!be.hasItem() && (held.isOf(MaterialItems.RAW_HIDE) || held.isOf(MaterialItems.RAW_GOURD)
+				|| held.isOf(com.projectrealism.anatomy.AnatomyItems.RAW_BONE))) {
 			be.mountItem(held, player);
 			return ActionResult.SUCCESS;
 		}

@@ -1,6 +1,8 @@
 package com.projectrealism.client;
 
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.anatomy.AnatomyItems;
+import com.projectrealism.anatomy.BoneData;
 import com.projectrealism.material.CuttingSurfaceBlock;
 import com.projectrealism.material.CuttingSurfaceBlockEntity;
 import com.projectrealism.material.DryingRackBlock;
@@ -199,6 +201,16 @@ public final class MaterialBlockRenderers {
 				matrices.translate(0.5, 0.62, 0.5);
 				matrices.scale(0.55f, 0.55f, 0.55f);
 				itemRenderer.renderItem(new ItemStack(MaterialItems.RAW_GOURD),
+						ModelTransformationMode.FIXED, light, overlay, matrices, consumers, be.getWorld(), 0);
+				matrices.pop();
+				return;
+			}
+			BoneData bd = be.bone();
+			if (bd != null) {
+				matrices.push();
+				matrices.translate(0.5, 0.64, 0.5);
+				matrices.scale(0.50f, 0.50f, 0.50f);
+				itemRenderer.renderItem(new ItemStack(AnatomyItems.RAW_BONE),
 						ModelTransformationMode.FIXED, light, overlay, matrices, consumers, be.getWorld(), 0);
 				matrices.pop();
 			}

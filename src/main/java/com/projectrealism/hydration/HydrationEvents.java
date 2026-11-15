@@ -164,6 +164,9 @@ public final class HydrationEvents {
 		if (stack.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)) {
 			return com.projectrealism.material.GourdFlaskItem.getVolumeMl(stack) > 0;
 		}
+		if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.HORN_FLASK)) {
+			return com.projectrealism.anatomy.HornFlaskItem.getVolumeMl(stack) > 0;
+		}
 		return HydrationManager.isWaterBottle(stack);
 	}
 

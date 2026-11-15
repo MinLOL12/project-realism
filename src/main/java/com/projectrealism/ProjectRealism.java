@@ -1,5 +1,8 @@
 package com.projectrealism;
 
+import com.projectrealism.anatomy.AnatomyBlocks;
+import com.projectrealism.anatomy.AnatomyEvents;
+import com.projectrealism.anatomy.AnatomyItems;
 import com.projectrealism.command.WeightCommand;
 import com.projectrealism.hydration.HydrationEvents;
 import com.projectrealism.hydration.HydrationItems;
@@ -73,6 +76,8 @@ public class ProjectRealism implements ModInitializer {
 		HydrationItems.register();
 		MaterialBlocks.register();
 		MaterialItems.register();
+		AnatomyBlocks.register();
+		AnatomyItems.register();
 		ModRecipes.register();
 		PrimitiveEvents.register();
 		TreeChopper.register();
@@ -80,6 +85,7 @@ public class ProjectRealism implements ModInitializer {
 		ThermoEvents.register();
 		HydrationEvents.register();
 		MaterialEvents.register();
+		AnatomyEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(HydrationPayload.ID, HydrationPayload.CODEC);
@@ -95,6 +101,7 @@ public class ProjectRealism implements ModInitializer {
 			ThermoEvents.tick(server);
 			HydrationManager.tick(server);
 			MaterialEvents.tick(server);
+			AnatomyEvents.tick(server);
 		});
 
 		// Logging in must never inherit a stale modifier from a previous session.

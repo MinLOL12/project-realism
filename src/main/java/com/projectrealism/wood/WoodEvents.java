@@ -1,12 +1,15 @@
 package com.projectrealism.wood;
 
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.anatomy.AnatomyItems;
 import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.primitive.ToolCondition;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.AxeItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -90,7 +93,7 @@ public final class WoodEvents {
 					}
 					return ActionResult.SUCCESS;
 				}
-				if (held.isOf(PrimitiveItems.STONE_KNIFE)) {
+				if (isWoodShaper(held)) {
 					if (world instanceof ServerWorld server) {
 						server.removeBlock(pos, false);
 						server.playSound(null, pos, SoundEvents.ITEM_AXE_STRIP, SoundCategory.BLOCKS, 0.9f, 1.15f);
@@ -99,7 +102,7 @@ public final class WoodEvents {
 							ToolCondition.setDry(rough, false);
 							Block.dropStack(server, pos, rough);
 						}
-						ToolCondition.applyWear(player, hand, held, sp.hardness() * 0.8f, server, true);
+						wearWoodShaper(player, hand, held, sp.hardness() * 0.8f, server);
 						player.sendMessage(Text.translatable("project_realism.wood.made_rough_planks_wet", sp.displayName())
 								.formatted(Formatting.GREEN), true);
 					}
@@ -107,7 +110,7 @@ public final class WoodEvents {
 				}
 			}
 
-			// 3. Dry vanilla logs: Sneak + Axe splits into dry firewood; Stone Knife hews into dry rough planks
+			// 3. Dry vanilla logs: Sneak + Axe splits into dry firewood; Stone Knife / Bone tool hews into dry rough planks
 			if (WoodSpecies.isDryLog(block)) {
 				Optional<WoodSpecies> maybe = WoodSpecies.fromBlock(block);
 				if (maybe.isPresent()) {
@@ -127,7 +130,7 @@ public final class WoodEvents {
 						}
 						return ActionResult.SUCCESS;
 					}
-					if (held.isOf(PrimitiveItems.STONE_KNIFE)) {
+					if (isWoodShaper(held)) {
 						if (world instanceof ServerWorld server) {
 							server.removeBlock(pos, false);
 							server.playSound(null, pos, SoundEvents.ITEM_AXE_STRIP, SoundCategory.BLOCKS, 0.9f, 1.15f);
@@ -136,7 +139,7 @@ public final class WoodEvents {
 								ToolCondition.setDry(rough, true);
 								Block.dropStack(server, pos, rough);
 							}
-							ToolCondition.applyWear(player, hand, held, sp.hardness() * 0.8f, server, true);
+							wearWoodShaper(player, hand, held, sp.hardness() * 0.8f, server);
 							player.sendMessage(Text.translatable("project_realism.wood.made_rough_planks_dry", sp.displayName())
 									.formatted(Formatting.GOLD), true);
 						}
@@ -145,8 +148,8 @@ public final class WoodEvents {
 				}
 			}
 
-			// 4. Split Wood: Stone Knife hews into rough plank (inherits moisture)
-			if (block instanceof SplitWoodBlock split && held.isOf(PrimitiveItems.STONE_KNIFE)) {
+			// 4. Split Wood: Stone Knife or Bone Blade/Chisel hews into rough plank (inherits moisture)
+			if (block instanceof SplitWoodBlock split && isWoodShaper(held)) {
 				if (world instanceof ServerWorld server) {
 					boolean isDry = state.get(SplitWoodBlock.MOISTURE) == 0;
 					WoodSpecies sp = split.species();
@@ -155,13 +158,13 @@ public final class WoodEvents {
 					ItemStack rough = new ItemStack(sp.roughPlankItem());
 					ToolCondition.setDry(rough, isDry);
 					Block.dropStack(server, pos, rough);
-					ToolCondition.applyWear(player, hand, held, sp.hardness() * 0.6f, server, true);
+					wearWoodShaper(player, hand, held, sp.hardness() * 0.6f, server);
 				}
 				return ActionResult.SUCCESS;
 			}
 
-			// 5. Rough Plank: Stone Knife planes dry rough plank into finished vanilla plank
-			if (block instanceof RoughPlankBlock rough && held.isOf(PrimitiveItems.STONE_KNIFE)) {
+			// 5. Rough Plank: Stone Knife or Bone Blade/Chisel planes dry rough plank into finished vanilla plank
+			if (block instanceof RoughPlankBlock rough && isWoodShaper(held)) {
 				WoodSpecies sp = rough.species();
 				int moisture = state.get(RoughPlankBlock.MOISTURE);
 				if (moisture > 0) {
@@ -175,7 +178,7 @@ public final class WoodEvents {
 					server.removeBlock(pos, false);
 					server.playSound(null, pos, SoundEvents.ITEM_AXE_STRIP, SoundCategory.BLOCKS, 0.8f, 1.3f);
 					Block.dropStack(server, pos, new ItemStack(sp.vanillaPlanks(), 1));
-					ToolCondition.applyWear(player, hand, held, sp.hardness() * 0.5f, server, true);
+					wearWoodShaper(player, hand, held, sp.hardness() * 0.5f, server);
 					player.sendMessage(Text.translatable("project_realism.wood.planed_plank", sp.displayName())
 							.formatted(Formatting.GOLD), true);
 				}
@@ -217,5 +220,20 @@ public final class WoodEvents {
 
 	private static boolean isAxe(ItemStack stack) {
 		return !stack.isEmpty() && (stack.isIn(ItemTags.AXES) || stack.getItem() instanceof AxeItem);
+	}
+
+	private static boolean isWoodShaper(ItemStack stack) {
+		return stack.isOf(PrimitiveItems.STONE_KNIFE)
+				|| stack.isOf(AnatomyItems.BONE_BLADE)
+				|| stack.isOf(AnatomyItems.BONE_CHISEL);
+	}
+
+	private static void wearWoodShaper(PlayerEntity player, Hand hand, ItemStack stack,
+									   float hardness, ServerWorld server) {
+		if (ToolCondition.isPrimitiveTool(stack)) {
+			ToolCondition.applyWear(player, hand, stack, hardness, server, true);
+		} else if (stack.isDamageable() && !player.isCreative()) {
+			stack.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
+		}
 	}
 }
