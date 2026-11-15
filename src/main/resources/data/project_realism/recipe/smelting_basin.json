@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "C C",
+    "CHC",
+    "SSS"
+  ],
+  "key": {
+    "C": [
+      {
+        "item": "project_realism:fire_clay_ball"
+      },
+      {
+        "item": "minecraft:clay_ball"
+      }
+    ],
+    "H": {
+      "item": "project_realism:hearth"
+    },
+    "S": [
+      {
+        "item": "project_realism:basalt_rock"
+      },
+      {
+        "item": "project_realism:granite_rock"
+      },
+      {
+        "item": "minecraft:cobblestone"
+      }
+    ]
+  },
+  "result": {
+    "id": "project_realism:smelting_basin",
+    "count": 1
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "minecraft:clay_ball"
+    },
+    {
+      "item": "project_realism:wood_ash"
+    },
+    {
+      "item": "minecraft:charcoal"
+    }
+  ],
+  "result": {
+    "id": "minecraft:brick",
+    "count": 2
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

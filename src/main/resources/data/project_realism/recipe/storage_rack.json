@@ -1,0 +1,27 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "building",
+  "ingredients": [
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "project_realism:cordage"
+    }
+  ],
+  "result": {
+    "id": "project_realism:storage_rack",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

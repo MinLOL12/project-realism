@@ -1,0 +1,145 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "project_realism:block/clay_crucible",
+    "clay": "project_realism:block/clay_crucible"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        2,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#clay"
+        },
+        "south": {
+          "texture": "#clay"
+        },
+        "east": {
+          "texture": "#clay"
+        },
+        "west": {
+          "texture": "#clay"
+        },
+        "up": {
+          "texture": "#clay"
+        },
+        "down": {
+          "texture": "#clay"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        2,
+        4
+      ],
+      "to": [
+        5,
+        10,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#clay"
+        },
+        "south": {
+          "texture": "#clay"
+        },
+        "east": {
+          "texture": "#clay"
+        },
+        "west": {
+          "texture": "#clay"
+        },
+        "up": {
+          "texture": "#clay"
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        2,
+        4
+      ],
+      "to": [
+        12,
+        10,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#clay"
+        },
+        "south": {
+          "texture": "#clay"
+        },
+        "east": {
+          "texture": "#clay"
+        },
+        "west": {
+          "texture": "#clay"
+        },
+        "up": {
+          "texture": "#clay"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        2,
+        4
+      ],
+      "to": [
+        11,
+        10,
+        5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#clay"
+        },
+        "south": {
+          "texture": "#clay"
+        },
+        "up": {
+          "texture": "#clay"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        2,
+        11
+      ],
+      "to": [
+        11,
+        10,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#clay"
+        },
+        "south": {
+          "texture": "#clay"
+        },
+        "up": {
+          "texture": "#clay"
+        }
+      }
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 package com.projectrealism.wood;
 
+import com.projectrealism.ProjectRealism;
 import com.projectrealism.primitive.ToolCondition;
+import com.projectrealism.thermo.ThermalWorldState;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
@@ -66,17 +68,29 @@ public class SplitWoodBlock extends Block {
 
 	@Override
 	public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-		if (!world.isClient && state.get(MOISTURE) > 0) {
-			world.scheduleBlockTick(pos, this,
-					DryingWoodHelper.computeStepDelayTicks(world, pos, species, 2.0f));
+		if (world instanceof ServerWorld server) {
+			if (ProjectRealism.config().thermodynamicsSimulation) {
+				var node = ThermalWorldState.get(server).getOrCreateNode(server, pos);
+				double sm = ToolCondition.getSurfaceMoisture(stack, 0.55);
+				double cm = ToolCondition.getCoreMoisture(stack, 0.60);
+				node.body.surfaceMoistureKg = Math.max(0.0, node.body.initialDryMassKg * 0.30 * sm);
+				node.body.coreMoistureKg = Math.max(0.0, node.body.initialDryMassKg * 0.70 * cm);
+			} else if (state.get(MOISTURE) > 0) {
+				world.scheduleBlockTick(pos, this,
+						DryingWoodHelper.computeStepDelayTicks(world, pos, species, 2.0f));
+			}
 		}
 	}
 
 	@Override
 	protected void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-		if (!world.isClient && state.get(MOISTURE) > 0) {
-			world.scheduleBlockTick(pos, this,
-					DryingWoodHelper.computeStepDelayTicks(world, pos, species, 2.0f));
+		if (world instanceof ServerWorld server && state.get(MOISTURE) > 0) {
+			if (ProjectRealism.config().thermodynamicsSimulation) {
+				ThermalWorldState.get(server).getOrCreateNode(server, pos);
+			} else {
+				world.scheduleBlockTick(pos, this,
+						DryingWoodHelper.computeStepDelayTicks(world, pos, species, 2.0f));
+			}
 		}
 	}
 
@@ -87,6 +101,10 @@ public class SplitWoodBlock extends Block {
 
 	@Override
 	protected void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+		if (ProjectRealism.config().thermodynamicsSimulation) {
+			ThermalWorldState.get(world).getOrCreateNode(world, pos);
+			return;
+		}
 		if (state.get(MOISTURE) > 0 && !world.getBlockTickScheduler().isQueued(pos, this)) {
 			world.scheduleBlockTick(pos, this,
 					DryingWoodHelper.computeStepDelayTicks(world, pos, species, 2.0f));
@@ -95,6 +113,10 @@ public class SplitWoodBlock extends Block {
 
 	@Override
 	protected void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+		if (ProjectRealism.config().thermodynamicsSimulation) {
+			ThermalWorldState.get(world).getOrCreateNode(world, pos);
+			return;
+		}
 		int moisture = state.get(MOISTURE);
 		if (moisture <= 0) {
 			return;
@@ -118,9 +140,14 @@ public class SplitWoodBlock extends Block {
 	public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state,
 						   @Nullable BlockEntity blockEntity, ItemStack tool) {
 		super.afterBreak(world, player, pos, state, blockEntity, tool);
-		if (!world.isClient && !player.isCreative()) {
+		if (world instanceof ServerWorld server && !player.isCreative()) {
 			ItemStack drop = new ItemStack(species.splitWoodItem());
-			ToolCondition.setDry(drop, state.get(MOISTURE) == 0);
+			var node = ThermalWorldState.get(server).getNodeReadOnly(pos);
+			if (node != null) {
+				ToolCondition.setMoisture(drop, node.body.surfaceMoistureRatio(), node.body.coreMoistureRatio());
+			} else {
+				ToolCondition.setDry(drop, state.get(MOISTURE) == 0);
+			}
 			Block.dropStack(world, pos, drop);
 		}
 	}

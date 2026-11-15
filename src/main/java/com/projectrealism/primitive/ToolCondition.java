@@ -30,6 +30,8 @@ public final class ToolCondition {
 	private static final String KEY_HEAD_DAMAGE = "HeadDamage";
 	private static final String KEY_CORDAGE = "CordageBound";
 	private static final String KEY_DRY = "Dry";
+	private static final String KEY_SURF_MOIST = "SurfaceMoisture";
+	private static final String KEY_CORE_MOIST = "CoreMoisture";
 
 	public enum SharpenResult {
 		SHARPENED,
@@ -287,18 +289,76 @@ public final class ToolCondition {
 
 	public static boolean isDry(ItemStack stack) {
 		NbtComponent comp = stack.get(DataComponentTypes.CUSTOM_DATA);
-		return comp != null && comp.copyNbt().getBoolean(KEY_DRY);
+		if (comp == null) {
+			return false;
+		}
+		NbtCompound nbt = comp.copyNbt();
+		if (nbt.contains(KEY_CORE_MOIST)) {
+			return nbt.getDouble(KEY_CORE_MOIST) <= 0.20 && nbt.getDouble(KEY_SURF_MOIST) <= 0.18;
+		}
+		return nbt.getBoolean(KEY_DRY);
 	}
 
 	public static ItemStack setDry(ItemStack stack, boolean dry) {
 		if (stack.isEmpty()) {
 			return stack;
 		}
-		NbtComponent.set(DataComponentTypes.CUSTOM_DATA, stack, nbt -> nbt.putBoolean(KEY_DRY, dry));
+		NbtComponent.set(DataComponentTypes.CUSTOM_DATA, stack, nbt -> {
+			nbt.putBoolean(KEY_DRY, dry);
+			nbt.putDouble(KEY_SURF_MOIST, dry ? 0.10 : 0.65);
+			nbt.putDouble(KEY_CORE_MOIST, dry ? 0.12 : 0.70);
+		});
+		return stack;
+	}
+
+	public static double getSurfaceMoisture(ItemStack stack, double fallback) {
+		NbtCompound nbt = readTag(stack);
+		if (nbt.contains(KEY_SURF_MOIST)) {
+			return Math.max(0.0, nbt.getDouble(KEY_SURF_MOIST));
+		}
+		return isDry(stack) ? 0.10 : fallback;
+	}
+
+	public static double getCoreMoisture(ItemStack stack, double fallback) {
+		NbtCompound nbt = readTag(stack);
+		if (nbt.contains(KEY_CORE_MOIST)) {
+			return Math.max(0.0, nbt.getDouble(KEY_CORE_MOIST));
+		}
+		return isDry(stack) ? 0.12 : fallback;
+	}
+
+	public static ItemStack setMoisture(ItemStack stack, double surfaceMoisture, double coreMoisture) {
+		if (stack.isEmpty()) {
+			return stack;
+		}
+		double s = Math.max(0.0, Math.min(1.5, surfaceMoisture));
+		double c = Math.max(0.0, Math.min(1.5, coreMoisture));
+		boolean dry = s <= 0.18 && c <= 0.20;
+		NbtComponent.set(DataComponentTypes.CUSTOM_DATA, stack, nbt -> {
+			nbt.putDouble(KEY_SURF_MOIST, s);
+			nbt.putDouble(KEY_CORE_MOIST, c);
+			nbt.putBoolean(KEY_DRY, dry);
+		});
 		return stack;
 	}
 
 	public static void appendWoodTooltip(ItemStack stack, List<Text> tooltip, boolean alwaysWet) {
+		NbtCompound nbt = readTag(stack);
+		if (nbt.contains(KEY_CORE_MOIST)) {
+			int surfPct = (int) Math.round(nbt.getDouble(KEY_SURF_MOIST) * 100.0);
+			int corePct = (int) Math.round(nbt.getDouble(KEY_CORE_MOIST) * 100.0);
+			boolean dry = !alwaysWet && isDry(stack);
+			tooltip.add(Text.translatable("project_realism.tooltip.wood_moisture", surfPct, corePct)
+					.formatted(dry ? Formatting.GOLD : Formatting.DARK_GREEN));
+			if (dry) {
+				tooltip.add(Text.translatable("project_realism.tooltip.wood_dry").formatted(Formatting.GOLD));
+			} else if (surfPct <= 20 && corePct > 25) {
+				tooltip.add(Text.translatable("project_realism.tooltip.wood_case_hardened").formatted(Formatting.YELLOW));
+			} else {
+				tooltip.add(Text.translatable("project_realism.tooltip.wood_wet").formatted(Formatting.DARK_GREEN));
+			}
+			return;
+		}
 		if (!alwaysWet && isDry(stack)) {
 			tooltip.add(Text.translatable("project_realism.tooltip.wood_dry").formatted(Formatting.GOLD));
 		} else {

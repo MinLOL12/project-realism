@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BB",
+    "BB"
+  ],
+  "key": {
+    "B": {
+      "item": "project_realism:fire_clay_brick"
+    }
+  },
+  "result": {
+    "id": "project_realism:fire_clay_bricks",
+    "count": 1
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "project_realism:wood_ash"
+    },
+    {
+      "item": "minecraft:kelp"
+    },
+    {
+      "item": "project_realism:plant_fiber"
+    }
+  ],
+  "result": {
+    "id": "project_realism:electrolyte_salts",
+    "count": 2
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

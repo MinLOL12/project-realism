@@ -1,0 +1,32 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "project_realism:cordage"
+    },
+    [
+      {
+        "item": "project_realism:granite_rock"
+      },
+      {
+        "item": "project_realism:limestone_rock"
+      },
+      {
+        "item": "project_realism:flint_rock"
+      }
+    ]
+  ],
+  "result": {
+    "id": "project_realism:bow_drill",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

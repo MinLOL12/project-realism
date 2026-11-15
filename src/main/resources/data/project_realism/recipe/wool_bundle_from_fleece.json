@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "project_realism:raw_wool"
+    },
+    {
+      "item": "project_realism:raw_wool"
+    },
+    {
+      "item": "project_realism:raw_wool"
+    },
+    {
+      "item": "project_realism:raw_wool"
+    }
+  ],
+  "result": {
+    "id": "minecraft:white_wool",
+    "count": 1
+  }
+}

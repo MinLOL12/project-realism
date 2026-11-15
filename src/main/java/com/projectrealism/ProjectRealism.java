@@ -1,10 +1,30 @@
 package com.projectrealism;
 
+import com.projectrealism.anatomy.AnatomyBlocks;
+import com.projectrealism.anatomy.AnatomyEvents;
+import com.projectrealism.anatomy.AnatomyItems;
 import com.projectrealism.command.WeightCommand;
+import com.projectrealism.hydration.HydrationEvents;
+import com.projectrealism.hydration.HydrationItems;
+import com.projectrealism.hydration.HydrationManager;
+import com.projectrealism.hydration.HydrationPayload;
+import com.projectrealism.knapping.DynamicKnappingBlocks;
+import com.projectrealism.knapping.DynamicKnappingEvents;
+import com.projectrealism.knapping.DynamicKnappingItems;
+import com.projectrealism.material.MaterialBlocks;
+import com.projectrealism.material.MaterialEvents;
+import com.projectrealism.material.MaterialItems;
+import com.projectrealism.metallurgy.MetallurgyBlocks;
+import com.projectrealism.metallurgy.MetallurgyEvents;
+import com.projectrealism.metallurgy.MetallurgyItems;
+import com.projectrealism.metallurgy.OreVeinSpawner;
 import com.projectrealism.primitive.PrimitiveBlocks;
 import com.projectrealism.primitive.PrimitiveEvents;
 import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.recipe.ModRecipes;
+import com.projectrealism.thermo.ThermoBlocks;
+import com.projectrealism.thermo.ThermoEvents;
+import com.projectrealism.thermo.ThermoItems;
 import com.projectrealism.weight.WeightAttributes;
 import com.projectrealism.weight.WeightManager;
 import com.projectrealism.weight.WeightPayload;
@@ -58,12 +78,31 @@ public class ProjectRealism implements ModInitializer {
 		PrimitiveBlocks.register();
 		WoodBlocks.register();
 		WoodItems.register();
+		ThermoBlocks.register();
+		ThermoItems.register();
+		HydrationItems.register();
+		MaterialBlocks.register();
+		MaterialItems.register();
+		AnatomyBlocks.register();
+		AnatomyItems.register();
+		DynamicKnappingBlocks.register();
+		DynamicKnappingItems.register();
+		MetallurgyBlocks.register();
+		MetallurgyItems.register();
 		ModRecipes.register();
 		PrimitiveEvents.register();
+		OreVeinSpawner.register();
 		TreeChopper.register();
 		WoodEvents.register();
+		ThermoEvents.register();
+		HydrationEvents.register();
+		MaterialEvents.register();
+		AnatomyEvents.register();
+		DynamicKnappingEvents.register();
+		MetallurgyEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(HydrationPayload.ID, HydrationPayload.CODEC);
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
 				WeightCommand.register(dispatcher, registryAccess));
@@ -73,14 +112,24 @@ public class ProjectRealism implements ModInitializer {
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			WeightManager.get().tick(server);
 			FallingTreeManager.tick(server);
+			ThermoEvents.tick(server);
+			HydrationManager.tick(server);
+			MaterialEvents.tick(server);
+			AnatomyEvents.tick(server);
 		});
 
 		// Logging in must never inherit a stale modifier from a previous session.
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-				WeightManager.get().onJoin(handler.getPlayer()));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			WeightManager.get().onJoin(handler.getPlayer());
+			HydrationManager.get(handler.getPlayer().getServerWorld()).onJoin(handler.getPlayer());
+		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			WeightManager.get().onDisconnect(handler.getPlayer().getUuid());
 			TreeChopper.forget(handler.getPlayer().getUuid());
+			ThermoEvents.onDisconnect(handler.getPlayer());
+			HydrationManager.get(handler.getPlayer().getServerWorld()).onDisconnect(handler.getPlayer().getUuid());
+			HydrationEvents.onDisconnect(handler.getPlayer());
+			MaterialEvents.onDisconnect(handler.getPlayer().getUuid());
 		});
 
 		// Pack authors can drop JSON weight overrides into a datapack and /reload without a restart.

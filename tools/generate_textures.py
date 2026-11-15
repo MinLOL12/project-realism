@@ -302,6 +302,101 @@ def make_flint_rock_item() -> Canvas:
     return c
 
 
+def make_chert_rock_item() -> Canvas:
+    c = Canvas()
+    pts = [(8, 11), (15, 7), (24, 9), (26, 17), (22, 24), (13, 25), (6, 21), (5, 15)]
+
+    def shader(x: int, y: int) -> RGBA:
+        dx = (x - 15.5) / 11.0
+        dy = (y - 16.0) / 9.5
+        n = hash_noise(x, y, 311)
+        band = math.sin((x * 0.45 + y * 0.7) + n * 0.6)
+        if x < 9 and y > 17:
+            base = (196, 186, 166)  # pale cortex edge
+        elif band > 0.35:
+            base = (176, 154, 128)  # warm caramel chalcedony band
+        elif band < -0.45:
+            base = (128, 112, 94)
+        else:
+            base = (156, 138, 116)
+        light = max(0.65, min(1.24, 1.04 - 0.24 * dx - 0.26 * dy))
+        return shade(base, light)
+
+    c.fill_poly(pts, shader)
+    c.outline((54, 44, 34, 255))
+    return c
+
+
+def make_quartzite_rock_item() -> Canvas:
+    c = Canvas()
+    cx, cy = 15.5, 16.5
+    for y in range(32):
+        for x in range(32):
+            dx = (x - cx) / 11.4
+            dy = (y - cy) / 9.0
+            ang = math.atan2(dy, dx)
+            r = math.hypot(dx, dy) + 0.06 * math.sin(ang * 3 + 1.2) + 0.04 * math.cos(ang * 5)
+            if r <= 0.96:
+                light = max(0.62, min(1.25, 1.05 - 0.24 * dx - 0.26 * dy))
+                n = hash_noise(x, y, 322)
+                if n > 0.84:
+                    base = (242, 236, 230)  # sugary quartz sparkle
+                elif n < 0.14:
+                    base = (182, 168, 162)
+                else:
+                    base = (218, 206, 198)
+                c.set(x, y, shade(base, light))
+    c.outline((92, 82, 78, 255))
+    return c
+
+
+def make_basalt_rock_item() -> Canvas:
+    c = Canvas()
+    pts = [(7, 13), (12, 8), (21, 7), (26, 12), (26, 20), (20, 25), (11, 24), (6, 19)]
+
+    def shader(x: int, y: int) -> RGBA:
+        dx = (x - 16.0) / 10.5
+        dy = (y - 16.0) / 9.5
+        n = hash_noise(x, y, 333)
+        if n > 0.86:
+            base = (104, 108, 114)  # plagioclase fleck
+        elif n < 0.15:
+            base = (52, 54, 60)    # micro-vesicle
+        else:
+            base = (76, 78, 86)
+        light = max(0.64, min(1.22, 1.02 - 0.22 * dx - 0.26 * dy))
+        return shade(base, light)
+
+    c.fill_poly(pts, shader)
+    c.outline((24, 25, 28, 255))
+    return c
+
+
+def make_obsidian_nodule_item() -> Canvas:
+    c = Canvas()
+    pts = [(9, 10), (16, 6), (25, 9), (26, 17), (21, 24), (12, 25), (6, 20), (6, 14)]
+
+    def shader(x: int, y: int) -> RGBA:
+        dx = (x - 15.5) / 10.5
+        dy = (y - 16.0) / 10.0
+        n = hash_noise(x, y, 344)
+        ripple = math.sin((x - y) * 0.75 + (x + y) * 0.35)
+        if ripple > 0.72 and dx + dy < 0.3:
+            base = (98, 76, 142)   # glassy conchoidal purple sheen
+        elif ripple > 0.15:
+            base = (50, 38, 76)
+        elif n < 0.12:
+            base = (18, 16, 24)
+        else:
+            base = (30, 24, 44)
+        light = max(0.68, min(1.28, 1.06 - 0.25 * dx - 0.25 * dy))
+        return shade(base, light)
+
+    c.fill_poly(pts, shader)
+    c.outline((12, 10, 18, 255))
+    return c
+
+
 def make_sharp_stone() -> Canvas:
     c = Canvas()
     # Diagonal leaf-shaped flint flake pointing top-right (26, 5)
@@ -640,7 +735,10 @@ def make_rough_plank_item(species: str, dry: bool = False) -> Canvas:
 
 def make_rock_block(kind: str) -> Canvas:
     c = Canvas(32, 32, (0, 0, 0, 255))
-    seed = {"granite": 1001, "limestone": 1002, "flint": 1003}[kind]
+    seed = {
+        "granite": 1001, "limestone": 1002, "flint": 1003,
+        "chert": 1004, "quartzite": 1005, "basalt": 1006,
+    }[kind]
     for y in range(32):
         for x in range(32):
             n = hash_noise(x, y, seed)
@@ -658,6 +756,16 @@ def make_rock_block(kind: str) -> Canvas:
                 band = math.sin(y * 0.95 + n * 0.7)
                 base = (168, 158, 138) if band < -0.5 else ((232, 224, 204) if n > 0.75 else (204, 195, 174))
                 bevel = 1.06 - 0.10 * (y / 31.0)
+            elif kind == "chert":
+                band = math.sin((x + y * 0.7) * 0.55 + n * 0.7)
+                base = (176, 154, 128) if band > 0.3 else ((128, 112, 94) if band < -0.4 else (154, 136, 114))
+                bevel = 1.07 - 0.12 * (y / 31.0)
+            elif kind == "quartzite":
+                base = (242, 236, 230) if n > 0.82 else ((182, 168, 162) if n < 0.14 else (218, 206, 198))
+                bevel = 1.08 - 0.12 * (x / 31.0 + y / 31.0) * 0.5
+            elif kind == "basalt":
+                base = (104, 108, 114) if n > 0.85 else ((52, 54, 60) if n < 0.15 else (76, 78, 86))
+                bevel = 1.06 - 0.12 * (y / 31.0)
             else:  # flint
                 wave = math.sin((x + y) * 0.45 + n * 0.6)
                 if n > 0.92:
@@ -742,14 +850,718 @@ def make_drying_wood_block(species: str, dry: bool, is_plank: bool) -> Canvas:
 
 
 # ---------------------------------------------------------------------------
+# Firemaking, Hearth & Ash Textures
+# ---------------------------------------------------------------------------
+
+def make_tinder_bundle() -> Canvas:
+    c = Canvas(32, 32)
+    # Cozy woven nest of dry golden straw, bark shavings & cordage wrap
+    for i in range(42):
+        ang = (i / 42.0) * math.pi * 2.0
+        r0 = 3.0 + (i % 4) * 1.4
+        r1 = 10.5 + (i % 3) * 1.6
+        x0 = round(16 + math.cos(ang) * r0)
+        y0 = round(17 + math.sin(ang) * r0 * 0.72)
+        x1 = round(16 + math.cos(ang + 0.55) * r1)
+        y1 = round(17 + math.sin(ang + 0.55) * r1 * 0.72)
+        col = (214, 178, 94, 255) if i % 3 == 0 else ((178, 134, 62, 255) if i % 3 == 1 else (138, 98, 44, 255))
+        c.line(x0, y0, x1, y1, col, 1)
+    # Central tender hollow & ember tinder core
+    for y in range(13, 21):
+        for x in range(11, 21):
+            d = math.hypot(x - 16, (y - 17) * 1.25)
+            if d < 5.0:
+                n = hash_noise(x, y, 2100)
+                col = (232, 202, 128) if n > 0.45 else (196, 156, 86)
+                c.set(x, y, shade(col, 1.0 - d * 0.04))
+    # Fiber cordage binding strap across bundle
+    c.line(8, 20, 24, 15, (148, 122, 68, 255), 2)
+    c.line(8, 21, 24, 16, (108, 86, 44, 255), 1)
+    c.outline()
+    return c
+
+
+def make_fire_drill() -> Canvas:
+    c = Canvas(32, 32)
+    # Horizontal notched cedar hearthboard at base
+    c.fill_poly([(4, 22), (27, 22), (28, 27), (3, 27)],
+                lambda x, y: shade((146, 98, 52) if y < 25 else (106, 68, 34), 0.94 + 0.1 * hash_noise(x, y, 2200)))
+    # Charred notch & ember dust glow on board
+    for y in range(21, 26):
+        for x in range(14, 19):
+            if math.hypot(x - 16, y - 22.5) < 2.6:
+                c.set(x, y, (238, 114, 28, 255) if y == 22 else (56, 36, 26, 255))
+    # Angled wooden spindle stick pressed into hearthboard
+    for i in range(22):
+        t = i / 21.0
+        px = round(16 + t * 8.0)
+        py = round(22 - t * 17.0)
+        for dx in (-1, 0, 1):
+            col = (182, 134, 74) if dx < 0 else ((146, 102, 52) if dx == 0 else (104, 68, 34))
+            if i < 3:
+                col = mix(col, (48, 30, 22), 0.65)  # charred tip
+            c.set(px + dx, py, shade(col, 1.0))
+    c.outline()
+    return c
+
+
+def make_bow_drill() -> Canvas:
+    c = Canvas(32, 32)
+    # Curved wooden bow arc
+    for i in range(48):
+        t = i / 47.0
+        bx = round(6 + t * 20)
+        by = round(19 - math.sin(t * math.pi) * 12)
+        c.line(bx, by, bx, by + 1, (148, 96, 48, 255), 2)
+    # Twisted cordage bowstring wrapped around upright spindle
+    c.line(6, 19, 16, 16, (206, 186, 132, 255), 1)
+    c.line(16, 16, 26, 19, (206, 186, 132, 255), 1)
+    # Vertical spindle + top granite bearing socket + charred bottom tip
+    for y in range(6, 27):
+        col = (176, 132, 74) if y < 23 else (58, 36, 24)
+        c.set(15, y, shade(col, 1.05))
+        c.set(16, y, shade(col, 0.92))
+    # Stone handhold bearing block at top
+    c.fill_poly([(12, 3), (20, 3), (21, 7), (11, 7)],
+                lambda x, y: shade((132, 132, 138), 0.92 + 0.14 * hash_noise(x, y, 2300)))
+    # Glowing friction ember spot at base
+    c.set(15, 27, (242, 118, 28, 255))
+    c.set(16, 27, (252, 182, 52, 255))
+    c.outline()
+    return c
+
+
+def make_wood_ash_item() -> Canvas:
+    c = Canvas(32, 32)
+    c.fill_poly([(6, 23), (11, 15), (17, 13), (22, 16), (26, 23), (22, 26), (10, 26)],
+                lambda x, y: shade(
+                    (204, 206, 202) if y < 18 else ((146, 148, 146) if hash_noise(x, y, 2400) > 0.22 else (58, 56, 54)),
+                    0.94 + 0.12 * hash_noise(x, y, 2401)))
+    c.outline()
+    return c
+
+
+def make_hearth_side_block() -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            n = hash_noise(x, y, 2500)
+            if y < 22:
+                # Fieldstone ring masonry
+                stone_cell = ((x // 8) + (y // 6) * 3)
+                edge = (x % 8 == 0) or (y % 6 == 0)
+                base = (72, 70, 68) if edge else ((128, 126, 122) if stone_cell % 2 == 0 else (108, 104, 100))
+                c.set(x, y, shade(base, 0.92 + 0.16 * n))
+            else:
+                # Compacted dark earth foundation
+                base = (68, 52, 38) if n > 0.35 else (54, 40, 28)
+                c.set(x, y, shade(base, 0.95 + 0.1 * n))
+    return c
+
+
+def make_hearth_top_block(mode: str) -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            d = math.hypot(x - 15.5, y - 15.5)
+            n = hash_noise(x, y, 2600 + (1 if mode == "embers" else (2 if mode == "lit" else 0)))
+            if d > 11.5:
+                # Outer ring of river cobblestones
+                ang = math.atan2(y - 15.5, x - 15.5)
+                seg = int((ang + math.pi) / (math.pi / 4))
+                seam = abs(((ang + math.pi) % (math.pi / 4)) - (math.pi / 8)) > (math.pi / 8 - 0.11)
+                base = (66, 64, 62) if seam else ((136, 132, 128) if seg % 2 == 0 else (112, 108, 104))
+                c.set(x, y, shade(base, 0.90 + 0.18 * n))
+            else:
+                # Interior fuel & ash pit
+                if mode == "cold":
+                    base = (128, 128, 124) if n > 0.45 else (58, 54, 50)
+                elif mode == "embers":
+                    if n > 0.62:
+                        base = (232, 82, 18)
+                    elif n > 0.45:
+                        base = (164, 42, 16)
+                    else:
+                        base = (52, 48, 46)
+                else:  # lit blazing fire bed
+                    if d < 5.5 and n > 0.35:
+                        base = (255, 212, 72)
+                    elif n > 0.30:
+                        base = (242, 108, 22)
+                    else:
+                        base = (68, 42, 28)
+                c.set(x, y, shade(base, 0.94 + 0.12 * n))
+    return c
+
+
+def make_wood_ash_pile_block() -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            n = hash_noise(x, y, 2700)
+            if n < 0.09:
+                base = (48, 46, 46)  # tiny unburned charcoal fleck
+            elif n > 0.72:
+                base = (214, 216, 210)
+            else:
+                base = (176, 178, 174)
+            c.set(x, y, shade(base, 0.94 + 0.12 * n))
+    return c
+
+
+# ---------------------------------------------------------------------------
+# Hydration & Water Quality Gear Textures
+# ---------------------------------------------------------------------------
+
+def make_waterskin() -> Canvas:
+    c = Canvas(32, 32)
+    # Shoulder strap arc
+    for i in range(36):
+        t = i / 35.0
+        bx = round(7 + t * 18)
+        by = round(10 - math.sin(t * math.pi) * 6.5)
+        c.line(bx, by, bx, by + 1, (112, 74, 42, 255), 1)
+    # Pear-shaped stitched leather flask body
+    for y in range(9, 28):
+        for x in range(6, 26):
+            ny = (y - 19.0) / 8.5
+            width = 7.8 * (1.0 - 0.35 * ny * ny) if y > 13 else 3.2 + (y - 9) * 0.85
+            if abs(x - 16) <= width:
+                n = hash_noise(x, y, 2800)
+                dist_edge = width - abs(x - 16)
+                light = 1.12 - ((x - 14) * 0.028) - max(0.0, (y - 17) * 0.025)
+                base = (146, 86, 46)
+                if dist_edge < 1.3:
+                    base = (96, 54, 28) if (y % 3 != 0) else (206, 186, 134)  # stitched seam
+                c.set(x, y, shade(base, light * (0.94 + 0.12 * n)))
+    # Cordage neck wrap & wooden cork stopper
+    for x in range(13, 20):
+        c.set(x, 8, (186, 162, 108, 255))
+        c.set(x, 9, (148, 124, 78, 255))
+    for y in range(4, 8):
+        for x in range(14, 19):
+            c.set(x, y, shade((176, 132, 78), 1.0 - (x - 14) * 0.06))
+    c.outline()
+    return c
+
+
+def make_water_filter() -> Canvas:
+    c = Canvas(32, 32)
+    # Bamboo / hollowed split-wood purifying tube with internal gravel, sand & charcoal layers
+    for y in range(5, 27):
+        for x in range(10, 22):
+            n = hash_noise(x, y, 2900)
+            if x in (10, 11, 20, 21):
+                # Wooden cylinder casing with cordage bands
+                col = (166, 126, 72) if y not in (9, 10, 21, 22) else (196, 174, 116)
+                c.set(x, y, shade(col, 1.04 - (x - 10) * 0.02))
+            else:
+                if y < 11:
+                    col = (88, 174, 226) if n > 0.35 else (112, 196, 242)  # water at top
+                elif y < 17:
+                    col = (52, 50, 54) if n > 0.25 else (34, 34, 38)  # activated charcoal layer
+                elif y < 23:
+                    col = (212, 194, 144) if n > 0.3 else (184, 166, 118)  # quartz sand bed
+                else:
+                    col = (146, 144, 140) if n > 0.4 else (114, 112, 108)  # gravel base
+                c.set(x, y, shade(col, 0.92 + 0.16 * n))
+    # Clear purified drop below spout
+    for y in range(28, 31):
+        for x in range(14, 18):
+            if math.hypot(x - 15.5, y - 29.0) < 1.8:
+                c.set(x, y, (118, 212, 255, 255))
+    c.outline()
+    return c
+
+
+def make_electrolyte_salts() -> Canvas:
+    c = Canvas(32, 32)
+    # Open woven pouch holding bright crystalline mineral salts
+    c.fill_poly([(7, 13), (25, 13), (27, 27), (5, 27)],
+                lambda x, y: shade((182, 164, 128) if (x + y) % 3 else (154, 136, 102),
+                                   0.94 + 0.12 * hash_noise(x, y, 3000)))
+    # Cordage tie rim
+    c.line(8, 14, 24, 14, (132, 104, 62, 255), 2)
+    # Mound of pale mineral & sea-salt crystals peeking out top
+    for y in range(7, 16):
+        for x in range(9, 23):
+            d = math.hypot((x - 16) * 0.78, y - 13.5)
+            if d < 5.6:
+                n = hash_noise(x, y, 3050)
+                col = (242, 236, 232) if n > 0.55 else ((232, 206, 196) if n > 0.25 else (218, 232, 236))
+                c.set(x, y, shade(col, 1.05 - d * 0.04))
+    c.outline()
+    return c
+
+
+# ---------------------------------------------------------------------------
+# Diegetic Material Processing, Hidecraft & Vessel Textures
+# ---------------------------------------------------------------------------
+
+def make_material_canvas() -> Canvas:
+    return Canvas(32, 32, (255, 255, 255, 255))
+
+
+def make_stone_scraper(dull: bool = False) -> Canvas:
+    c = Canvas(32, 32)
+    # Fan-shaped knapped end-scraper held with cordage-wrapped finger grip
+    for y in range(6, 27):
+        for x in range(7, 25):
+            dy = (y - 17.0) / 9.5
+            dx = (x - 16.0) / (8.5 if y < 17 else 5.2)
+            if dx * dx + dy * dy <= 1.0:
+                n = hash_noise(x, y, 3100)
+                if y <= 11:
+                    col = (146, 142, 136) if dull else (196, 196, 192)  # beveled scraping edge
+                elif y >= 21:
+                    col = (164, 138, 92) if (x + y) % 2 == 0 else (136, 112, 72)  # cordage wrap
+                else:
+                    col = (108, 106, 102)
+                c.set(x, y, shade(col, 0.92 + 0.16 * n))
+    c.outline()
+    return c
+
+
+def make_bone_awl() -> Canvas:
+    c = Canvas(32, 32)
+    # Tapered sharp bone awl diagonally oriented from knuckle handle to fine piercing point
+    for i in range(22):
+        t = i / 21.0
+        cx = round(7 + i * 0.85)
+        cy = round(25 - i * 0.85)
+        rad = 2.6 - t * 2.1
+        for oy in range(-3, 4):
+            for ox in range(-3, 4):
+                if ox * ox + oy * oy <= rad * rad:
+                    n = hash_noise(cx + ox, cy + oy, 3200)
+                    col = (228, 220, 198) if i > 3 else (204, 192, 166)
+                    c.set(cx + ox, cy + oy, shade(col, 0.94 + 0.12 * n))
+    c.outline()
+    return c
+
+
+def make_bone_needle() -> Canvas:
+    c = Canvas(32, 32)
+    # Slender ivory bone needle with tiny slotted eye & cordage thread trailing
+    c.line(8, 24, 25, 7, (232, 224, 206, 255), 2)
+    c.set(11, 21, (60, 52, 46, 255))  # needle eye
+    c.line(10, 22, 6, 26, (186, 158, 102, 255), 1)
+    c.line(6, 26, 12, 28, (164, 138, 86, 255), 1)
+    c.outline()
+    return c
+
+
+def make_raw_hide() -> Canvas:
+    c = Canvas(32, 32)
+    # Irregular anatomical hide silhouette with thick dark spine down center and fleshy underside
+    for y in range(4, 28):
+        for x in range(5, 27):
+            edge_w = 9.5 - 3.0 * math.cos((y - 16) * 0.25)
+            if abs(x - 16) <= edge_w:
+                n = hash_noise(x, y, 3300)
+                spine = abs(x - 16) < 2.2
+                col = (128, 68, 44) if spine else (172, 92, 68)
+                c.set(x, y, shade(col, 0.90 + 0.18 * n))
+    c.outline()
+    return c
+
+
+def make_leather_piece() -> Canvas:
+    c = Canvas(32, 32)
+    # Clean trimmed supple tan leather panel
+    c.fill_poly([(7, 6), (24, 7), (25, 25), (6, 24)],
+                lambda x, y: shade((184, 124, 70), 0.94 + 0.12 * hash_noise(x, y, 3400)))
+    c.outline()
+    return c
+
+
+def make_hide_scrap() -> Canvas:
+    c = Canvas(32, 32)
+    c.fill_poly([(8, 12), (21, 9), (24, 20), (14, 24), (7, 19)],
+                lambda x, y: shade((166, 108, 62), 0.92 + 0.16 * hash_noise(x, y, 3500)))
+    c.outline()
+    return c
+
+
+def make_tallow_wax() -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(8, 25):
+        for x in range(7, 25):
+            if math.hypot((x - 16) * 0.9, y - 16.5) < 7.2:
+                n = hash_noise(x, y, 3600)
+                c.set(x, y, shade((238, 224, 172), 0.92 + 0.14 * n))
+    c.outline()
+    return c
+
+
+def make_pine_resin() -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(7, 26):
+        for x in range(8, 24):
+            if math.hypot(x - 16, (y - 16.5) * 0.85) < 6.8:
+                n = hash_noise(x, y, 3700)
+                c.set(x, y, shade((216, 134, 34) if n > 0.35 else (176, 94, 20), 0.94 + 0.14 * n))
+    c.outline()
+    return c
+
+
+def make_gourd(carved: bool) -> Canvas:
+    c = Canvas(32, 32)
+    # Double-lobed bottle gourd silhouette
+    for y in range(6, 27):
+        for x in range(7, 25):
+            upper = math.hypot((x - 16) * 1.15, y - 11.5) < 4.5
+            lower = math.hypot((x - 16) * 0.92, y - 20.5) < 6.4
+            if upper or lower:
+                n = hash_noise(x, y, 3800 + (50 if carved else 0))
+                base = (196, 146, 68) if carved else (112, 162, 68)
+                c.set(x, y, shade(base, 0.92 + 0.16 * n - (x - 14) * 0.018))
+    if carved:
+        for x in range(14, 19):
+            c.set(x, 6, (118, 78, 42, 255))  # bored stopper mouth
+    c.outline()
+    return c
+
+
+def make_workstation_wood(seed: int, slab_top: bool = False) -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            n = hash_noise(x, y, seed)
+            plank_seam = (y % 8 == 0) or (slab_top and (x == 0 or x == 31 or y == 0 or y == 31))
+            base = (104, 72, 42) if plank_seam else ((158, 114, 70) if (y // 8) % 2 == 0 else (142, 102, 62))
+            if slab_top and 4 <= x <= 27 and 4 <= y <= 27 and not plank_seam:
+                base = (174, 132, 84)  # smooth planed top work face
+            c.set(x, y, shade(base, 0.94 + 0.12 * n))
+    return c
+
+
+# ---------------------------------------------------------------------------
+# Anatomical Carcass, Bone Processing, Sinew, Cuts, Organs & Horn Textures
+# ---------------------------------------------------------------------------
+
+def make_carcass_item() -> Canvas:
+    c = Canvas(32, 32)
+    # Clean bundled game carcass silhouette bound with cordage strap
+    for y in range(8, 25):
+        for x in range(5, 27):
+            if math.hypot((x - 16) * 0.72, (y - 17) * 1.05) < 7.6:
+                n = hash_noise(x, y, 4200)
+                col = (146, 102, 68) if y < 19 else (186, 148, 114)
+                c.set(x, y, shade(col, 0.92 + 0.14 * n))
+    c.line(12, 10, 12, 23, (176, 146, 94, 255), 2)
+    c.line(20, 10, 20, 23, (176, 146, 94, 255), 2)
+    c.outline()
+    return c
+
+
+def make_raw_bone() -> Canvas:
+    c = Canvas(32, 32)
+    # Long cortical shaft with smooth articular condyles
+    c.line(8, 24, 24, 8, (230, 222, 198, 255), 3)
+    for (cx, cy) in [(7, 23), (9, 25), (23, 7), (25, 9)]:
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                if dx * dx + dy * dy <= 4:
+                    c.set(cx + dx, cy + dy, shade((224, 214, 188), 0.96 + 0.08 * hash_noise(cx + dx, cy + dy, 4300)))
+    c.outline()
+    return c
+
+
+def make_meat_cut(kind: str) -> Canvas:
+    c = Canvas(32, 32)
+    if kind == "prime":
+        poly = [(8, 10), (22, 8), (25, 20), (12, 24), (7, 18)]
+        base, streak = (176, 86, 78), (222, 196, 182)
+    elif kind == "fatty":
+        poly = [(6, 9), (25, 10), (26, 22), (7, 23)]
+        base, streak = (168, 94, 84), (236, 222, 178)
+    else:
+        poly = [(8, 7), (21, 9), (24, 24), (11, 25), (6, 15)]
+        base, streak = (138, 68, 64), (192, 166, 152)
+    c.fill_poly(poly, lambda x, y: shade(
+        streak if ((x + y * 2) % 7 == 0 and kind != "tough") or (kind == "fatty" and y % 5 == 0) else base,
+        0.92 + 0.16 * hash_noise(x, y, 4400)))
+    c.outline()
+    return c
+
+
+def make_organ(kind: str) -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(7, 26):
+        for x in range(7, 25):
+            n = hash_noise(x, y, 4500)
+            if kind == "heart":
+                in_shape = math.hypot((x - 16) * 1.1, y - 15) < 6.8 or math.hypot((x - 16) * 1.4, y - 20) < 4.0
+                col = (148, 62, 66)
+            elif kind == "liver":
+                in_shape = math.hypot((x - 14) * 0.9, y - 16) < 6.5 or math.hypot((x - 19) * 1.1, y - 17) < 5.0
+                col = (122, 64, 58)
+            else:
+                in_shape = 4.0 < math.hypot(x - 16, y - 16) < 7.8 or math.hypot(x - 16, y - 16) < 2.8
+                col = (198, 174, 146)
+            if in_shape:
+                c.set(x, y, shade(col, 0.92 + 0.16 * n))
+    c.outline()
+    return c
+
+
+def make_animal_fat() -> Canvas:
+    c = Canvas(32, 32)
+    c.fill_poly([(7, 11), (22, 9), (26, 19), (16, 25), (6, 20)],
+                lambda x, y: shade((238, 224, 174), 0.94 + 0.12 * hash_noise(x, y, 4600)))
+    c.outline()
+    return c
+
+
+def make_connective(is_tendon: bool) -> Canvas:
+    c = Canvas(32, 32)
+    col = (212, 204, 186) if is_tendon else (228, 214, 184)
+    for s in range(-2, 3, 2):
+        c.line(7, 23 + s // 2, 24, 9 + s // 2, (col[0], col[1], col[2], 255), 2)
+    c.outline()
+    return c
+
+
+def make_raw_wool() -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(6, 26):
+        for x in range(6, 26):
+            d = min(math.hypot(x - 13, y - 14), math.hypot(x - 19, y - 14),
+                    math.hypot(x - 16, y - 19), math.hypot(x - 15, y - 11))
+            if d < 6.2:
+                n = hash_noise(x, y, 4700)
+                c.set(x, y, shade((242, 238, 226), 0.92 + 0.14 * n))
+    c.outline()
+    return c
+
+
+def make_horn(flask: bool = False) -> Canvas:
+    c = Canvas(32, 32)
+    for t_i in range(28):
+        t = t_i / 27.0
+        cx = 9 + t * 14 + math.sin(t * 2.2) * 3.0
+        cy = 24 - t * 16 - math.cos(t * 1.4) * 2.0
+        rad = (4.8 * (1.0 - t * 0.72)) if not flask else (5.2 * (1.0 - t * 0.58))
+        for dy in range(-5, 6):
+            for dx in range(-5, 6):
+                if dx * dx + dy * dy <= rad * rad:
+                    ix, iy = round(cx + dx), round(cy + dy)
+                    n = hash_noise(ix, iy, 4800)
+                    col = (194, 174, 134) if t < 0.65 else (98, 86, 72)
+                    c.set(ix, iy, shade(col, 0.92 + 0.14 * n))
+    if flask:
+        c.line(7, 21, 13, 27, (132, 88, 46, 255), 2)  # wooden stopper lip
+    c.outline()
+    return c
+
+
+def make_bone_tool(chisel: bool = False) -> Canvas:
+    c = Canvas(32, 32)
+    if chisel:
+        c.line(7, 25, 22, 10, (226, 218, 194, 255), 3)
+        c.line(21, 9, 25, 6, (242, 236, 218, 255), 4)
+        c.line(10, 20, 14, 24, (176, 152, 104, 255), 2)
+    else:
+        c.line(7, 25, 13, 19, (164, 132, 84, 255), 2)
+        c.fill_poly([(13, 19), (24, 6), (26, 9), (16, 21)],
+                    lambda x, y: shade((234, 226, 204), 0.94 + 0.10 * hash_noise(x, y, 4900)))
+    c.outline()
+    return c
+
+
+# ---------------------------------------------------------------------------
 # Registry of All Textures
 # ---------------------------------------------------------------------------
+
+def make_ore_deposit_block(host_rgb: RGB, vein_rgb: RGB, accent_rgb: RGB, seed: int) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(seed)
+    for y in range(32):
+        for x in range(32):
+            n = (rng.random() - 0.5) * 0.14
+            diag = math.sin(x * 0.35 + y * 0.25 + seed) * 0.5 + math.cos(x * 0.18 - y * 0.42) * 0.5
+            if diag > 0.42 and rng.random() < 0.72:
+                col = accent_rgb if rng.random() < 0.35 else vein_rgb
+                cv.set(x, y, shade(col, 0.92 + rng.random() * 0.24))
+            elif diag > 0.20 and rng.random() < 0.35:
+                cv.set(x, y, shade(vein_rgb, 0.85 + rng.random() * 0.15))
+            else:
+                cv.set(x, y, shade(host_rgb, 0.92 + n))
+    return cv
+
+
+def make_brick_wall_block(brick_rgb: RGB, mortar_rgb: RGB, seed: int) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(seed)
+    for y in range(32):
+        row = y // 8
+        offset = 8 if (row % 2) == 1 else 0
+        for x in range(32):
+            if (y % 8) == 0 or ((x + offset) % 16) == 0:
+                cv.set(x, y, shade(mortar_rgb, 0.94 + rng.random() * 0.12))
+            else:
+                v = 0.90 + rng.random() * 0.18
+                cv.set(x, y, shade(brick_rgb, v))
+    return cv
+
+
+def make_smelting_basin_top(lit: bool) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(905 if lit else 904)
+    rim: RGB = (92, 86, 82)
+    bed: RGB = (42, 34, 30) if not lit else (238, 128, 34)
+    for y in range(32):
+        for x in range(32):
+            in_basin = 4 <= x <= 27 and 4 <= y <= 27
+            if not in_basin:
+                cv.set(x, y, shade(rim, 0.92 + rng.random() * 0.16))
+            else:
+                d = math.hypot(x - 15.5, y - 15.5)
+                if lit:
+                    heat = max(0.2, 1.0 - d / 16.0)
+                    col = mix((185, 52, 16), (255, 224, 108), heat * (0.7 + 0.3 * rng.random()))
+                    cv.set(x, y, shade(col, 0.95 + rng.random() * 0.1))
+                else:
+                    cv.set(x, y, shade(bed, 0.85 + rng.random() * 0.3))
+    return cv
+
+
+def make_smelting_basin_side() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(906)
+    stone: RGB = (104, 98, 94)
+    dark: RGB = (58, 52, 48)
+    for y in range(32):
+        for x in range(32):
+            if 11 <= x <= 20 and 18 <= y <= 29:
+                cv.set(x, y, shade(dark, 0.8 + rng.random() * 0.25))
+            else:
+                cv.set(x, y, shade(stone, 0.90 + rng.random() * 0.18))
+    return cv
+
+
+def make_ore_chunk_item() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(910)
+    rock: RGB = (118, 114, 108)
+    vein: RGB = (62, 178, 122)
+    cu: RGB = (206, 118, 66)
+    for y in range(7, 25):
+        for x in range(7, 25):
+            dx = (x - 15.5) / 8.0
+            dy = (y - 16.0) / 7.2
+            if dx * dx + dy * dy + 0.15 * math.sin(x * 0.7 + y * 0.5) <= 0.92:
+                if (x + y) % 5 == 0 or (x * 2 - y) % 7 == 0:
+                    col = cu if (x + y) % 2 == 0 else vein
+                    cv.set(x, y, shade(col, 0.95 + rng.random() * 0.15))
+                else:
+                    cv.set(x, y, shade(rock, 0.88 + rng.random() * 0.22 - (dy * 0.12)))
+    return cv
+
+
+def make_slag_clump_item() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(911)
+    slag: RGB = (66, 60, 56)
+    glass: RGB = (92, 104, 98)
+    for y in range(8, 24):
+        for x in range(8, 24):
+            d = ((x - 15.5) / 7.0) ** 2 + ((y - 16.0) / 6.5) ** 2
+            if d <= 0.88 + 0.12 * math.sin(x * 0.9):
+                c = glass if (x + y * 3) % 6 == 0 else slag
+                cv.set(x, y, shade(c, 0.85 + rng.random() * 0.25))
+    return cv
+
+
+def make_clay_ball_item(col_rgb: RGB, seed: int) -> Canvas:
+    cv = Canvas()
+    rng = random.Random(seed)
+    for y in range(7, 25):
+        for x in range(7, 25):
+            d = ((x - 15.5) / 7.5) ** 2 + ((y - 15.5) / 7.5) ** 2
+            if d <= 0.90:
+                light = 1.08 - (y - 8) * 0.015 - d * 0.15
+                cv.set(x, y, shade(col_rgb, light + rng.random() * 0.06))
+    return cv
+
+
+def make_brick_item() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(913)
+    col: RGB = (206, 184, 138)
+    for y in range(10, 22):
+        for x in range(6, 26):
+            shade_f = 1.08 if y < 14 else (0.94 if y < 19 else 0.78)
+            cv.set(x, y, shade(col, shade_f + (rng.random() - 0.5) * 0.08))
+    return cv
+
+
+def make_crucible_sprite() -> Canvas:
+    cv = Canvas()
+    rng = random.Random(914)
+    clay: RGB = (162, 118, 86)
+    rim: RGB = (188, 144, 108)
+    for y in range(6, 26):
+        w = 8.0 - max(0, y - 16) * 0.35
+        for x in range(8, 24):
+            if abs(x - 15.5) <= w:
+                col = rim if y <= 9 else clay
+                f = 1.0 - abs(x - 15.5) * 0.035 + (rng.random() - 0.5) * 0.06
+                if y == 8 and abs(x - 15.5) < w - 1.5:
+                    col = (64, 48, 38)
+                cv.set(x, y, shade(col, f))
+    return cv
+
+
+def make_bellows_item() -> Canvas:
+    cv = Canvas()
+    wood: RGB = (146, 98, 56)
+    leather: RGB = (138, 78, 44)
+    nozzle: RGB = (142, 146, 152)
+    for y in range(9, 23):
+        for x in range(6, 21):
+            span = (x - 5) * 0.42
+            if abs(y - 15.5) <= span:
+                if abs(abs(y - 15.5) - span) < 1.3:
+                    cv.set(x, y, shade(wood, 0.95))
+                else:
+                    fold = 0.85 if (x % 3) == 0 else 1.04
+                    cv.set(x, y, shade(leather, fold))
+    for y in range(14, 18):
+        for x in range(21, 27):
+            cv.set(x, y, shade(nozzle, 0.95 if y < 16 else 0.75))
+    return cv
+
+
+def make_tongs_item() -> Canvas:
+    cv = Canvas()
+    iron: RGB = (138, 144, 152)
+    rivet: RGB = (92, 96, 102)
+    for i in range(5, 27):
+        y = 31 - i
+        cv.set(i, y, shade(iron, 1.05))
+        cv.set(i + 1, y, shade(iron, 0.92))
+        cv.set(i, y + 1, shade(iron, 0.80))
+        if i < 23:
+            cv.set(i, y - 3, shade(iron, 0.95))
+            cv.set(i + 1, y - 3, shade(iron, 0.78))
+    # Pivot rivet & gripping jaws
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            cv.set(19 + dx, 11 + dy, shade(rivet, 1.0))
+    return cv
+
 
 def build_all_textures() -> Dict[str, Canvas]:
     tex: Dict[str, Canvas] = {
         "item/granite_rock.png": make_granite_rock_item(),
         "item/limestone_rock.png": make_limestone_rock_item(),
         "item/flint_rock.png": make_flint_rock_item(),
+        "item/chert_rock.png": make_chert_rock_item(),
+        "item/quartzite_rock.png": make_quartzite_rock_item(),
+        "item/basalt_rock.png": make_basalt_rock_item(),
+        "item/obsidian_nodule.png": make_obsidian_nodule_item(),
         "item/sharp_stone.png": make_sharp_stone(),
         "item/stone_axe_head.png": make_stone_axe_head(),
         "item/plant_fiber.png": make_plant_fiber(),
@@ -760,10 +1572,77 @@ def build_all_textures() -> Dict[str, Canvas]:
         "item/stone_axe_dull.png": make_stone_axe(dull=True),
         "item/stone_pickaxe.png": make_stone_pickaxe(dull=False),
         "item/stone_pickaxe_dull.png": make_stone_pickaxe(dull=True),
+        "item/tinder_bundle.png": make_tinder_bundle(),
+        "item/fire_drill.png": make_fire_drill(),
+        "item/bow_drill.png": make_bow_drill(),
+        "item/wood_ash.png": make_wood_ash_item(),
+        "item/waterskin.png": make_waterskin(),
+        "item/water_filter.png": make_water_filter(),
+        "item/electrolyte_salts.png": make_electrolyte_salts(),
+        "misc/material_canvas.png": make_material_canvas(),
+        "item/stone_scraper.png": make_stone_scraper(dull=False),
+        "item/stone_scraper_dull.png": make_stone_scraper(dull=True),
+        "item/bone_awl.png": make_bone_awl(),
+        "item/bone_needle.png": make_bone_needle(),
+        "item/raw_hide.png": make_raw_hide(),
+        "item/leather_piece.png": make_leather_piece(),
+        "item/hide_scrap.png": make_hide_scrap(),
+        "item/tallow_wax.png": make_tallow_wax(),
+        "item/pine_resin.png": make_pine_resin(),
+        "item/raw_gourd.png": make_gourd(carved=False),
+        "item/gourd_flask.png": make_gourd(carved=True),
+        "block/workstation_wood.png": make_workstation_wood(4000, slab_top=False),
+        "block/workstation_top.png": make_workstation_wood(4100, slab_top=True),
+        "item/carcass_item.png": make_carcass_item(),
+        "item/raw_bone.png": make_raw_bone(),
+        "item/prime_cut.png": make_meat_cut("prime"),
+        "item/fatty_cut.png": make_meat_cut("fatty"),
+        "item/tough_cut.png": make_meat_cut("tough"),
+        "item/organ_heart.png": make_organ("heart"),
+        "item/organ_liver.png": make_organ("liver"),
+        "item/organ_gut.png": make_organ("gut"),
+        "item/animal_fat.png": make_animal_fat(),
+        "item/sinew.png": make_connective(is_tendon=False),
+        "item/tendon.png": make_connective(is_tendon=True),
+        "item/raw_wool.png": make_raw_wool(),
+        "item/animal_horn.png": make_horn(flask=False),
+        "item/horn_flask.png": make_horn(flask=True),
+        "item/bone_blade.png": make_bone_tool(chisel=False),
+        "item/bone_chisel.png": make_bone_tool(chisel=True),
         "block/granite_rock.png": make_rock_block("granite"),
         "block/limestone_rock.png": make_rock_block("limestone"),
         "block/flint_rock.png": make_rock_block("flint"),
+        "block/chert_rock.png": make_rock_block("chert"),
+        "block/quartzite_rock.png": make_rock_block("quartzite"),
+        "block/basalt_rock.png": make_rock_block("basalt"),
         "block/fallen_stick.png": make_fallen_stick_block(),
+        "block/hearth_side.png": make_hearth_side_block(),
+        "block/hearth_top.png": make_hearth_top_block("cold"),
+        "block/hearth_embers.png": make_hearth_top_block("embers"),
+        "block/hearth_lit.png": make_hearth_top_block("lit"),
+        "block/wood_ash_pile.png": make_wood_ash_pile_block(),
+        "block/native_copper_deposit.png": make_ore_deposit_block((88, 86, 92), (194, 108, 56), (228, 138, 82), 801),
+        "block/malachite_azurite_deposit.png": make_ore_deposit_block((118, 114, 108), (44, 162, 98), (48, 94, 198), 802),
+        "block/chalcopyrite_deposit.png": make_ore_deposit_block((76, 78, 84), (196, 174, 62), (154, 122, 48), 803),
+        "block/cassiterite_deposit.png": make_ore_deposit_block((134, 128, 120), (88, 62, 46), (54, 42, 36), 804),
+        "block/arsenopyrite_deposit.png": make_ore_deposit_block((94, 96, 100), (178, 184, 192), (218, 224, 228), 805),
+        "block/hematite_magnetite_deposit.png": make_ore_deposit_block((84, 80, 82), (146, 56, 46), (58, 60, 66), 806),
+        "block/limonite_bog_deposit.png": make_ore_deposit_block((108, 92, 68), (178, 118, 42), (142, 78, 32), 807),
+        "block/fire_clay_deposit.png": make_ore_deposit_block((164, 152, 132), (206, 194, 164), (186, 172, 146), 808),
+        "block/raw_clay_wall.png": make_ore_deposit_block((156, 152, 144), (168, 164, 156), (144, 140, 132), 809),
+        "block/fired_clay_wall.png": make_ore_deposit_block((164, 88, 64), (146, 76, 54), (182, 102, 74), 810),
+        "block/fire_clay_bricks.png": make_brick_wall_block((208, 186, 142), (156, 142, 114), 811),
+        "block/smelting_basin_cold.png": make_smelting_basin_top(False),
+        "block/smelting_basin_lit.png": make_smelting_basin_top(True),
+        "block/smelting_basin_side.png": make_smelting_basin_side(),
+        "block/clay_crucible.png": make_brick_wall_block((156, 114, 84), (132, 94, 68), 812),
+        "item/ore_chunk.png": make_ore_chunk_item(),
+        "item/slag_clump.png": make_slag_clump_item(),
+        "item/fire_clay_ball.png": make_clay_ball_item((202, 188, 156), 912),
+        "item/fire_clay_brick.png": make_brick_item(),
+        "item/clay_crucible.png": make_crucible_sprite(),
+        "item/leather_bellows.png": make_bellows_item(),
+        "item/iron_tongs.png": make_tongs_item(),
     }
     for sp in ("oak", "birch", "spruce", "dark_oak"):
         tex[f"item/fresh_{sp}_log.png"] = make_fresh_log_item(sp)

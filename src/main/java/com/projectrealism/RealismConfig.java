@@ -79,6 +79,9 @@ public final class RealismConfig {
 	/** Whether knapping (striking two rocks) replaces the vanilla stone tool recipes. */
 	public boolean knapping = true;
 
+	/** Whether rocks are shaped pixel-by-pixel via 3D voxel knapping instead of instant tool head templates. */
+	public boolean dynamicKnapping = true;
+
 	/**
 	 * Whether rocks and fallen sticks are written into newly generated chunks.
 	 *
@@ -100,6 +103,64 @@ public final class RealismConfig {
 
 	/** Whether primitive tools dull, loosen bindings, and fracture with heavy use. */
 	public boolean toolDegradation = true;
+
+	// -------------------------------------------------- thermodynamics & fire ----
+
+	/** Whether physical combustion, heat transfer (conduction/convection/radiation), and moisture physics run. */
+	public boolean thermodynamicsSimulation = true;
+
+	/** Whether coarse-grid airflow, buoyancy plumes, smoke pooling, and O2/CO shelter effects are simulated. */
+	public boolean dynamicAirflow = true;
+
+	/** Whether thermal expansion, shock cracking, clay firing, metal softening, and char collapse occur. */
+	public boolean thermalMaterialDamage = true;
+
+	/** Whether firemaking requires friction energy or sparks conditioned on moisture and oxygen. */
+	public boolean realisticFiremaking = true;
+
+	/** Whether cooking simulates thermal surface-to-core penetration across cooking methods. */
+	public boolean thermalCooking = true;
+
+	/** Baseline temperate ambient temperature in Kelvin (293.15 K = 20 C). */
+	public double ambientTempKelvin = 293.15;
+
+	// -------------------------------------------------- hydration & physiology ---
+
+	/** Whether multi-compartment body water, GI absorption, electrolytes, and kidneys run. */
+	public boolean hydrationSimulation = true;
+
+	/** Speed multiplier mapping real seconds to physiological seconds (default 12x). */
+	public double hydrationTimeScale = 12.0;
+
+	/** Whether thermoregulatory sweating couples with body temperature, RH, and airflow. */
+	public boolean sweatThermoregulation = true;
+
+	/** Whether water sources carry temperature, salinity, sediment, mineral, microbe, and chemical profiles. */
+	public boolean waterQualitySimulation = true;
+
+	/** Whether the perceived thirst and body temp HUD is rendered. */
+	public boolean hydrationHud = true;
+
+	// ----------------------------------------- diegetic material processing ---
+
+	/** Whether anatomical hides, physical workstations, stitching, leaks, and material aging run. */
+	public boolean materialProcessing = true;
+
+	// ---------------------------------------- anatomy, carcasses & bones ---
+
+	/** Whether killed animals become persistent multi-region carcasses instead of instant loot drops. */
+	public boolean carcassSystem = true;
+
+	/** Whether live animals track forage fat, hydration, thermal load, fatigue, age & injuries. */
+	public boolean animalPhysiology = true;
+
+	// ---------------------------------------- physical metallurgy & geology ---
+
+	/** Whether geological copper, tin, arsenic, iron & fire-clay veins spawn in worldgen. */
+	public boolean geologicalOreVeins = true;
+
+	/** Whether freeform smelting, casting, dynamic plastic forging, alloys & microstructure run. */
+	public boolean physicalMetallurgy = true;
 
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
@@ -166,6 +227,16 @@ public final class RealismConfig {
 			woodDrySpeedMultiplier = 0.1;
 		} else if (woodDrySpeedMultiplier > 20.0) {
 			woodDrySpeedMultiplier = 20.0;
+		}
+		if (ambientTempKelvin < 230.0) {
+			ambientTempKelvin = 230.0;
+		} else if (ambientTempKelvin > 325.0) {
+			ambientTempKelvin = 325.0;
+		}
+		if (hydrationTimeScale < 0.5) {
+			hydrationTimeScale = 0.5;
+		} else if (hydrationTimeScale > 60.0) {
+			hydrationTimeScale = 60.0;
 		}
 	}
 }

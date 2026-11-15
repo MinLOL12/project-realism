@@ -66,7 +66,35 @@ public final class InventoryWeigher {
 			return 0.0;
 		}
 
-		double mass = table.weightOf(stack.getItem()) * stack.getCount();
+		double mass;
+		if (stack.isOf(com.projectrealism.hydration.HydrationItems.WATERSKIN)) {
+			int vol = com.projectrealism.hydration.WaterskinItem.getVolumeMl(stack);
+			mass = com.projectrealism.material.WaterskinConstruction.read(stack).totalMassKg(vol) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)) {
+			mass = com.projectrealism.material.GourdFlaskItem.totalMassKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.HORN_FLASK)) {
+			mass = com.projectrealism.anatomy.HornFlaskItem.totalMassKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.CARCASS_ITEM)) {
+			mass = com.projectrealism.anatomy.CarcassItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			mass = com.projectrealism.knapping.DynamicStoneItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			mass = com.projectrealism.metallurgy.DynamicMetalItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.ORE_CHUNK)) {
+			mass = com.projectrealism.metallurgy.OreChunkItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.metallurgy.MetallurgyItems.CLAY_CRUCIBLE_ITEM)) {
+			mass = com.projectrealism.metallurgy.ClayCrucibleItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.anatomy.AnatomyItems.RAW_BONE)) {
+			mass = com.projectrealism.anatomy.RawBoneItem.massKg(stack) * stack.getCount();
+		} else if (stack.getItem() instanceof com.projectrealism.anatomy.AnatomyMeatItem) {
+			mass = com.projectrealism.anatomy.AnatomyMeatItem.massKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.material.MaterialItems.RAW_HIDE)) {
+			mass = com.projectrealism.material.RawHideItem.readSurface(stack).currentMassKg() * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.material.MaterialItems.LEATHER_PIECE)) {
+			mass = com.projectrealism.material.LeatherPieceItem.massKg(stack) * stack.getCount();
+		} else {
+			mass = table.weightOf(stack.getItem()) * stack.getCount();
+		}
 
 		Identifier id = net.minecraft.registry.Registries.ITEM.getId(stack.getItem());
 		Tally tally = totals.computeIfAbsent(id, key -> new Tally(stack.getName().getString()));

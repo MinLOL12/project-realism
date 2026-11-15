@@ -1,0 +1,18 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "project_realism:wood_ash"
+    },
+    {
+      "item": "project_realism:wood_ash"
+    }
+  ],
+  "result": {
+    "id": "minecraft:bone_meal",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

@@ -1,0 +1,24 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "building",
+  "ingredients": [
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "tag": "minecraft:logs"
+    }
+  ],
+  "tool": {
+    "item": "project_realism:stone_knife"
+  },
+  "result": {
+    "id": "project_realism:cutting_surface",
+    "count": 1
+  },
+  "keep_tool": true,
+  "damage_tool": true
+}

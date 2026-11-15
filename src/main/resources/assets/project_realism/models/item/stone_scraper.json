@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "project_realism:item/stone_scraper"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "project_realism:dull": 1
+      },
+      "model": "project_realism:item/stone_scraper_dull"
+    }
+  ]
+}

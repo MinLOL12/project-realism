@@ -5,6 +5,12 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.hydration.BodyFluidMath;
+import com.projectrealism.hydration.HydrationManager;
+import com.projectrealism.hydration.PhysiologicalConstants;
+import com.projectrealism.thermo.AirGrid;
+import com.projectrealism.thermo.ThermalConstants;
+import com.projectrealism.thermo.ThermalWorldState;
 import com.projectrealism.weight.WeightManager;
 import com.projectrealism.weight.WeightReport;
 import net.minecraft.command.CommandRegistryAccess;
@@ -14,9 +20,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
 
@@ -51,6 +59,18 @@ public final class WeightCommand {
 		root.then(CommandManager.literal("reload")
 				.requires(source -> source.hasPermissionLevel(4))
 				.executes(WeightCommand::reload));
+
+		root.then(CommandManager.literal("thermo")
+				.requires(source -> source.hasPermissionLevel(0))
+				.executes(WeightCommand::showThermo));
+
+		root.then(CommandManager.literal("hydration")
+				.requires(source -> source.hasPermissionLevel(0))
+				.executes(WeightCommand::showHydration));
+
+		root.then(CommandManager.literal("void")
+				.requires(source -> source.hasPermissionLevel(0))
+				.executes(WeightCommand::voidBladder));
 
 		dispatcher.register(root);
 	}
@@ -135,6 +155,94 @@ public final class WeightCommand {
 		ProjectRealism.LOGGER.info("Weight data reload requested by {}.", context.getSource().getName());
 		context.getSource().sendFeedback(() -> Text.literal(
 				"Reloaded " + WeightManager.get().knownWeightCount() + " item weights.").formatted(Formatting.GRAY), true);
+		return 1;
+	}
+
+	private static int showThermo(CommandContext<ServerCommandSource> context) {
+		ServerPlayerEntity player = context.getSource().getPlayer();
+		if (player == null) {
+			context.getSource().sendError(Text.literal("Run /realism thermo as a player."));
+			return 0;
+		}
+		ServerWorld world = player.getServerWorld();
+		ThermalWorldState thermo = ThermalWorldState.get(world);
+		BlockPos p = player.getBlockPos();
+		double ambK = thermo.ambientTempAt(world, p);
+		double rh = thermo.relativeHumidityAt(world, p);
+		AirGrid.AirCell air = thermo.airGrid().getReadOnly(AirGrid.CellPos.fromBlock(p.up()), ambK);
+
+		context.getSource().sendFeedback(() -> Text.literal(String.format(
+				"Environment: %.1f°C | RH %.0f%% | Active Thermal Nodes: %d | Air Cells: %d",
+				ThermalConstants.toCelsius(ambK), rh * 100.0,
+				thermo.nodes().size(), thermo.airGrid().cells().size())).formatted(Formatting.GOLD), false);
+		context.getSource().sendFeedback(() -> Text.literal(String.format(
+				"Local Air: %.1f°C | Wind %.2f m/s | O2 %.1f%% | CO2 %.2f%% | CO %.0f ppm | Smoke %.2f",
+				ThermalConstants.toCelsius(air.temperatureK), air.speedMS(),
+				air.o2 * 100.0, air.co2 * 100.0, air.co * 1_000_000.0, air.smoke)).formatted(Formatting.AQUA), false);
+
+		var below = thermo.getNodeReadOnly(p.down());
+		if (below != null) {
+			context.getSource().sendFeedback(() -> Text.literal(String.format(
+					"Underfoot Block: Surf %.1f°C | Core %.1f°C | Moist %.0f%% (S %.0f%% / C %.0f%%) | Stress %.0f%%",
+					ThermalConstants.toCelsius(below.body.surfaceTempK),
+					ThermalConstants.toCelsius(below.body.coreTempK),
+					below.body.totalMoistureRatio() * 100.0,
+					below.body.surfaceMoistureRatio() * 100.0,
+					below.body.coreMoistureRatio() * 100.0,
+					below.body.stressDamage * 100.0)).formatted(Formatting.YELLOW), false);
+		}
+		return 1;
+	}
+
+	private static int showHydration(CommandContext<ServerCommandSource> context) {
+		ServerPlayerEntity player = context.getSource().getPlayer();
+		if (player == null) {
+			context.getSource().sendError(Text.literal("Run /realism hydration as a player."));
+			return 0;
+		}
+		BodyFluidMath.BodyFluidState s = HydrationManager.get(player.getServerWorld()).getOrCreateState(player.getUuid());
+		double tbwPct = s.bodyWaterFraction(PhysiologicalConstants.REFERENCE_BODY_MASS_KG) * 100.0;
+		context.getSource().sendFeedback(() -> Text.literal(String.format(
+				"Compartments: ICF %.2f L | ISF %.2f L | Plasma %.2f L | TBW %.2f L (%.1f%%)",
+				s.icfLiters, s.isfLiters, s.plasmaLiters, s.totalBodyWaterLiters(), tbwPct))
+				.formatted(Formatting.AQUA), false);
+		context.getSource().sendFeedback(() -> Text.literal(String.format(
+				"GI & Renal: Stomach %.0f mL | Intestine %.0f mL | Bladder %.0f mL (Urine %.0f mOsm/L @ %.2f mL/s)",
+				s.stomachLiters * 1000.0, s.intestineLiters * 1000.0, s.bladderLiters * 1000.0,
+				s.urineOsmolalityMOsm, s.lastUrineRateLS * 1000.0))
+				.formatted(Formatting.GRAY), false);
+		context.getSource().sendFeedback(() -> Text.literal(String.format(
+				"Electrolytes: Na+ %.1f mM | K+ %.2f mM | Cl- %.1f mM | Osm ECF %.1f / ICF %.1f mOsm/L",
+				s.plasmaNaMm(), s.plasmaKMm(), s.plasmaClMm(),
+				s.ecfOsmolalityMOsm(), s.icfOsmolalityMOsm()))
+				.formatted(Formatting.GOLD), false);
+		context.getSource().sendFeedback(() -> Text.literal(String.format(
+				"Thermo & Signals: Core %.2f°C | Skin %.2f°C | Sweat %.1f g/min (Evap %.0f W, Drip %.0f%%) | ADH %.2f | Aldo %.2f | Thirst %.0f%%",
+				ThermalConstants.toCelsius(s.bodyCoreTempK),
+				ThermalConstants.toCelsius(s.skinTempK),
+				s.lastSweatRateKgS * 60000.0,
+				s.lastEvapCoolingW,
+				s.lastSweatRateKgS > 1e-7 ? (s.lastSweatDripRateKgS / s.lastSweatRateKgS) * 100.0 : 0.0,
+				s.adhLevel, s.aldosteroneLevel, s.perceivedThirst * 100.0))
+				.formatted(Formatting.YELLOW), false);
+		return 1;
+	}
+
+	private static int voidBladder(CommandContext<ServerCommandSource> context) {
+		ServerPlayerEntity player = context.getSource().getPlayer();
+		if (player == null) {
+			return 0;
+		}
+		HydrationManager mgr = HydrationManager.get(player.getServerWorld());
+		BodyFluidMath.BodyFluidState s = mgr.getOrCreateState(player.getUuid());
+		int ml = (int) Math.round(s.bladderLiters * 1000.0);
+		double osm = s.urineOsmolalityMOsm;
+		s.bladderLiters = 0.02;
+		mgr.markDirty();
+		context.getSource().sendFeedback(() -> Text.literal(String.format(
+				"Voided %d mL urine (%.0f mOsm/L — %s).",
+				ml, osm, osm > 800.0 ? "concentrated dark amber" : (osm < 200.0 ? "very dilute clear" : "pale straw")))
+				.formatted(osm > 800.0 ? Formatting.GOLD : Formatting.AQUA), false);
 		return 1;
 	}
 }

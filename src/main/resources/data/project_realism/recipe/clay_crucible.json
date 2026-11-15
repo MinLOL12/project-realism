@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "C C",
+    "C C",
+    "CCC"
+  ],
+  "key": {
+    "C": {
+      "item": "project_realism:fire_clay_ball"
+    }
+  },
+  "result": {
+    "id": "project_realism:clay_crucible",
+    "count": 1
+  }
+}

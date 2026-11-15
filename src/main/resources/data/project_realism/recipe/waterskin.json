@@ -1,0 +1,23 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:false"
+    }
+  ],
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:leather"
+    },
+    {
+      "item": "project_realism:cordage"
+    }
+  ],
+  "result": {
+    "id": "project_realism:waterskin",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

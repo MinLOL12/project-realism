@@ -1,0 +1,41 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "ash": "project_realism:block/wood_ash_pile",
+    "particle": "project_realism:block/wood_ash_pile"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ash"
+        },
+        "south": {
+          "texture": "#ash"
+        },
+        "east": {
+          "texture": "#ash"
+        },
+        "west": {
+          "texture": "#ash"
+        },
+        "up": {
+          "texture": "#ash"
+        },
+        "down": {
+          "texture": "#ash"
+        }
+      }
+    }
+  ]
+}

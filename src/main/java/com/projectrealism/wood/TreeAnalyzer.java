@@ -171,8 +171,20 @@ public final class TreeAnalyzer {
 	}
 
 	public static int requiredChops(TreeData data, ItemStack tool) {
+		double speedMult = ToolCondition.speedMultiplier(tool);
+		if (tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(tool);
+			speedMult = com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 140.0)
+					.speedMultiplier();
+		} else if (tool.isOf(com.projectrealism.metallurgy.MetallurgyItems.DYNAMIC_METAL)) {
+			var s = com.projectrealism.metallurgy.DynamicMetalItem.readState(tool);
+			speedMult = com.projectrealism.metallurgy.ContactPhysics.evaluateMetal(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 150.0)
+					.speedMultiplier();
+		}
 		double base = 2.0 + (data.totalLogCount() / 3.0) + (data.thickTrunk() ? 4.0 : 0.0);
-		double scaled = base * data.species().processingFactor() / Math.max(0.25f, ToolCondition.speedMultiplier(tool));
+		double scaled = base * data.species().processingFactor() / Math.max(0.25, speedMult);
 		return Math.max(2, Math.min(24, (int) Math.ceil(scaled)));
 	}
 }

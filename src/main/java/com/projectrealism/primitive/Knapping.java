@@ -53,14 +53,32 @@ public final class Knapping {
 			return TypedActionResult.pass(held);
 		}
 
-		boolean heldIsRock = PrimitiveItems.isKnappable(held.getItem());
-		boolean otherIsRock = PrimitiveItems.isKnappable(other.getItem());
+		boolean heldIsRock = PrimitiveItems.isKnappable(held.getItem())
+				|| com.projectrealism.knapping.DynamicKnappingItems.isKnappableRawRock(held);
+		boolean otherIsRock = PrimitiveItems.isKnappable(other.getItem())
+				|| com.projectrealism.knapping.DynamicKnappingItems.isKnappableRawRock(other);
 		boolean heldIsSharp = held.isOf(PrimitiveItems.SHARP_STONE);
 		boolean otherIsSharp = other.isOf(PrimitiveItems.SHARP_STONE);
 		boolean heldIsFiber = held.isOf(PrimitiveItems.PLANT_FIBER);
 		boolean otherIsFiber = other.isOf(PrimitiveItems.PLANT_FIBER);
 		boolean heldIsTool = ToolCondition.isPrimitiveTool(held);
 		boolean otherIsTool = ToolCondition.isPrimitiveTool(other);
+
+		// Two plant fibers: twist into cordage.
+		if (heldIsFiber && otherIsFiber) {
+			return twistCordage(player, world, hand, offHand, held, other);
+		}
+
+		// Under dynamicKnapping, rocks must be placed on ground and struck voxel-by-voxel!
+		if (ProjectRealism.config().dynamicKnapping) {
+			if ((heldIsRock && otherIsRock) || (heldIsSharp && otherIsRock) || (otherIsSharp && heldIsRock)) {
+				if (!world.isClient && tryConsumeCooldown(LAST_HINT, player.getUuid(), System.currentTimeMillis(), 1500L)) {
+					player.sendMessage(Text.translatable("project_realism.knapping.place_on_ground")
+							.formatted(Formatting.AQUA), true);
+				}
+				return TypedActionResult.pass(held);
+			}
+		}
 
 		// A dull stone tool struck with a rock (either hand order) re-knaps its cutting edge.
 		if ((heldIsTool && otherIsRock) || (otherIsTool && heldIsRock)) {
@@ -75,11 +93,6 @@ public final class Knapping {
 		// Two rocks: knap both of them into sharp stones.
 		if (heldIsRock && otherIsRock) {
 			return strikeSharp(player, world, hand, offHand, held, other);
-		}
-
-		// Two plant fibers: twist into cordage.
-		if (heldIsFiber && otherIsFiber) {
-			return twistCordage(player, world, hand, offHand, held, other);
 		}
 
 		// A rock and nothing else: tell the player what the interaction wants, while letting the

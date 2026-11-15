@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "project_realism:block/wooden_workbench"
+    },
+    "facing=east": {
+      "model": "project_realism:block/wooden_workbench",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "project_realism:block/wooden_workbench",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "project_realism:block/wooden_workbench",
+      "y": 270
+    }
+  }
+}

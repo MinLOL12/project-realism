@@ -1,0 +1,20 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:false"
+    }
+  ],
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:bone"
+    }
+  ],
+  "result": {
+    "id": "project_realism:bone_awl",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

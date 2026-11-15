@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "project_realism:block/smelting_basin_cold"
+    },
+    "lit=true": {
+      "model": "project_realism:block/smelting_basin_lit"
+    }
+  }
+}
