@@ -66,7 +66,19 @@ public final class InventoryWeigher {
 			return 0.0;
 		}
 
-		double mass = table.weightOf(stack.getItem()) * stack.getCount();
+		double mass;
+		if (stack.isOf(com.projectrealism.hydration.HydrationItems.WATERSKIN)) {
+			int vol = com.projectrealism.hydration.WaterskinItem.getVolumeMl(stack);
+			mass = com.projectrealism.material.WaterskinConstruction.read(stack).totalMassKg(vol) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)) {
+			mass = com.projectrealism.material.GourdFlaskItem.totalMassKg(stack) * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.material.MaterialItems.RAW_HIDE)) {
+			mass = com.projectrealism.material.RawHideItem.readSurface(stack).currentMassKg() * stack.getCount();
+		} else if (stack.isOf(com.projectrealism.material.MaterialItems.LEATHER_PIECE)) {
+			mass = com.projectrealism.material.LeatherPieceItem.massKg(stack) * stack.getCount();
+		} else {
+			mass = table.weightOf(stack.getItem()) * stack.getCount();
+		}
 
 		Identifier id = net.minecraft.registry.Registries.ITEM.getId(stack.getItem());
 		Tally tally = totals.computeIfAbsent(id, key -> new Tally(stack.getName().getString()));

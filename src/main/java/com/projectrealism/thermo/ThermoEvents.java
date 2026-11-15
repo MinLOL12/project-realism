@@ -55,7 +55,10 @@ public final class ThermoEvents {
 			if (state.isOf(ThermoBlocks.HEARTH) && world.getBlockEntity(pos) instanceof HearthBlockEntity be) {
 				if (!held.isEmpty()) {
 					boolean isWaterVessel = HydrationManager.isWaterBottle(held)
-							|| (held.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(held) > 0);
+							|| (held.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(held) > 0)
+							|| (held.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)
+							&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(held) > 0)
+							|| held.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP);
 					if (CookingPhysics.isFoodTrackable(held) || isWaterVessel) {
 						if (world instanceof ServerWorld && be.addFood(held)) {
 							held.decrementUnlessCreative(1, player);

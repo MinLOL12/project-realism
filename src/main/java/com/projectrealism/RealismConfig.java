@@ -138,6 +138,11 @@ public final class RealismConfig {
 	/** Whether the perceived thirst and body temp HUD is rendered. */
 	public boolean hydrationHud = true;
 
+	// ----------------------------------------- diegetic material processing ---
+
+	/** Whether anatomical hides, physical workstations, stitching, leaks, and material aging run. */
+	public boolean materialProcessing = true;
+
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		RealismConfig config = new RealismConfig();

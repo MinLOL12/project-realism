@@ -1,4 +1,9 @@
 {
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:false"
+    }
+  ],
   "type": "project_realism:tool_crafting",
   "category": "equipment",
   "ingredients": [
@@ -6,13 +11,7 @@
       "item": "minecraft:leather"
     },
     {
-      "item": "minecraft:leather"
-    },
-    {
       "item": "project_realism:cordage"
-    },
-    {
-      "item": "minecraft:stick"
     }
   ],
   "result": {

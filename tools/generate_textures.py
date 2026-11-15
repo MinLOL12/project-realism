@@ -987,6 +987,148 @@ def make_electrolyte_salts() -> Canvas:
 
 
 # ---------------------------------------------------------------------------
+# Diegetic Material Processing, Hidecraft & Vessel Textures
+# ---------------------------------------------------------------------------
+
+def make_material_canvas() -> Canvas:
+    return Canvas(32, 32, (255, 255, 255, 255))
+
+
+def make_stone_scraper(dull: bool = False) -> Canvas:
+    c = Canvas(32, 32)
+    # Fan-shaped knapped end-scraper held with cordage-wrapped finger grip
+    for y in range(6, 27):
+        for x in range(7, 25):
+            dy = (y - 17.0) / 9.5
+            dx = (x - 16.0) / (8.5 if y < 17 else 5.2)
+            if dx * dx + dy * dy <= 1.0:
+                n = hash_noise(x, y, 3100)
+                if y <= 11:
+                    col = (146, 142, 136) if dull else (196, 196, 192)  # beveled scraping edge
+                elif y >= 21:
+                    col = (164, 138, 92) if (x + y) % 2 == 0 else (136, 112, 72)  # cordage wrap
+                else:
+                    col = (108, 106, 102)
+                c.set(x, y, shade(col, 0.92 + 0.16 * n))
+    c.outline()
+    return c
+
+
+def make_bone_awl() -> Canvas:
+    c = Canvas(32, 32)
+    # Tapered sharp bone awl diagonally oriented from knuckle handle to fine piercing point
+    for i in range(22):
+        t = i / 21.0
+        cx = round(7 + i * 0.85)
+        cy = round(25 - i * 0.85)
+        rad = 2.6 - t * 2.1
+        for oy in range(-3, 4):
+            for ox in range(-3, 4):
+                if ox * ox + oy * oy <= rad * rad:
+                    n = hash_noise(cx + ox, cy + oy, 3200)
+                    col = (228, 220, 198) if i > 3 else (204, 192, 166)
+                    c.set(cx + ox, cy + oy, shade(col, 0.94 + 0.12 * n))
+    c.outline()
+    return c
+
+
+def make_bone_needle() -> Canvas:
+    c = Canvas(32, 32)
+    # Slender ivory bone needle with tiny slotted eye & cordage thread trailing
+    c.line(8, 24, 25, 7, (232, 224, 206, 255), 2)
+    c.set(11, 21, (60, 52, 46, 255))  # needle eye
+    c.line(10, 22, 6, 26, (186, 158, 102, 255), 1)
+    c.line(6, 26, 12, 28, (164, 138, 86, 255), 1)
+    c.outline()
+    return c
+
+
+def make_raw_hide() -> Canvas:
+    c = Canvas(32, 32)
+    # Irregular anatomical hide silhouette with thick dark spine down center and fleshy underside
+    for y in range(4, 28):
+        for x in range(5, 27):
+            edge_w = 9.5 - 3.0 * math.cos((y - 16) * 0.25)
+            if abs(x - 16) <= edge_w:
+                n = hash_noise(x, y, 3300)
+                spine = abs(x - 16) < 2.2
+                col = (128, 68, 44) if spine else (172, 92, 68)
+                c.set(x, y, shade(col, 0.90 + 0.18 * n))
+    c.outline()
+    return c
+
+
+def make_leather_piece() -> Canvas:
+    c = Canvas(32, 32)
+    # Clean trimmed supple tan leather panel
+    c.fill_poly([(7, 6), (24, 7), (25, 25), (6, 24)],
+                lambda x, y: shade((184, 124, 70), 0.94 + 0.12 * hash_noise(x, y, 3400)))
+    c.outline()
+    return c
+
+
+def make_hide_scrap() -> Canvas:
+    c = Canvas(32, 32)
+    c.fill_poly([(8, 12), (21, 9), (24, 20), (14, 24), (7, 19)],
+                lambda x, y: shade((166, 108, 62), 0.92 + 0.16 * hash_noise(x, y, 3500)))
+    c.outline()
+    return c
+
+
+def make_tallow_wax() -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(8, 25):
+        for x in range(7, 25):
+            if math.hypot((x - 16) * 0.9, y - 16.5) < 7.2:
+                n = hash_noise(x, y, 3600)
+                c.set(x, y, shade((238, 224, 172), 0.92 + 0.14 * n))
+    c.outline()
+    return c
+
+
+def make_pine_resin() -> Canvas:
+    c = Canvas(32, 32)
+    for y in range(7, 26):
+        for x in range(8, 24):
+            if math.hypot(x - 16, (y - 16.5) * 0.85) < 6.8:
+                n = hash_noise(x, y, 3700)
+                c.set(x, y, shade((216, 134, 34) if n > 0.35 else (176, 94, 20), 0.94 + 0.14 * n))
+    c.outline()
+    return c
+
+
+def make_gourd(carved: bool) -> Canvas:
+    c = Canvas(32, 32)
+    # Double-lobed bottle gourd silhouette
+    for y in range(6, 27):
+        for x in range(7, 25):
+            upper = math.hypot((x - 16) * 1.15, y - 11.5) < 4.5
+            lower = math.hypot((x - 16) * 0.92, y - 20.5) < 6.4
+            if upper or lower:
+                n = hash_noise(x, y, 3800 + (50 if carved else 0))
+                base = (196, 146, 68) if carved else (112, 162, 68)
+                c.set(x, y, shade(base, 0.92 + 0.16 * n - (x - 14) * 0.018))
+    if carved:
+        for x in range(14, 19):
+            c.set(x, 6, (118, 78, 42, 255))  # bored stopper mouth
+    c.outline()
+    return c
+
+
+def make_workstation_wood(seed: int, slab_top: bool = False) -> Canvas:
+    c = Canvas(32, 32, (0, 0, 0, 255))
+    for y in range(32):
+        for x in range(32):
+            n = hash_noise(x, y, seed)
+            plank_seam = (y % 8 == 0) or (slab_top and (x == 0 or x == 31 or y == 0 or y == 31))
+            base = (104, 72, 42) if plank_seam else ((158, 114, 70) if (y // 8) % 2 == 0 else (142, 102, 62))
+            if slab_top and 4 <= x <= 27 and 4 <= y <= 27 and not plank_seam:
+                base = (174, 132, 84)  # smooth planed top work face
+            c.set(x, y, shade(base, 0.94 + 0.12 * n))
+    return c
+
+
+# ---------------------------------------------------------------------------
 # Registry of All Textures
 # ---------------------------------------------------------------------------
 
@@ -1012,6 +1154,20 @@ def build_all_textures() -> Dict[str, Canvas]:
         "item/waterskin.png": make_waterskin(),
         "item/water_filter.png": make_water_filter(),
         "item/electrolyte_salts.png": make_electrolyte_salts(),
+        "misc/material_canvas.png": make_material_canvas(),
+        "item/stone_scraper.png": make_stone_scraper(dull=False),
+        "item/stone_scraper_dull.png": make_stone_scraper(dull=True),
+        "item/bone_awl.png": make_bone_awl(),
+        "item/bone_needle.png": make_bone_needle(),
+        "item/raw_hide.png": make_raw_hide(),
+        "item/leather_piece.png": make_leather_piece(),
+        "item/hide_scrap.png": make_hide_scrap(),
+        "item/tallow_wax.png": make_tallow_wax(),
+        "item/pine_resin.png": make_pine_resin(),
+        "item/raw_gourd.png": make_gourd(carved=False),
+        "item/gourd_flask.png": make_gourd(carved=True),
+        "block/workstation_wood.png": make_workstation_wood(4000, slab_top=False),
+        "block/workstation_top.png": make_workstation_wood(4100, slab_top=True),
         "block/granite_rock.png": make_rock_block("granite"),
         "block/limestone_rock.png": make_rock_block("limestone"),
         "block/flint_rock.png": make_rock_block("flint"),

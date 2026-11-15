@@ -5,6 +5,9 @@ import com.projectrealism.hydration.HydrationEvents;
 import com.projectrealism.hydration.HydrationItems;
 import com.projectrealism.hydration.HydrationManager;
 import com.projectrealism.hydration.HydrationPayload;
+import com.projectrealism.material.MaterialBlocks;
+import com.projectrealism.material.MaterialEvents;
+import com.projectrealism.material.MaterialItems;
 import com.projectrealism.primitive.PrimitiveBlocks;
 import com.projectrealism.primitive.PrimitiveEvents;
 import com.projectrealism.primitive.PrimitiveItems;
@@ -68,12 +71,15 @@ public class ProjectRealism implements ModInitializer {
 		ThermoBlocks.register();
 		ThermoItems.register();
 		HydrationItems.register();
+		MaterialBlocks.register();
+		MaterialItems.register();
 		ModRecipes.register();
 		PrimitiveEvents.register();
 		TreeChopper.register();
 		WoodEvents.register();
 		ThermoEvents.register();
 		HydrationEvents.register();
+		MaterialEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(HydrationPayload.ID, HydrationPayload.CODEC);
@@ -88,6 +94,7 @@ public class ProjectRealism implements ModInitializer {
 			FallingTreeManager.tick(server);
 			ThermoEvents.tick(server);
 			HydrationManager.tick(server);
+			MaterialEvents.tick(server);
 		});
 
 		// Logging in must never inherit a stale modifier from a previous session.
@@ -101,6 +108,7 @@ public class ProjectRealism implements ModInitializer {
 			ThermoEvents.onDisconnect(handler.getPlayer());
 			HydrationManager.get(handler.getPlayer().getServerWorld()).onDisconnect(handler.getPlayer().getUuid());
 			HydrationEvents.onDisconnect(handler.getPlayer());
+			MaterialEvents.onDisconnect(handler.getPlayer().getUuid());
 		});
 
 		// Pack authors can drop JSON weight overrides into a datapack and /reload without a restart.

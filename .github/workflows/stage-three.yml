@@ -1,0 +1,217 @@
+name: Stage three
+
+# Dedicated pipeline for Stage 3: Thermodynamics, Hydration & Physiology, and
+# Diegetic Material Processing / Equipment Construction (v0.3.0).
+#
+#   push / PR  -> verify stage-three assets & physics guards, build & run all JUnit suites
+#   tag v*     -> publish GitHub release with versioned & latest jars attached
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+    paths:
+      - 'src/**'
+      - 'tools/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
+      - '.github/workflows/stage-three.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tools/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
+      - '.github/workflows/stage-three.yml'
+  workflow_dispatch:
+    inputs:
+      make_release:
+        description: 'Publish a GitHub release for this build'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage-three-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  STAGE: '3.0.0'
+  VERSION_PREFIX: '0.3.0'
+  MOD_ID: project_realism
+
+jobs:
+  verify:
+    name: Verify stage three
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify stage-three classes, assets & zero-mixin guards
+        run: |
+          set -e
+          required=(
+            src/main/java/com/projectrealism/thermo/ThermalMath.java
+            src/main/java/com/projectrealism/thermo/AirGrid.java
+            src/main/java/com/projectrealism/thermo/HearthBlockEntity.java
+            src/main/java/com/projectrealism/hydration/BodyFluidMath.java
+            src/main/java/com/projectrealism/hydration/WaterQuality.java
+            src/main/java/com/projectrealism/hydration/HydrationManager.java
+            src/main/java/com/projectrealism/hydration/WaterskinItem.java
+            src/main/java/com/projectrealism/material/AnimalHideType.java
+            src/main/java/com/projectrealism/material/HideSurface.java
+            src/main/java/com/projectrealism/material/WaterskinConstruction.java
+            src/main/java/com/projectrealism/material/MaterialAging.java
+            src/main/java/com/projectrealism/material/MaterialBlocks.java
+            src/main/java/com/projectrealism/material/MaterialItems.java
+            src/main/java/com/projectrealism/material/MaterialEvents.java
+            src/main/java/com/projectrealism/material/ScrapingFrameBlockEntity.java
+            src/main/java/com/projectrealism/material/DryingRackBlockEntity.java
+            src/main/java/com/projectrealism/material/CuttingSurfaceBlockEntity.java
+            src/main/java/com/projectrealism/material/SewingFrameBlockEntity.java
+            src/main/java/com/projectrealism/material/WorkbenchBlockEntity.java
+            src/main/java/com/projectrealism/material/StorageRackBlockEntity.java
+            src/main/java/com/projectrealism/client/MaterialBlockRenderers.java
+            src/test/java/com/projectrealism/thermo/ThermalMathTest.java
+            src/test/java/com/projectrealism/hydration/BodyFluidMathTest.java
+            src/test/java/com/projectrealism/material/MaterialSimulationTest.java
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::Stage three file missing: $f"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "All ${#required[@]} stage-three files present."
+
+      - name: Verify zero-mixin architecture and diegetic waterskin rules
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+
+          fmod = json.loads(pathlib.Path('src/main/resources/fabric.mod.json').read_text())
+          if fmod.get('mixins'):
+              print("::error file=fabric.mod.json::fabric.mod.json must remain mixin-free")
+              sys.exit(1)
+
+          ws_recipe = pathlib.Path('src/main/resources/data/project_realism/recipe/waterskin.json')
+          if ws_recipe.exists():
+              data = json.loads(ws_recipe.read_text())
+              disabled = any(c.get('condition') == 'fabric:false' for c in data.get('fabric:load_conditions', []))
+              if not disabled:
+                  print("::error file=waterskin.json::Instant waterskin grid recipe must stay disabled")
+                  sys.exit(1)
+          print("Zero-mixin and diegetic waterskin recipe guards passed.")
+          PY
+
+      - name: Verify generated 32x32 textures
+        run: python3 tools/generate_textures.py --check
+
+  build:
+    name: Build & test mod jar
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Stamp version 0.3.0
+        run: |
+          sed -i -E "s/^mod_version=.*/mod_version=${VERSION_PREFIX}/" gradle.properties
+          grep '^mod_version' gradle.properties
+
+      - name: Cache Gradle and Loom
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-stage3-${{ hashFiles('gradle.properties', 'build.gradle', 'settings.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-stage3-
+            ${{ runner.os }}-gradle-stage2-
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build and run tests
+        run: |
+          set -o pipefail
+          ./gradlew build --stacktrace --no-daemon --console=plain 2>&1 | tee gradle-build.log
+
+      - name: Summarise compile or test errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import re
+          try:
+              text = open('gradle-build.log', errors='ignore').read()
+          except FileNotFoundError:
+              raise SystemExit(0)
+          pattern = re.compile(r'(?m)^(\S+\.java):(\d+): (?:error|warning): (.*)((?:\n\s{2,}.*)*)')
+          for match in pattern.finditer(text):
+              detail = ' '.join([match.group(3)] + [l.strip() for l in match.group(4).splitlines()])
+              detail = ' '.join(detail.split())[:900]
+              print(f"::error file={match.group(1)},line={match.group(2)},title=javac::{detail}")
+          PY
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-realism-stage3-jar
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage3-test-report
+          path: build/reports/tests/test
+          if-no-files-found: ignore
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.make_release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: project-realism-stage3-jar
+          path: dist
+
+      - name: Rename for stable download link
+        run: |
+          versioned=$(ls dist/*.jar | grep -v sources | head -1)
+          cp "$versioned" "dist/project-realism-latest.jar"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Project Realism 0.3 — Thermodynamics, Physiology & Diegetic Hidecraft"
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', env.VERSION_PREFIX) }}
+          files: dist/*.jar
+          generate_release_notes: true

@@ -118,8 +118,11 @@ public class HearthBlockEntity extends BlockEntity {
 			return false;
 		}
 		boolean isWater = HydrationManager.isWaterBottle(stack)
-				|| (stack.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(stack) > 0);
-		if (!CookingPhysics.isFoodTrackable(stack) && !isWater) {
+				|| (stack.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(stack) > 0)
+				|| (stack.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)
+				&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(stack) > 0);
+		boolean isRenderableScrap = stack.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP);
+		if (!CookingPhysics.isFoodTrackable(stack) && !isWater && !isRenderableScrap) {
 			return false;
 		}
 		cookingFood = stack.copyWithCount(1);
@@ -305,12 +308,19 @@ public class HearthBlockEntity extends BlockEntity {
 			thermo.radiateHeatSource(server, pos, be.temperatureK(), be.isFlaming() ? 1.4 : 0.7, dt);
 		}
 
-		// Advance food cooking OR water bottle / waterskin heating & pathogen boiling!
+		// Advance food cooking, fat-scrap rendering into tallow wax, OR water heating/boiling!
 		if (!be.cookingFood.isEmpty() && be.temperatureK() > 325.0) {
 			boolean isWater = HydrationManager.isWaterBottle(be.cookingFood)
 					|| (be.cookingFood.isOf(HydrationItems.WATERSKIN)
-					&& WaterskinItem.getVolumeMl(be.cookingFood) > 0);
-			if (isWater) {
+					&& WaterskinItem.getVolumeMl(be.cookingFood) > 0)
+					|| (be.cookingFood.isOf(com.projectrealism.material.MaterialItems.GOURD_FLASK)
+					&& com.projectrealism.material.GourdFlaskItem.getVolumeMl(be.cookingFood) > 0);
+			if (be.cookingFood.isOf(com.projectrealism.material.MaterialItems.HIDE_SCRAP)) {
+				if (be.temperatureK() >= 365.0 && be.tickCounter % 60 == 0) {
+					be.cookingFood = new ItemStack(com.projectrealism.material.MaterialItems.TALLOW_WAX, 1);
+					server.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.4f, 1.5f);
+				}
+			} else if (isWater) {
 				WaterQuality cur = WaterQuality.read(be.cookingFood, WaterQuality.RIVER_WATER);
 				WaterQuality next = cur.stepHeating(be.temperatureK(), ambientK, dt);
 				WaterQuality.write(be.cookingFood, next);

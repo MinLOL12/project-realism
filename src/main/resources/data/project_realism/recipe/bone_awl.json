@@ -1,0 +1,18 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "project_realism:sharp_stone"
+    }
+  ],
+  "result": {
+    "id": "project_realism:bone_awl",
+    "count": 1
+  },
+  "keep_tool": true,
+  "damage_tool": true
+}

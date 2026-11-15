@@ -4,6 +4,7 @@ import com.projectrealism.ProjectRealism;
 import com.projectrealism.hydration.HydrationManager;
 import com.projectrealism.hydration.HydrationPayload;
 import com.projectrealism.hydration.WaterQuality;
+import com.projectrealism.material.MaterialItems;
 import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.primitive.ToolCondition;
 import com.projectrealism.thermo.CookingPhysics;
@@ -31,6 +32,7 @@ public class ProjectRealismClient implements ClientModInitializer {
 
 		HudRenderCallback.EVENT.register(new WeightHud());
 		HudRenderCallback.EVENT.register(new HydrationHud());
+		MaterialBlockRenderers.register();
 
 		Identifier dullId = ProjectRealism.id("dull");
 		for (Item tool : new Item[]{
@@ -38,6 +40,8 @@ public class ProjectRealismClient implements ClientModInitializer {
 			ModelPredicateProviderRegistry.register(tool, dullId,
 					(stack, world, entity, seed) -> ToolCondition.isDull(stack) ? 1.0f : 0.0f);
 		}
+		ModelPredicateProviderRegistry.register(MaterialItems.STONE_SCRAPER, dullId,
+				(stack, world, entity, seed) -> MaterialItems.StoneScraperItem.getSharpness(stack) < 35 ? 1.0f : 0.0f);
 
 		Identifier dryId = ProjectRealism.id("dry");
 		for (WoodSpecies sp : WoodSpecies.values()) {
