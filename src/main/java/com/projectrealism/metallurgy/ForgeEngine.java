@@ -179,32 +179,39 @@ public final class ForgeEngine {
 
 		// Ensure lowest voxel stays seated on anvil
 		grid.settleOnBase();
+		grid.syncMicroWeights();
 
-		// Update internal microstructure across impacted 4x4x4 zone & adjacent neighbors
+		// Update internal microstructure across impacted 4x4x4 zones with smooth compressive shock attenuation
 		double strain = Math.min(0.28, (totalDisplaced / 4200.0) * (isHot ? 0.25 : 1.0));
 		double slagExpelled = 0.0;
-		for (int dy = -1; dy <= 1; dy++) {
-			for (int dz = -1; dz <= 1; dz++) {
-				for (int dx = -1; dx <= 1; dx++) {
-					int vx = Math.max(0, Math.min(15, hit.x() + dx * 2));
-					int vy = Math.max(0, Math.min(15, hit.y() + dy * 2));
-					int vz = Math.max(0, Math.min(15, hit.z() + dz * 2));
-					MicrostructureState.MicroCell c = grid.micro.cellAtVoxel(vx, vy, vz);
+		for (int cy = 0; cy < MicrostructureState.SUB_SIZE; cy++) {
+			for (int cz = 0; cz < MicrostructureState.SUB_SIZE; cz++) {
+				for (int cx = 0; cx < MicrostructureState.SUB_SIZE; cx++) {
+					double mx = cx * 4.0 + 1.5;
+					double my = cy * 4.0 + 1.5;
+					double mz = cz * 4.0 + 1.5;
+					double dSq = (mx - hit.x()) * (mx - hit.x())
+							+ (my - hit.y()) * (my - hit.y())
+							+ (mz - hit.z()) * (mz - hit.z());
+					if (dSq > 36.0) continue;
+					double atten = Math.exp(-dSq / 24.0);
+					int ci = (cy << 4) | (cz << 2) | cx;
+					MicrostructureState.MicroCell c = grid.micro.cell(ci);
 					if (isHot) {
 						// Hot forging welds pores & refines cast dendrites dynamically!
-						c.porosity = Math.max(0.005, c.porosity * 0.72);
-						c.grainSizeUm = Math.max(12.0, c.grainSizeUm * 0.86);
-						c.dislocationDensity = Math.min(0.25, c.dislocationDensity + strain * 0.25);
+						c.porosity = Math.max(0.005, c.porosity * (1.0 - 0.30 * atten));
+						c.grainSizeUm = Math.max(12.0, c.grainSizeUm * (1.0 - 0.16 * atten));
+						c.dislocationDensity = Math.min(0.25, c.dislocationDensity + strain * 0.25 * atten);
 						if (alloy.slag > 0.008) {
-							double drop = Math.min(alloy.slag * 0.22, 0.028);
+							double drop = Math.min(alloy.slag * 0.22, 0.028 * atten);
 							c.slagInclusion = Math.max(0.0, c.slagInclusion - drop);
 							slagExpelled = Math.max(slagExpelled, drop);
 						}
 					} else {
 						// Cold work hardening sharply elevates dislocation density & residual stress!
-						c.dislocationDensity = Math.min(1.0, c.dislocationDensity + 0.08 + strain * 0.65);
-						c.residualStress = Math.min(1.0, c.residualStress + 0.05 + strain * 0.45);
-						c.porosity = Math.max(0.01, c.porosity * 0.90);
+						c.dislocationDensity = Math.min(1.0, c.dislocationDensity + (0.055 + strain * 0.55) * atten);
+						c.residualStress = Math.min(1.0, c.residualStress + (0.04 + strain * 0.35) * atten);
+						c.porosity = Math.max(0.01, c.porosity * (1.0 - 0.10 * atten));
 					}
 				}
 			}

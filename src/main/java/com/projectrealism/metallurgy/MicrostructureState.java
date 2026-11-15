@@ -70,11 +70,50 @@ public final class MicrostructureState {
 	}
 
 	private final MicroCell[] cells = new MicroCell[TOTAL_CELLS];
+	private final double[] cellMassWeights = new double[TOTAL_CELLS];
+	private boolean useOccupancyWeights = false;
 
 	public MicrostructureState() {
 		for (int i = 0; i < TOTAL_CELLS; i++) {
 			cells[i] = new MicroCell();
 		}
+	}
+
+	public void setCellMassWeights(double[] weights) {
+		if (weights == null || weights.length != TOTAL_CELLS) {
+			useOccupancyWeights = false;
+			return;
+		}
+		double sum = 0.0;
+		for (int i = 0; i < TOTAL_CELLS; i++) {
+			double w = Math.max(0.0, weights[i]);
+			cellMassWeights[i] = w;
+			sum += w;
+		}
+		useOccupancyWeights = sum > 1e-6;
+	}
+
+	private double weightedAverage(java.util.function.ToDoubleFunction<MicroCell> fn) {
+		if (!useOccupancyWeights) {
+			double sum = 0.0;
+			for (MicroCell c : cells) sum += fn.applyAsDouble(c);
+			return sum / TOTAL_CELLS;
+		}
+		double sum = 0.0;
+		double wSum = 0.0;
+		for (int i = 0; i < TOTAL_CELLS; i++) {
+			double w = cellMassWeights[i];
+			if (w > 0.0) {
+				sum += fn.applyAsDouble(cells[i]) * w;
+				wSum += w;
+			}
+		}
+		if (wSum <= 1e-9) {
+			double fallback = 0.0;
+			for (MicroCell c : cells) fallback += fn.applyAsDouble(c);
+			return fallback / TOTAL_CELLS;
+		}
+		return sum / wSum;
 	}
 
 	public static int cellIndexForVoxel(int vx, int vy, int vz) {
@@ -104,9 +143,12 @@ public final class MicrostructureState {
 		for (MicroCell cell : cells) {
 			// 1. Low-temperature tempering of brittle quenched martensite (440..780 K)
 			if (cell.martensiteFrac > 0.01 && tempK >= 440.0) {
-				double temperRate = Math.min(0.6, dtSeconds * 0.015 * ((tempK - 420.0) / 300.0));
-				cell.residualStress = Math.max(0.0, cell.residualStress * (1.0 - temperRate * 1.4));
-				if (tempK >= 720.0) {
+				double temperRate = Math.min(0.88, dtSeconds * 0.042 * ((tempK - 410.0) / 140.0));
+				cell.residualStress = Math.max(0.0, cell.residualStress * (1.0 - temperRate));
+				if (tempK >= 480.0 && tempK < 720.0) {
+					// Medium temper precipitates fine carbides, relieving brittleness while preserving hardness
+					cell.martensiteFrac = Math.max(0.45, cell.martensiteFrac * (1.0 - temperRate * 0.14));
+				} else if (tempK >= 720.0) {
 					// Over-tempering softens martensite back toward pearlite/ferrite
 					cell.martensiteFrac = Math.max(0.0, cell.martensiteFrac * (1.0 - temperRate));
 				}
@@ -156,7 +198,7 @@ public final class MicrostructureState {
 					if (c >= 0.0022) {
 						double transform = Math.min(1.0, (c / 0.008) * sev);
 						cell.martensiteFrac = Math.max(cell.martensiteFrac, transform);
-						cell.residualStress = Math.min(1.0, cell.residualStress + 0.38 * transform);
+						cell.residualStress = Math.min(1.0, cell.residualStress + 0.58 * transform);
 						if (c > 0.012 && sev > 0.85) {
 							cell.fractureDamage = Math.min(1.0, cell.fractureDamage + 0.08);
 						}
@@ -173,45 +215,31 @@ public final class MicrostructureState {
 	}
 
 	public double averageDislocation() {
-		double sum = 0;
-		for (MicroCell c : cells) sum += c.dislocationDensity;
-		return sum / TOTAL_CELLS;
+		return weightedAverage(c -> c.dislocationDensity);
 	}
 
 	public double averageGrainSizeUm() {
-		double sum = 0;
-		for (MicroCell c : cells) sum += c.grainSizeUm;
-		return sum / TOTAL_CELLS;
+		return weightedAverage(c -> c.grainSizeUm);
 	}
 
 	public double averagePorosity() {
-		double sum = 0;
-		for (MicroCell c : cells) sum += c.porosity;
-		return sum / TOTAL_CELLS;
+		return weightedAverage(c -> c.porosity);
 	}
 
 	public double averageMartensite() {
-		double sum = 0;
-		for (MicroCell c : cells) sum += c.martensiteFrac;
-		return sum / TOTAL_CELLS;
+		return weightedAverage(c -> c.martensiteFrac);
 	}
 
 	public double averageFracture() {
-		double sum = 0;
-		for (MicroCell c : cells) sum += c.fractureDamage;
-		return sum / TOTAL_CELLS;
+		return weightedAverage(c -> c.fractureDamage);
 	}
 
 	public double averageResidualStress() {
-		double sum = 0;
-		for (MicroCell c : cells) sum += c.residualStress;
-		return sum / TOTAL_CELLS;
+		return weightedAverage(c -> c.residualStress);
 	}
 
 	public double averageCarbon(AlloyComposition alloy) {
-		double sum = 0;
-		for (MicroCell c : cells) sum += Math.max(c.localCarbon, alloy.c);
-		return sum / TOTAL_CELLS;
+		return weightedAverage(c -> Math.max(c.localCarbon, alloy.c));
 	}
 
 	/** Effective mechanical hardness boost/modifier combining Hall-Petch grain refinement, work hardening, martensite & porosity. */
@@ -230,7 +258,7 @@ public final class MicrostructureState {
 	public double effectiveToughness(AlloyComposition alloy, double tempK) {
 		double duct = alloy.intrinsicDuctility();
 		double grainFactor = Math.max(0.55, Math.min(1.25, 1.15 - (averageGrainSizeUm() - 25.0) / 260.0));
-		double workBrittleness = averageDislocation() * 0.42 + averageResidualStress() * 0.35 + averageMartensite() * 0.48;
+		double workBrittleness = averageDislocation() * 0.42 + averageResidualStress() * 0.52 + averageMartensite() * 0.22;
 		double defects = averagePorosity() * 0.65 + averageFracture() * 0.85 + alloy.slag * 0.8;
 		double hotDuctile = tempK >= alloy.recrystallizationTempK() ? 0.30 : 0.0;
 		return Math.max(0.08, Math.min(1.30, (duct * grainFactor + hotDuctile) - workBrittleness - defects));
@@ -241,6 +269,8 @@ public final class MicrostructureState {
 		for (int i = 0; i < TOTAL_CELLS; i++) {
 			m.cells[i] = cells[i].copy();
 		}
+		System.arraycopy(cellMassWeights, 0, m.cellMassWeights, 0, TOTAL_CELLS);
+		m.useOccupancyWeights = useOccupancyWeights;
 		return m;
 	}
 

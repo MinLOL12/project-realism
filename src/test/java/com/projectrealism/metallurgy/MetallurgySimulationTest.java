@@ -75,7 +75,7 @@ public class MetallurgySimulationTest {
 		shaftCh.charcoalMassKg = 4.0;
 		shaftCh.temperatureK = 700.0;
 		shaftCh.fluxCalciteKg = 0.8;
-		shaftCh.activeOre = OreComposition.malachiteOre(1.0, 0.20);
+		shaftCh.activeOre = OreComposition.malachiteOre(1.2, 0.72);
 		shaftCh.activeOre.crushedDegree = 0.85;
 
 		for (int i = 0; i < 160; i++) {

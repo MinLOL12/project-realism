@@ -168,6 +168,7 @@ public final class CastingEngine {
 			c.residualStress = castStress;
 			c.localCarbon = castAlloy.c;
 		}
+		metalGrid.syncMicroWeights();
 
 		DynamicMetalState out = new DynamicMetalState(
 				castAlloy, voxelScaleCm, metalGrid,

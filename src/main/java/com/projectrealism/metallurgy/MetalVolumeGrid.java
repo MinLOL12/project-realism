@@ -75,6 +75,22 @@ public final class MetalVolumeGrid {
 		return c;
 	}
 
+	/** Syncs mass-occupancy weights on the 64-zone MicrostructureState so empty air voxels never dilute averages. */
+	public void syncMicroWeights() {
+		double[] weights = new double[MicrostructureState.TOTAL_CELLS];
+		for (int y = 0; y < SIZE; y++) {
+			for (int z = 0; z < SIZE; z++) {
+				for (int x = 0; x < SIZE; x++) {
+					int f = fill[index(x, y, z)];
+					if (f > 0) {
+						weights[MicrostructureState.cellIndexForVoxel(x, y, z)] += f / (double) FULL_CELL;
+					}
+				}
+			}
+		}
+		micro.setCellMassWeights(weights);
+	}
+
 	/** Creates an organic unshaped native copper nugget or smelted prill lump. */
 	public static MetalVolumeGrid createNativeNugget(long seed, double sizeScale) {
 		MetalVolumeGrid g = new MetalVolumeGrid();
@@ -99,6 +115,7 @@ public final class MetalVolumeGrid {
 			}
 		}
 		g.settleOnBase();
+		g.syncMicroWeights();
 		return g;
 	}
 
@@ -157,6 +174,7 @@ public final class MetalVolumeGrid {
 
 	/** Computes exact physical metrics from conserved sub-voxel volume, alloy density, and microstructure. */
 	public VoxelRockGrid.GeometryMetrics measure(AlloyComposition alloy, double voxelScaleCm) {
+		syncMicroWeights();
 		int solidCount = 0;
 		long volUnits = 0;
 		double sumX = 0, sumY = 0, sumZ = 0;
@@ -334,6 +352,7 @@ public final class MetalVolumeGrid {
 	public MetalVolumeGrid copy() {
 		MetalVolumeGrid g = new MetalVolumeGrid(this.micro.copy());
 		System.arraycopy(this.fill, 0, g.fill, 0, TOTAL_VOXELS);
+		g.syncMicroWeights();
 		return g;
 	}
 
@@ -363,6 +382,7 @@ public final class MetalVolumeGrid {
 				g.fill[idx] = (short) Math.min(FULL_CELL, amt);
 			}
 		}
+		g.syncMicroWeights();
 		return g;
 	}
 }
