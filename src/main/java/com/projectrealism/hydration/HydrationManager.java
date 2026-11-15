@@ -206,7 +206,7 @@ public final class HydrationManager extends PersistentState {
 			}
 			radiantW += estimateFireRadiantHeatOnPlayer(world, thermo, bpos);
 
-			double carriedKg = WeightManager.get().totalKg(player);
+			double carriedKg = WeightManager.get().reportFor(player).totalKg();
 			// Armor pieces increase thermal insulation (making heavy armor hot to sprint in!)
 			double clo = 0.72 + player.getArmor() * 0.025;
 			if (world.isRaining() && world.isSkyVisible(bpos.up())) {
