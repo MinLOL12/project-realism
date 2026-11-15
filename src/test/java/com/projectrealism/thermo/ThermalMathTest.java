@@ -28,9 +28,9 @@ class ThermalMathTest {
 
 		ThermalMath.BodyState oak = new ThermalMath.BodyState(293.15, 16.0, 0.05, 0.05);
 		ThermalMath.BodyState stick = new ThermalMath.BodyState(293.15, 0.35, 0.05, 0.05);
-		for (int i = 0; i < 6; i++) {
-			ThermalMath.stepBody(oak, MaterialProfile.DARK_OAK_WOOD, 0.5, 4500.0, 293.15, 0.2095, 0.5, 0.4, 0.0);
-			ThermalMath.stepBody(stick, MaterialProfile.STICK_KINDLING, 0.5, 4500.0, 293.15, 0.2095, 0.5, 0.4, 0.0);
+		for (int i = 0; i < 20; i++) {
+			ThermalMath.stepBody(oak, MaterialProfile.DARK_OAK_WOOD, 0.5, 11000.0, 293.15, 0.2095, 0.5, 0.4, 0.0);
+			ThermalMath.stepBody(stick, MaterialProfile.STICK_KINDLING, 0.5, 11000.0, 293.15, 0.2095, 0.5, 0.4, 0.0);
 		}
 		assertTrue(stick.surfaceTempK > oak.surfaceTempK + 120.0);
 	}
@@ -108,7 +108,7 @@ class ThermalMathTest {
 		ThermalMath.FoodThermalState roast = new ThermalMath.FoodThermalState(293.15, steak.waterFraction());
 		ThermalMath.FoodThermalState boil = new ThermalMath.FoodThermalState(293.15, steak.waterFraction());
 
-		for (int i = 0; i < 120; i++) {
+		for (int i = 0; i < 160; i++) {
 			ThermalMath.stepFood(roast, steak, ThermalMath.CookingMethod.ROASTING, 920.0, 0.9, 0.5);
 			ThermalMath.stepFood(boil, steak, ThermalMath.CookingMethod.BOILING, 920.0, 0.9, 0.5);
 		}

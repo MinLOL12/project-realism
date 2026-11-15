@@ -171,18 +171,22 @@ public final class ThermalMath {
 		s.coreMoistureKg = Math.max(0.0, s.coreMoistureKg - diffusedWater);
 		s.surfaceMoistureKg = Math.max(0.0, s.surfaceMoistureKg + diffusedWater);
 
+		// Geometric surface-area similarity when fuel piece mass differs from profile reference mass
+		double massRatio = Math.max(0.04, Math.min(4.0, s.initialDryMassKg / Math.max(0.1, p.dryMassKg())));
+		double effArea = p.surfaceAreaM2() * Math.pow(massRatio, 0.6667);
+
 		// 2. Internal heat conduction between outer shell and interior core
 		double shellMass = Math.max(0.03, (s.dryWoodMassKg + s.charMassKg + s.ashMassKg) * 0.30);
 		double coreMass = Math.max(0.05, (s.dryWoodMassKg + s.charMassKg + s.ashMassKg) * 0.70);
 		double charFrac = s.charMassKg / Math.max(0.05, s.dryWoodMassKg + s.charMassKg);
 		double kEff = p.thermalConductivity() * (1.0 - 0.5 * charFrac) + 0.25 * s.coreMoistureRatio();
 		double thicknessM = Math.max(0.04, Math.cbrt(s.initialDryMassKg / Math.max(100.0, p.densityKgM3())) * 0.5);
-		double qInternalW = conductivePowerWatts(kEff, kEff, p.surfaceAreaM2() * 0.6,
+		double qInternalW = conductivePowerWatts(kEff, kEff, effArea * 0.6,
 				s.surfaceTempK, s.coreTempK, thicknessM);
 
 		// 3. Surface radiative + convective heat loss to surrounding air
-		double qRadOutW = radiativePowerWatts(p.emissivity(), p.surfaceAreaM2() * 0.55, s.surfaceTempK, airTempK);
-		double qConvToAirW = convectivePowerWatts(airSpeedMS, p.surfaceAreaM2() * 0.55, s.surfaceTempK, airTempK);
+		double qRadOutW = radiativePowerWatts(p.emissivity(), effArea * 0.55, s.surfaceTempK, airTempK);
+		double qConvToAirW = convectivePowerWatts(airSpeedMS, effArea * 0.55, s.surfaceTempK, airTempK);
 
 		double netShellHeatJ = (externalHeatWatts - qInternalW - qRadOutW - qConvToAirW) * dt;
 		double netCoreHeatJ = qInternalW * dt;
@@ -201,7 +205,7 @@ public final class ThermalMath {
 			double vaporDrive = Math.max(0.0, (1.0 - relativeHumidity) * (0.5 + airSpeedMS)
 					* (0.3 + Math.max(0.0, s.surfaceTempK - 275.0) * 0.03));
 			double ambientEvap = Math.min(excessSurfaceWater,
-					p.surfaceAreaM2() * 1.2e-4 * vaporDrive * dt);
+					effArea * 1.2e-4 * vaporDrive * dt);
 			s.surfaceMoistureKg -= ambientEvap;
 			netShellHeatJ -= ambientEvap * ThermalConstants.WATER_LATENT_VAPORIZATION * 0.35;
 		}
@@ -248,7 +252,7 @@ public final class ThermalMath {
 				double thermalDrive = Math.min(3.5, (s.surfaceTempK - effPyroK) / 140.0 + 0.12);
 				// Porosity + surface area + low moisture accelerate pyrolysis
 				double moistDamp = 1.0 / (1.0 + 4.5 * surfMoist);
-				double baseRate = 0.0045 * p.surfaceAreaM2() * (0.45 + p.porosity());
+				double baseRate = 0.0045 * effArea * (0.45 + p.porosity());
 				pyroRateKgS = Math.min(s.dryWoodMassKg / dt, baseRate * thermalDrive * moistDamp);
 			}
 
@@ -309,7 +313,7 @@ public final class ThermalMath {
 				double o2Drive = Math.min(1.3, (o2Fraction - ThermalConstants.MIN_O2_EMBER) / 0.15)
 						* (0.45 + 0.75 * Math.min(2.5, airSpeedMS + 0.35));
 				double tDrive = Math.min(2.5, (s.surfaceTempK - ThermalConstants.CHAR_OXIDATION_K + 80.0) / 300.0);
-				double charRate = 0.0012 * p.surfaceAreaM2() * (0.5 + p.porosity()) * o2Drive * Math.max(0.2, tDrive);
+				double charRate = 0.0012 * effArea * (0.5 + p.porosity()) * o2Drive * Math.max(0.2, tDrive);
 				double burnedChar = Math.min(s.charMassKg, charRate * dt);
 				s.charMassKg = Math.max(0.0, s.charMassKg - burnedChar);
 				// Small inorganic ash fraction remains from char oxidation
@@ -418,7 +422,7 @@ public final class ThermalMath {
 		double dt = Math.max(0.01, Math.min(2.0, dtSeconds));
 		double surfMass = fp.massKg() * 0.30;
 		double coreMass = fp.massKg() * 0.70;
-		double area = 0.018 * Math.pow(fp.massKg() / 0.3, 0.66);
+		double area = 0.048 * Math.pow(fp.massKg() / 0.3, 0.66);
 
 		double qRad = method.radiationWeight * radiativePowerWatts(0.88, area, sourceTempK, fs.surfaceTempK);
 		double qConv = method.convectionWeight * convectivePowerWatts(airSpeedMS + 0.4, area, sourceTempK, fs.surfaceTempK);
@@ -429,8 +433,8 @@ public final class ThermalMath {
 		double capTemp = (method == CookingMethod.BOILING || method == CookingMethod.STEAMING)
 				? Math.min(sourceTempK, ThermalConstants.BOILING_K + 2.0) : 1300.0;
 
-		double qInner = conductivePowerWatts(fp.thermalConductivity(), fp.thermalConductivity(), area * 0.8,
-				fs.surfaceTempK, fs.coreTempK, fp.characteristicRadiusM());
+		double qInner = conductivePowerWatts(fp.thermalConductivity(), fp.thermalConductivity(), area * 1.4,
+				fs.surfaceTempK, fs.coreTempK, fp.characteristicRadiusM()) * 3.5;
 
 		double surfCap = Math.max(80.0, surfMass * fp.specificHeat());
 		double coreCap = Math.max(150.0, coreMass * fp.specificHeat());
