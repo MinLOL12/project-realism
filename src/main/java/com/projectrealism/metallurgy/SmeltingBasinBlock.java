@@ -104,7 +104,8 @@ public class SmeltingBasinBlock extends BlockWithEntity {
 			be.addFlux(player, held, world, pos);
 			return ActionResult.SUCCESS;
 		}
-		if (held.isOf(ThermoItems.FIRE_STARTER) || held.isOf(Items.FLINT_AND_STEEL)) {
+		if (held.isOf(ThermoItems.FIRE_DRILL) || held.isOf(ThermoItems.BOW_DRILL)
+				|| held.isOf(Items.FLINT_AND_STEEL)) {
 			be.ignite(player, world, pos);
 			return ActionResult.SUCCESS;
 		}

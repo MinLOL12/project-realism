@@ -96,7 +96,8 @@ public final class MetallurgyEvents {
 			}
 
 			// 4. Pit Charcoal Kiln: lighting covered timber pile converts enclosed logs cleanly into CHARCOAL!
-			if ((held.isOf(ThermoItems.FIRE_STARTER) || held.isOf(Items.FLINT_AND_STEEL))
+			if ((held.isOf(ThermoItems.FIRE_DRILL) || held.isOf(ThermoItems.BOW_DRILL)
+					|| held.isOf(Items.FLINT_AND_STEEL))
 					&& state.isIn(BlockTags.LOGS)) {
 				if (world instanceof ServerWorld sw) {
 					int converted = tryBurnCharcoalKiln(sw, pos);

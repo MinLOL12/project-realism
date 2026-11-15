@@ -23,6 +23,7 @@ public enum MineralSpecies {
 	}
 
 	public final String id;
+	public final String displayName;
 	public final TargetElement element;
 	/** Stoichiometric pure-metal mass yield of the pure mineral crystal (0..1). */
 	public final double pureMetalFraction;
@@ -39,6 +40,7 @@ public enum MineralSpecies {
 				   double reductionTempK, double productMeltTempK,
 				   int colorR, int colorG, int colorB) {
 		this.id = id;
+		this.displayName = formatDisplayName(id);
 		this.element = element;
 		this.pureMetalFraction = pureMetalFraction;
 		this.sulfide = sulfide;
@@ -47,6 +49,18 @@ public enum MineralSpecies {
 		this.colorR = colorR;
 		this.colorG = colorG;
 		this.colorB = colorB;
+	}
+
+	private static String formatDisplayName(String raw) {
+		String[] parts = raw.split("_");
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < parts.length; i++) {
+			if (i > 0) sb.append(' ');
+			if (!parts[i].isEmpty()) {
+				sb.append(Character.toUpperCase(parts[i].charAt(0))).append(parts[i].substring(1));
+			}
+		}
+		return sb.toString();
 	}
 
 	public static MineralSpecies fromId(String id) {
