@@ -96,8 +96,8 @@ public class CarcassBlock extends BlockWithEntity {
 		if (world.isClient) return ActionResult.SUCCESS;
 		if (!(world.getBlockEntity(pos) instanceof CarcassBlockEntity be)) return ActionResult.PASS;
 
-		Vec3d uv = localBedUV(state.get(FACING), pos, hit.getPos());
-		CarcassState.Region region = regionFromUV(uv.x, uv.z);
+		Vec3d uv = CarcassState.localBedUV(state.get(FACING), pos, hit.getPos());
+		CarcassState.Region region = CarcassState.regionFromUV(uv.x, uv.z);
 		ItemStack held = player.getMainHandStack();
 
 		// Sneak + empty hand: pick up whole persistent carcass as portable CarcassItem
@@ -127,33 +127,5 @@ public class CarcassBlock extends BlockWithEntity {
 		}
 
 		return ActionResult.PASS;
-	}
-
-	/**
-	 * Maps a block-hit position onto normalized carcass bed coordinates aligned with {@link AnatomyBlockRenderers}:
-	 * {@code u} (Vec3d.x) spans across the body flanks (0 = left, 1 = right), and {@code v} (Vec3d.z) runs
-	 * front-to-back along the body axis (0 = head/neck end, 1 = hindquarters/limbs).
-	 */
-	public static Vec3d localBedUV(Direction facing, BlockPos pos, Vec3d hitPos) {
-		double lx = Math.max(0.02, Math.min(0.98, hitPos.x - pos.getX()));
-		double lz = Math.max(0.02, Math.min(0.98, hitPos.z - pos.getZ()));
-		double u;
-		double v;
-		switch (facing) {
-			case SOUTH -> { u = 1.0 - lx; v = 1.0 - lz; }
-			case EAST  -> { u = lz;       v = 1.0 - lx; }
-			case WEST  -> { u = 1.0 - lz; v = lx;       }
-			default    -> { u = lx;       v = lz;       } // NORTH: head renders at -Z (low lz)
-		}
-		return new Vec3d(u, hitPos.y - pos.getY(), v);
-	}
-
-	public static CarcassState.Region regionFromUV(double u, double v) {
-		// Front head/neck (v < 0.28), hindquarters/limbs (v > 0.72), left belly/viscera, right spine/loin, center torso
-		if (v < 0.28) return CarcassState.Region.HEAD_NECK;
-		if (v > 0.72) return CarcassState.Region.HAUNCH_LIMB;
-		if (u < 0.36) return CarcassState.Region.VISCERA_CAVITY;
-		if (u > 0.68) return CarcassState.Region.LOIN_RIBS;
-		return CarcassState.Region.COAT_TORSO;
 	}
 }

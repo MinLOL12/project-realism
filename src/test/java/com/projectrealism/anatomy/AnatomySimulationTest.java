@@ -145,21 +145,21 @@ class AnatomySimulationTest {
 	void carcassHorizontalRegionMappingReachesHeadAndAllZones() {
 		net.minecraft.util.math.BlockPos pos = net.minecraft.util.math.BlockPos.ORIGIN;
 		// Facing NORTH: head is at low Z (0.10), hind at high Z (0.85), flanks/torso in middle Z (0.50)
-		var headUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+		var headUv = CarcassState.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
 				new net.minecraft.util.math.Vec3d(0.50, 0.625, 0.10));
-		var limbUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+		var limbUv = CarcassState.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
 				new net.minecraft.util.math.Vec3d(0.50, 0.625, 0.85));
-		var gutUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+		var gutUv = CarcassState.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
 				new net.minecraft.util.math.Vec3d(0.20, 0.625, 0.50));
-		var loinUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+		var loinUv = CarcassState.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
 				new net.minecraft.util.math.Vec3d(0.80, 0.625, 0.50));
-		var torsoUv = CarcassBlock.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
+		var torsoUv = CarcassState.localBedUV(net.minecraft.util.math.Direction.NORTH, pos,
 				new net.minecraft.util.math.Vec3d(0.50, 0.625, 0.50));
 
-		assertEquals(CarcassState.Region.HEAD_NECK, CarcassBlock.regionFromUV(headUv.x, headUv.z));
-		assertEquals(CarcassState.Region.HAUNCH_LIMB, CarcassBlock.regionFromUV(limbUv.x, limbUv.z));
-		assertEquals(CarcassState.Region.VISCERA_CAVITY, CarcassBlock.regionFromUV(gutUv.x, gutUv.z));
-		assertEquals(CarcassState.Region.LOIN_RIBS, CarcassBlock.regionFromUV(loinUv.x, loinUv.z));
-		assertEquals(CarcassState.Region.COAT_TORSO, CarcassBlock.regionFromUV(torsoUv.x, torsoUv.z));
+		assertEquals(CarcassState.Region.HEAD_NECK, CarcassState.regionFromUV(headUv.x, headUv.z));
+		assertEquals(CarcassState.Region.HAUNCH_LIMB, CarcassState.regionFromUV(limbUv.x, limbUv.z));
+		assertEquals(CarcassState.Region.VISCERA_CAVITY, CarcassState.regionFromUV(gutUv.x, gutUv.z));
+		assertEquals(CarcassState.Region.LOIN_RIBS, CarcassState.regionFromUV(loinUv.x, loinUv.z));
+		assertEquals(CarcassState.Region.COAT_TORSO, CarcassState.regionFromUV(torsoUv.x, torsoUv.z));
 	}
 }

@@ -4,6 +4,9 @@ import com.projectrealism.material.HideSurface;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,33 @@ public final class CarcassState {
 			this.index = index;
 			this.key = key;
 		}
+	}
+
+	/**
+	 * Maps a block-hit position onto normalized carcass bed coordinates aligned with the renderer:
+	 * {@code u} (Vec3d.x) spans across the flanks (0 = left, 1 = right), and {@code v} (Vec3d.z) runs
+	 * front-to-back along the body axis (0 = head/neck end, 1 = hindquarters/limbs).
+	 */
+	public static Vec3d localBedUV(Direction facing, BlockPos pos, Vec3d hitPos) {
+		double lx = Math.max(0.02, Math.min(0.98, hitPos.x - pos.getX()));
+		double lz = Math.max(0.02, Math.min(0.98, hitPos.z - pos.getZ()));
+		double u;
+		double v;
+		switch (facing) {
+			case SOUTH -> { u = 1.0 - lx; v = 1.0 - lz; }
+			case EAST  -> { u = lz;       v = 1.0 - lx; }
+			case WEST  -> { u = 1.0 - lz; v = lx;       }
+			default    -> { u = lx;       v = lz;       } // NORTH: head renders at -Z (low lz)
+		}
+		return new Vec3d(u, hitPos.y - pos.getY(), v);
+	}
+
+	public static Region regionFromUV(double u, double v) {
+		if (v < 0.28) return Region.HEAD_NECK;
+		if (v > 0.72) return Region.HAUNCH_LIMB;
+		if (u < 0.36) return Region.VISCERA_CAVITY;
+		if (u > 0.68) return Region.LOIN_RIBS;
+		return Region.COAT_TORSO;
 	}
 
 	public AnimalSpecies species = AnimalSpecies.COW;
