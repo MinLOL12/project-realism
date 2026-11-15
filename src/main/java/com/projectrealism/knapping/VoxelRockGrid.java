@@ -377,8 +377,9 @@ public final class VoxelRockGrid {
 						int t1 = measureThicknessPerp(x + inX, y + inY, z + inZ, inX, inY, inZ);
 						int t2 = measureThicknessPerp(x + inX * 2, y + inY * 2, z + inZ * 2, inX, inY, inZ);
 						int t0 = measureThicknessPerp(x, y, z, inX, inY, inZ);
-						double slope = Math.max(0.18, (Math.max(t1, t2) - t0 * 0.55) / 2.0);
-						double angleDeg = Math.max(11.0, Math.min(86.0, Math.toDegrees(2.0 * Math.atan(slope * 0.48))));
+						double taper = Math.max(0.11, 0.11 * Math.max(0, t2 - t0)
+								+ 0.07 * Math.max(0, t1 - t0) + 0.11 + Math.max(0, t0 - 1) * 0.14);
+						double angleDeg = Math.max(12.0, Math.min(86.0, Math.toDegrees(2.0 * Math.atan(taper))));
 						// Material acuity + chipped crack roughness determine micro-tip radius (mm)
 						int cr = getCrackLevel(x, y, z);
 						double radiusMm = (1.18 - material.acuityPotential * 0.92) * voxelScaleCm * (t0 > 1 ? 2.1 : 0.75)
@@ -389,7 +390,7 @@ public final class VoxelRockGrid {
 						localRadii[idx] = Math.max(0.10, Math.min(5.0, radiusMm));
 						localSpine[idx] = t2;
 
-						if (angleDeg <= 56.0 && t0 <= 2) {
+						if (angleDeg <= 58.0 && t0 <= 2) {
 							acuteEdge[idx] = true;
 						}
 						// Reinforced point: exposed on 3+ faces AND backed by solid interior stem

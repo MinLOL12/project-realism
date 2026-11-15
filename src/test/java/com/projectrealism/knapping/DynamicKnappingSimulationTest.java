@@ -82,13 +82,13 @@ public class DynamicKnappingSimulationTest {
 		DynamicStoneState limestone = buildBeveledBlock(StoneMaterial.LIMESTONE);
 
 		// 1. Weak interior center hit glances vs rim platform strike removes clean flake
-		FractureEngine.VoxelHit centerHit = new FractureEngine.VoxelHit(8, 5, 8, 0, 1, 0);
+		FractureEngine.VoxelHit centerHit = new FractureEngine.VoxelHit(8, 4, 8, 0, 1, 0);
 		var glance = FractureEngine.strike(flint.copy(), centerHit, new Vec3d(0, -1, 0),
-				0.35, StoneMaterial.LIMESTONE, FractureEngine.SupportCondition.SOFT_EARTH, new Random(1L));
+				0.20, StoneMaterial.LIMESTONE, FractureEngine.SupportCondition.SOFT_EARTH, new Random(1L));
 		assertEquals(FractureEngine.OutcomeKind.NO_EFFECT, glance.kind());
 
 		// 2. Crisp beveled rim strike with hard quartzite hammerstone on firm wood removes sharp flake
-		FractureEngine.VoxelHit rimHit = new FractureEngine.VoxelHit(11, 4, 8, 1, 1, 0);
+		FractureEngine.VoxelHit rimHit = new FractureEngine.VoxelHit(11, 2, 8, 0, 1, 0);
 		var clean = FractureEngine.strike(flint.copy(), rimHit, new Vec3d(-0.35, -0.94, 0),
 				1.30, StoneMaterial.QUARTZITE, FractureEngine.SupportCondition.FIRM_WOOD, new Random(7L));
 		assertTrue(clean.removedVoxels() > 0, "Rim strike with hard hammerstone must remove flake voxels");
@@ -105,6 +105,7 @@ public class DynamicKnappingSimulationTest {
 		DynamicStoneState cracked = buildBeveledBlock(StoneMaterial.OBSIDIAN);
 		for (int y = 0; y < 5; y++) {
 			for (int z = 5; z < 11; z++) {
+				cracked.grid.addCrack(11, y, z, 28);
 				cracked.grid.addCrack(9, y, z, 28);
 			}
 		}
@@ -128,14 +129,18 @@ public class DynamicKnappingSimulationTest {
 
 		// Heavy thick flint wedge hafted perpendicularly vs tiny acute obsidian razor on hardwood chopping
 		DynamicStoneState heavyWedge = buildBox(StoneMaterial.BASALT, 4, 12, 0, 5, 4, 12);
-		// Carve realistic ~34 deg chopping bevel along front x=10..12
-		for (int x = 10; x < 12; x++) {
-			for (int z = 4; z < 12; z++) {
-				heavyWedge.grid.setSolid(x, 3, z, false);
-				heavyWedge.grid.setSolid(x, 4, z, false);
-			}
+		// Carve realistic ~43 deg chopping bevel tapering 3 -> 2 -> 1 along front x=9..12
+		for (int z = 4; z < 12; z++) {
+			heavyWedge.grid.setSolid(9, 0, z, false);
+			heavyWedge.grid.setSolid(9, 4, z, false);
+			heavyWedge.grid.setSolid(10, 0, z, false);
+			heavyWedge.grid.setSolid(10, 3, z, false);
+			heavyWedge.grid.setSolid(10, 4, z, false);
+			heavyWedge.grid.setSolid(11, 0, z, false);
+			heavyWedge.grid.setSolid(11, 2, z, false);
+			heavyWedge.grid.setSolid(11, 3, z, false);
+			heavyWedge.grid.setSolid(11, 4, z, false);
 		}
-		heavyWedge.grid.setSolid(11, 2, 4, false);
 		heavyWedge.invalidateGeometry();
 		heavyWedge.haft.attachHandle(HaftData.Orientation.PERPENDICULAR_CHOP, 64.0, 0.45, heavyWedge.metrics());
 		heavyWedge.haft.wrapBinding("sinew", 0.95);
