@@ -253,8 +253,8 @@ public class DynamicKnappingSimulationTest {
 		}
 		assertNotNull(edgeTarget);
 		FractureEngine.KnapOutcome tap = FractureEngine.strike(
-				granite, edgeTarget, new Vec3d(-0.6, -0.75, 0.0), StoneMaterial.QUARTZITE,
-				0.68, FractureEngine.SupportCondition.HARD_ANVIL, new Random(77L));
+				granite, edgeTarget, new Vec3d(-0.6, -0.75, 0.0), 0.68,
+				StoneMaterial.QUARTZITE, FractureEngine.SupportCondition.HARD_ANVIL, new Random(77L));
 		assertEquals(FractureEngine.OutcomeKind.CLEAN_FLAKE, tap.kind());
 		assertTrue(tap.removedVoxels() >= 1 && tap.removedVoxels() <= 2,
 				"Precision pressure flake should remove 1-2 targeted voxels, removed=" + tap.removedVoxels());
