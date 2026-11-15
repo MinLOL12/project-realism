@@ -83,10 +83,13 @@ public final class AnatomyEvents {
 		UseItemCallback.EVENT.register((player, world, hand) -> {
 			ItemStack main = player.getStackInHand(hand);
 			ItemStack off = player.getStackInHand(hand == Hand.MAIN_HAND ? Hand.OFF_HAND : Hand.MAIN_HAND);
-			if (hand == Hand.MAIN_HAND && main.isOf(AnatomyItems.RAW_BONE) && PrimitiveItems.isKnappable(off.getItem())) {
+			if (hand == Hand.MAIN_HAND && main.isOf(AnatomyItems.RAW_BONE)
+					&& (PrimitiveItems.isKnappable(off.getItem()) || com.projectrealism.knapping.DynamicKnappingItems.isStriker(off))) {
 				if (world instanceof ServerWorld sw) {
 					BoneData b = RawBoneItem.readBone(main);
-					b.abradeWithStone(off.isOf(PrimitiveItems.FLINT_ROCK) ? 0.90 : 0.72);
+					var mat = com.projectrealism.knapping.DynamicKnappingItems.materialOfItem(off);
+					double grit = (mat != null && mat.mohsHardness >= 6.0) ? 0.90 : 0.72;
+					b.abradeWithStone(grit);
 					RawBoneItem.writeBone(main, b);
 					sw.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_GRINDSTONE_USE,
 							SoundCategory.PLAYERS, 0.5f, 1.3f);

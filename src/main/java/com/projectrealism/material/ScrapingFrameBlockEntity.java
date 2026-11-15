@@ -77,7 +77,19 @@ public class ScrapingFrameBlockEntity extends BlockEntity {
 		// Player pitch controls blade angle relative to angled frame; straight down = steep gouge!
 		double pitchAbs = Math.abs(player.getPitch());
 		double angleDeg = Math.max(12.0, Math.min(80.0, pitchAbs * 0.95));
-		double sharpness = MaterialItems.StoneScraperItem.getSharpness(scraper) / 100.0;
+		double sharpness;
+		if (scraper.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(scraper);
+			var resp = com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.HIDE_SCRAPE, 75.0);
+			sharpness = Math.max(0.20, Math.min(1.0, resp.effectiveness()));
+			// Very acute razor edge cuts/gouges leather when scraped flat!
+			if (resp.gougeRisk() > 0.45) {
+				angleDeg = Math.max(angleDeg, 72.0);
+			}
+		} else {
+			sharpness = MaterialItems.StoneScraperItem.getSharpness(scraper) / 100.0;
+		}
 		double pressure = player.isSprinting() ? 1.45 : (player.isSneaking() ? 0.72 : 1.0);
 
 		HideSurface.ScrapeOutcome out = hide.scrapeAt(u, v, sweep, angleDeg, sharpness, pressure);
@@ -111,10 +123,18 @@ public class ScrapingFrameBlockEntity extends BlockEntity {
 
 			// Wear scraper edge slightly on each stroke
 			if (!player.isCreative()) {
-				int curS = MaterialItems.StoneScraperItem.getSharpness(scraper);
-				int loss = out.wetHide ? 2 : 5;
-				MaterialItems.StoneScraperItem.setSharpness(scraper, curS - loss);
-				scraper.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
+				if (scraper.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+					var s = com.projectrealism.knapping.DynamicStoneItem.readState(scraper);
+					com.projectrealism.knapping.StoneInteractionPhysics.applyContactWear(
+							s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.HIDE_SCRAPE,
+							out.wetHide ? 50.0 : 85.0, new java.util.Random(sw.random.nextLong()));
+					com.projectrealism.knapping.DynamicStoneItem.writeState(scraper, s);
+				} else {
+					int curS = MaterialItems.StoneScraperItem.getSharpness(scraper);
+					int loss = out.wetHide ? 2 : 5;
+					MaterialItems.StoneScraperItem.setSharpness(scraper, curS - loss);
+					scraper.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
+				}
 			}
 		}
 		sync();

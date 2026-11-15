@@ -105,11 +105,23 @@ public class CuttingSurfaceBlockEntity extends BlockEntity {
 		if (knife.isOf(AnatomyItems.BONE_BLADE)) {
 			return Math.max(0.35, AnatomyItems.BoneToolItem.getWorkQualityPct(knife) / 100.0);
 		}
+		if (knife.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(knife);
+			return Math.max(0.15, Math.min(1.0, com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.HIDE_CUT, 85.0)
+					.effectiveness()));
+		}
 		return 0.80;
 	}
 
 	private static void wearKnife(PlayerEntity player, Hand hand, ItemStack knife, float hardness, ServerWorld sw) {
-		if (ToolCondition.isPrimitiveTool(knife)) {
+		if (knife.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(knife);
+			com.projectrealism.knapping.StoneInteractionPhysics.applyContactWear(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.HIDE_CUT,
+					85.0 * hardness, new java.util.Random(sw.random.nextLong()));
+			com.projectrealism.knapping.DynamicStoneItem.writeState(knife, s);
+		} else if (ToolCondition.isPrimitiveTool(knife)) {
 			ToolCondition.applyWear(player, hand, knife, hardness, sw);
 		} else if (knife.isDamageable() && !player.isCreative()) {
 			knife.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);

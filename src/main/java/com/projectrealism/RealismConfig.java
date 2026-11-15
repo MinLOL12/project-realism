@@ -79,6 +79,9 @@ public final class RealismConfig {
 	/** Whether knapping (striking two rocks) replaces the vanilla stone tool recipes. */
 	public boolean knapping = true;
 
+	/** Whether rocks are shaped pixel-by-pixel via 3D voxel knapping instead of instant tool head templates. */
+	public boolean dynamicKnapping = true;
+
 	/**
 	 * Whether rocks and fallen sticks are written into newly generated chunks.
 	 *

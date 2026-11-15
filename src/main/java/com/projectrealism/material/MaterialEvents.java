@@ -87,7 +87,8 @@ public final class MaterialEvents {
 			ItemStack held = player.getStackInHand(hand);
 			if (!held.isOf(PrimitiveItems.STONE_KNIFE) && !held.isOf(MaterialItems.STONE_SCRAPER)
 					&& !held.isOf(com.projectrealism.anatomy.AnatomyItems.BONE_BLADE)
-					&& !held.isOf(com.projectrealism.anatomy.AnatomyItems.BONE_CHISEL)) {
+					&& !held.isOf(com.projectrealism.anatomy.AnatomyItems.BONE_CHISEL)
+					&& !held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
 				return ActionResult.PASS;
 			}
 			BlockPos pos = hit.getBlockPos();

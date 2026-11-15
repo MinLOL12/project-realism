@@ -34,6 +34,7 @@ public class ProjectRealismClient implements ClientModInitializer {
 		HudRenderCallback.EVENT.register(new HydrationHud());
 		MaterialBlockRenderers.register();
 		AnatomyBlockRenderers.register();
+		KnappingBlockRenderers.register();
 
 		Identifier dullId = ProjectRealism.id("dull");
 		for (Item tool : new Item[]{

@@ -113,7 +113,13 @@ public class CarcassBlockEntity extends BlockEntity {
 							  ItemStack tool, World world, BlockPos pos) {
 		if (!(world instanceof ServerWorld sw)) return;
 		double sharp = getBladeSharpness(tool);
-		boolean heavy = tool.isOf(PrimitiveItems.STONE_AXE) || tool.isOf(AnatomyItems.BONE_CHISEL);
+		boolean heavy = tool.isOf(PrimitiveItems.STONE_AXE) || tool.isOf(AnatomyItems.BONE_CHISEL)
+				|| (tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)
+				&& com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+						com.projectrealism.knapping.DynamicStoneItem.readState(tool),
+						com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CHISEL, 120.0)
+						.effectiveness() >= 0.45
+				&& com.projectrealism.knapping.DynamicStoneItem.readState(tool).metrics().massKg() >= 1.1);
 		boolean scraper = tool.isOf(MaterialItems.STONE_SCRAPER);
 
 		switch (region) {
@@ -265,12 +271,24 @@ public class CarcassBlockEntity extends BlockEntity {
 		if (tool.isOf(AnatomyItems.BONE_BLADE) || tool.isOf(AnatomyItems.BONE_CHISEL)) {
 			return AnatomyItems.BoneToolItem.getWorkQualityPct(tool) / 100.0;
 		}
+		if (tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(tool);
+			return Math.max(0.15, Math.min(1.0, com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.FLESH_SLICE, 85.0)
+					.effectiveness()));
+		}
 		return 0.75;
 	}
 
 	private static void wearTool(PlayerEntity player, Hand hand, ItemStack tool, ServerWorld sw) {
 		if (player.isCreative()) return;
-		if (tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(PrimitiveItems.STONE_AXE)) {
+		if (tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(tool);
+			com.projectrealism.knapping.StoneInteractionPhysics.applyContactWear(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.FLESH_SLICE,
+					85.0, new Random(sw.random.nextLong()));
+			com.projectrealism.knapping.DynamicStoneItem.writeState(tool, s);
+		} else if (tool.isOf(PrimitiveItems.STONE_KNIFE) || tool.isOf(PrimitiveItems.STONE_AXE)) {
 			ToolCondition.applyWear(player, hand, tool, 0.75f, sw);
 		} else {
 			tool.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);

@@ -81,7 +81,15 @@ public final class TreeChopper {
 					server.getRegistryKey(), k -> new ConcurrentHashMap<>());
 			int newChops = worldProgress.getOrDefault(pos, 0) + 1;
 
-			ToolCondition.applyWear(player, Hand.MAIN_HAND, tool, tree.species().hardness(), server, true);
+			if (tool.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+				var s = com.projectrealism.knapping.DynamicStoneItem.readState(tool);
+				com.projectrealism.knapping.StoneInteractionPhysics.applyContactWear(
+						s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP,
+						140.0 * tree.species().hardness(), new java.util.Random(server.random.nextLong()));
+				com.projectrealism.knapping.DynamicStoneItem.writeState(tool, s);
+			} else {
+				ToolCondition.applyWear(player, Hand.MAIN_HAND, tool, tree.species().hardness(), server, true);
+			}
 
 			if (newChops < required) {
 				worldProgress.put(pos, newChops);
@@ -125,6 +133,12 @@ public final class TreeChopper {
 	}
 
 	private static boolean isAxe(ItemStack stack) {
+		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
+			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 140.0)
+					.effectiveness() >= 0.36;
+		}
 		return !stack.isEmpty() && (stack.isIn(ItemTags.AXES) || stack.getItem() instanceof AxeItem);
 	}
 

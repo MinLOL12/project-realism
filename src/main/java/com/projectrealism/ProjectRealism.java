@@ -8,6 +8,9 @@ import com.projectrealism.hydration.HydrationEvents;
 import com.projectrealism.hydration.HydrationItems;
 import com.projectrealism.hydration.HydrationManager;
 import com.projectrealism.hydration.HydrationPayload;
+import com.projectrealism.knapping.DynamicKnappingBlocks;
+import com.projectrealism.knapping.DynamicKnappingEvents;
+import com.projectrealism.knapping.DynamicKnappingItems;
 import com.projectrealism.material.MaterialBlocks;
 import com.projectrealism.material.MaterialEvents;
 import com.projectrealism.material.MaterialItems;
@@ -78,6 +81,8 @@ public class ProjectRealism implements ModInitializer {
 		MaterialItems.register();
 		AnatomyBlocks.register();
 		AnatomyItems.register();
+		DynamicKnappingBlocks.register();
+		DynamicKnappingItems.register();
 		ModRecipes.register();
 		PrimitiveEvents.register();
 		TreeChopper.register();
@@ -86,6 +91,7 @@ public class ProjectRealism implements ModInitializer {
 		HydrationEvents.register();
 		MaterialEvents.register();
 		AnatomyEvents.register();
+		DynamicKnappingEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(HydrationPayload.ID, HydrationPayload.CODEC);

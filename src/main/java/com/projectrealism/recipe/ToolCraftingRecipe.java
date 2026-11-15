@@ -3,6 +3,12 @@ package com.projectrealism.recipe;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.projectrealism.ProjectRealism;
+import com.projectrealism.knapping.DynamicKnappingItems;
+import com.projectrealism.knapping.DynamicStoneItem;
+import com.projectrealism.knapping.StoneInteractionPhysics;
+import com.projectrealism.material.MaterialItems;
+import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.primitive.ToolCondition;
 import com.projectrealism.wood.FreshLogBlock;
 import com.projectrealism.wood.RoughPlankBlock;
@@ -117,6 +123,9 @@ public final class ToolCraftingRecipe implements CraftingRecipe {
 	}
 
 	private Optional<MatchResult> findMatch(CraftingRecipeInput input) {
+		if (ProjectRealism.config().dynamicKnapping && isLegacyStoneTemplateResult(result)) {
+			return Optional.empty();
+		}
 		List<Integer> nonEmptySlots = new ArrayList<>();
 		for (int i = 0; i < input.getSize(); i++) {
 			if (!input.getStackInSlot(i).isEmpty()) {
@@ -133,7 +142,7 @@ public final class ToolCraftingRecipe implements CraftingRecipe {
 			Ingredient toolIng = tool.get();
 			for (int candidateToolSlot : nonEmptySlots) {
 				ItemStack toolStack = input.getStackInSlot(candidateToolSlot);
-				if (!toolIng.test(toolStack)) {
+				if (!matchesIngredientOrDynamic(toolIng, toolStack)) {
 					continue;
 				}
 				if (sharpenTool && ToolCondition.getSharpness(toolStack) >= 98) {
@@ -158,6 +167,34 @@ public final class ToolCraftingRecipe implements CraftingRecipe {
 		return Optional.empty();
 	}
 
+	private static boolean isLegacyStoneTemplateResult(ItemStack out) {
+		return out.isOf(PrimitiveItems.SHARP_STONE)
+				|| out.isOf(PrimitiveItems.STONE_AXE_HEAD)
+				|| out.isOf(PrimitiveItems.STONE_AXE)
+				|| out.isOf(PrimitiveItems.STONE_KNIFE)
+				|| out.isOf(PrimitiveItems.STONE_PICKAXE)
+				|| out.isOf(MaterialItems.STONE_SCRAPER);
+	}
+
+	private static boolean matchesIngredientOrDynamic(Ingredient target, ItemStack stack) {
+		if (target.test(stack)) {
+			return true;
+		}
+		if (stack.isOf(DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = DynamicStoneItem.readState(stack);
+			if (target.test(new ItemStack(PrimitiveItems.STONE_AXE))) {
+				return StoneInteractionPhysics.evaluate(
+						s, StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 140.0).effectiveness() >= 0.36;
+			}
+			if (target.test(new ItemStack(PrimitiveItems.STONE_KNIFE))) {
+				return StoneInteractionPhysics.evaluate(
+						s, StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 95.0).effectiveness() >= 0.36;
+			}
+		}
+		return DynamicKnappingItems.isKnappableRawRock(stack)
+				&& target.test(new ItemStack(PrimitiveItems.FLINT_ROCK));
+	}
+
 	private boolean matchIngredients(CraftingRecipeInput input, List<Integer> slots,
 									 int ingIdx, boolean[] used) {
 		if (ingIdx == ingredients.size()) {
@@ -169,7 +206,7 @@ public final class ToolCraftingRecipe implements CraftingRecipe {
 				continue;
 			}
 			ItemStack stack = input.getStackInSlot(slots.get(i));
-			if (!target.test(stack)) {
+			if (!matchesIngredientOrDynamic(target, stack)) {
 				continue;
 			}
 			if (requireDryWood && !isDryInput(stack)) {
@@ -253,9 +290,17 @@ public final class ToolCraftingRecipe implements CraftingRecipe {
 		int toolSlot = match.get().toolSlot;
 		ItemStack copy = input.getStackInSlot(toolSlot).copyWithCount(1);
 		if (damageTool) {
-			ToolCondition.applyCraftingWear(copy);
-			if (copy.isDamageable() && copy.getDamage() >= copy.getMaxDamage()) {
-				return rem;
+			if (copy.isOf(DynamicKnappingItems.DYNAMIC_STONE)) {
+				var s = DynamicStoneItem.readState(copy);
+				StoneInteractionPhysics.applyContactWear(
+						s, StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 95.0,
+						new java.util.Random(System.nanoTime()));
+				DynamicStoneItem.writeState(copy, s);
+			} else {
+				ToolCondition.applyCraftingWear(copy);
+				if (copy.isDamageable() && copy.getDamage() >= copy.getMaxDamage()) {
+					return rem;
+				}
 			}
 		}
 		rem.set(toolSlot, copy);

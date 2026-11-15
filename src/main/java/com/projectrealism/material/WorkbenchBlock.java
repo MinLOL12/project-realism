@@ -97,18 +97,35 @@ public class WorkbenchBlock extends BlockWithEntity {
 				be.carveBone(slot, player, held, world, pos);
 				return ActionResult.SUCCESS;
 			}
-			if (PrimitiveItems.isKnappable(held.getItem()) || held.isOf(PrimitiveItems.SHARP_STONE)) {
+			if (held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+				var s = com.projectrealism.knapping.DynamicStoneItem.readState(held);
+				double slice = com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+						s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.BONE_CARVE, 95.0).effectiveness();
+				double flat = s.metrics().flatSurfaceAreaCm2();
+				if (slice >= 0.45 && s.metrics().primaryEdgeAngleDeg() <= 45.0) {
+					be.carveBone(slot, player, held, world, pos);
+				} else if (flat >= 12.0 || slice < 0.45) {
+					be.abradeBone(slot, player, held, world, pos);
+				} else {
+					be.carveBone(slot, player, held, world, pos);
+				}
+				return ActionResult.SUCCESS;
+			}
+			if (PrimitiveItems.isKnappable(held.getItem()) || held.isOf(PrimitiveItems.SHARP_STONE)
+					|| com.projectrealism.knapping.DynamicKnappingItems.isKnappableRawRock(held)) {
 				be.abradeBone(slot, player, held, world, pos);
 				return ActionResult.SUCCESS;
 			}
 		}
 		if (slotItem.isOf(AnatomyItems.ANIMAL_HORN)
-				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE))) {
+				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE)
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))) {
 			be.carveHornFlask(slot, player, held, world, pos);
 			return ActionResult.SUCCESS;
 		}
 		if (slotItem.isOf(MaterialItems.RAW_GOURD)
-				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE))) {
+				&& (held.isOf(MaterialItems.BONE_AWL) || held.isOf(PrimitiveItems.STONE_KNIFE)
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))) {
 			be.carveGourd(slot, player, held, world, pos);
 			return ActionResult.SUCCESS;
 		}

@@ -302,6 +302,101 @@ def make_flint_rock_item() -> Canvas:
     return c
 
 
+def make_chert_rock_item() -> Canvas:
+    c = Canvas()
+    pts = [(8, 11), (15, 7), (24, 9), (26, 17), (22, 24), (13, 25), (6, 21), (5, 15)]
+
+    def shader(x: int, y: int) -> RGBA:
+        dx = (x - 15.5) / 11.0
+        dy = (y - 16.0) / 9.5
+        n = hash_noise(x, y, 311)
+        band = math.sin((x * 0.45 + y * 0.7) + n * 0.6)
+        if x < 9 and y > 17:
+            base = (196, 186, 166)  # pale cortex edge
+        elif band > 0.35:
+            base = (176, 154, 128)  # warm caramel chalcedony band
+        elif band < -0.45:
+            base = (128, 112, 94)
+        else:
+            base = (156, 138, 116)
+        light = max(0.65, min(1.24, 1.04 - 0.24 * dx - 0.26 * dy))
+        return shade(base, light)
+
+    c.fill_poly(pts, shader)
+    c.outline((54, 44, 34, 255))
+    return c
+
+
+def make_quartzite_rock_item() -> Canvas:
+    c = Canvas()
+    cx, cy = 15.5, 16.5
+    for y in range(32):
+        for x in range(32):
+            dx = (x - cx) / 11.4
+            dy = (y - cy) / 9.0
+            ang = math.atan2(dy, dx)
+            r = math.hypot(dx, dy) + 0.06 * math.sin(ang * 3 + 1.2) + 0.04 * math.cos(ang * 5)
+            if r <= 0.96:
+                light = max(0.62, min(1.25, 1.05 - 0.24 * dx - 0.26 * dy))
+                n = hash_noise(x, y, 322)
+                if n > 0.84:
+                    base = (242, 236, 230)  # sugary quartz sparkle
+                elif n < 0.14:
+                    base = (182, 168, 162)
+                else:
+                    base = (218, 206, 198)
+                c.set(x, y, shade(base, light))
+    c.outline((92, 82, 78, 255))
+    return c
+
+
+def make_basalt_rock_item() -> Canvas:
+    c = Canvas()
+    pts = [(7, 13), (12, 8), (21, 7), (26, 12), (26, 20), (20, 25), (11, 24), (6, 19)]
+
+    def shader(x: int, y: int) -> RGBA:
+        dx = (x - 16.0) / 10.5
+        dy = (y - 16.0) / 9.5
+        n = hash_noise(x, y, 333)
+        if n > 0.86:
+            base = (104, 108, 114)  # plagioclase fleck
+        elif n < 0.15:
+            base = (52, 54, 60)    # micro-vesicle
+        else:
+            base = (76, 78, 86)
+        light = max(0.64, min(1.22, 1.02 - 0.22 * dx - 0.26 * dy))
+        return shade(base, light)
+
+    c.fill_poly(pts, shader)
+    c.outline((24, 25, 28, 255))
+    return c
+
+
+def make_obsidian_nodule_item() -> Canvas:
+    c = Canvas()
+    pts = [(9, 10), (16, 6), (25, 9), (26, 17), (21, 24), (12, 25), (6, 20), (6, 14)]
+
+    def shader(x: int, y: int) -> RGBA:
+        dx = (x - 15.5) / 10.5
+        dy = (y - 16.0) / 10.0
+        n = hash_noise(x, y, 344)
+        ripple = math.sin((x - y) * 0.75 + (x + y) * 0.35)
+        if ripple > 0.72 and dx + dy < 0.3:
+            base = (98, 76, 142)   # glassy conchoidal purple sheen
+        elif ripple > 0.15:
+            base = (50, 38, 76)
+        elif n < 0.12:
+            base = (18, 16, 24)
+        else:
+            base = (30, 24, 44)
+        light = max(0.68, min(1.28, 1.06 - 0.25 * dx - 0.25 * dy))
+        return shade(base, light)
+
+    c.fill_poly(pts, shader)
+    c.outline((12, 10, 18, 255))
+    return c
+
+
 def make_sharp_stone() -> Canvas:
     c = Canvas()
     # Diagonal leaf-shaped flint flake pointing top-right (26, 5)
@@ -640,7 +735,10 @@ def make_rough_plank_item(species: str, dry: bool = False) -> Canvas:
 
 def make_rock_block(kind: str) -> Canvas:
     c = Canvas(32, 32, (0, 0, 0, 255))
-    seed = {"granite": 1001, "limestone": 1002, "flint": 1003}[kind]
+    seed = {
+        "granite": 1001, "limestone": 1002, "flint": 1003,
+        "chert": 1004, "quartzite": 1005, "basalt": 1006,
+    }[kind]
     for y in range(32):
         for x in range(32):
             n = hash_noise(x, y, seed)
@@ -658,6 +756,16 @@ def make_rock_block(kind: str) -> Canvas:
                 band = math.sin(y * 0.95 + n * 0.7)
                 base = (168, 158, 138) if band < -0.5 else ((232, 224, 204) if n > 0.75 else (204, 195, 174))
                 bevel = 1.06 - 0.10 * (y / 31.0)
+            elif kind == "chert":
+                band = math.sin((x + y * 0.7) * 0.55 + n * 0.7)
+                base = (176, 154, 128) if band > 0.3 else ((128, 112, 94) if band < -0.4 else (154, 136, 114))
+                bevel = 1.07 - 0.12 * (y / 31.0)
+            elif kind == "quartzite":
+                base = (242, 236, 230) if n > 0.82 else ((182, 168, 162) if n < 0.14 else (218, 206, 198))
+                bevel = 1.08 - 0.12 * (x / 31.0 + y / 31.0) * 0.5
+            elif kind == "basalt":
+                base = (104, 108, 114) if n > 0.85 else ((52, 54, 60) if n < 0.15 else (76, 78, 86))
+                bevel = 1.06 - 0.12 * (y / 31.0)
             else:  # flint
                 wave = math.sin((x + y) * 0.45 + n * 0.6)
                 if n > 0.92:
@@ -1271,6 +1379,10 @@ def build_all_textures() -> Dict[str, Canvas]:
         "item/granite_rock.png": make_granite_rock_item(),
         "item/limestone_rock.png": make_limestone_rock_item(),
         "item/flint_rock.png": make_flint_rock_item(),
+        "item/chert_rock.png": make_chert_rock_item(),
+        "item/quartzite_rock.png": make_quartzite_rock_item(),
+        "item/basalt_rock.png": make_basalt_rock_item(),
+        "item/obsidian_nodule.png": make_obsidian_nodule_item(),
         "item/sharp_stone.png": make_sharp_stone(),
         "item/stone_axe_head.png": make_stone_axe_head(),
         "item/plant_fiber.png": make_plant_fiber(),
@@ -1321,6 +1433,9 @@ def build_all_textures() -> Dict[str, Canvas]:
         "block/granite_rock.png": make_rock_block("granite"),
         "block/limestone_rock.png": make_rock_block("limestone"),
         "block/flint_rock.png": make_rock_block("flint"),
+        "block/chert_rock.png": make_rock_block("chert"),
+        "block/quartzite_rock.png": make_rock_block("quartzite"),
+        "block/basalt_rock.png": make_rock_block("basalt"),
         "block/fallen_stick.png": make_fallen_stick_block(),
         "block/hearth_side.png": make_hearth_side_block(),
         "block/hearth_top.png": make_hearth_top_block("cold"),

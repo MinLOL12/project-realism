@@ -118,10 +118,11 @@ public class CarcassBlock extends BlockWithEntity {
 			return ActionResult.SUCCESS;
 		}
 
-		// Sharp stone / bone cutting blade, hide scraper, chisel, or axe process targeted anatomical zone
+		// Sharp stone / bone cutting blade, hide scraper, chisel, axe, or dynamically shaped stone
 		if (held.isOf(PrimitiveItems.STONE_KNIFE) || held.isOf(AnatomyItems.BONE_BLADE)
 				|| held.isOf(MaterialItems.STONE_SCRAPER)
-				|| held.isOf(PrimitiveItems.STONE_AXE) || held.isOf(AnatomyItems.BONE_CHISEL)) {
+				|| held.isOf(PrimitiveItems.STONE_AXE) || held.isOf(AnatomyItems.BONE_CHISEL)
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
 			be.processRegion(region, player, Hand.MAIN_HAND, held, world, pos);
 			return ActionResult.SUCCESS;
 		}

@@ -60,14 +60,14 @@ public final class WoodEvents {
 						if (server.random.nextFloat() < 0.45f) {
 							Block.dropStack(server, pos, new ItemStack(PrimitiveItems.PLANT_FIBER));
 						}
-						ToolCondition.applyWear(player, hand, held, sp.hardness() * 0.7f, server, true);
+						wearWoodAxe(player, hand, held, sp.hardness() * 0.7f, server);
 						player.sendMessage(Text.translatable("project_realism.wood.debranched", sp.displayName())
 								.formatted(Formatting.YELLOW), true);
 					} else {
 						server.removeBlock(pos, false);
 						server.playSound(null, pos, SoundEvents.BLOCK_WOOD_BREAK, SoundCategory.BLOCKS, 0.9f, 0.9f);
 						Block.dropStack(server, pos, new ItemStack(sp.freshLogItem(), 2));
-						ToolCondition.applyWear(player, hand, held, sp.hardness(), server, true);
+						wearWoodAxe(player, hand, held, sp.hardness(), server);
 						player.sendMessage(Text.translatable("project_realism.wood.cut_logs", sp.displayName())
 								.formatted(Formatting.GOLD), true);
 					}
@@ -87,7 +87,7 @@ public final class WoodEvents {
 							ToolCondition.setDry(split, false);
 							Block.dropStack(server, pos, split);
 						}
-						ToolCondition.applyWear(player, hand, held, sp.hardness(), server, true);
+						wearWoodAxe(player, hand, held, sp.hardness(), server);
 						player.sendMessage(Text.translatable("project_realism.wood.split_logs", sp.displayName())
 								.formatted(Formatting.YELLOW), true);
 					}
@@ -121,10 +121,10 @@ public final class WoodEvents {
 							server.playSound(null, pos, SoundEvents.BLOCK_WOOD_BREAK, SoundCategory.BLOCKS, 0.9f, 1.0f);
 							for (int i = 0; i < 4; i++) {
 								ItemStack split = new ItemStack(sp.splitWoodItem());
-								ToolCondition.setDry(split, true);
-								Block.dropStack(server, pos, split);
-							}
-							ToolCondition.applyWear(player, hand, held, sp.hardness(), server, true);
+							ToolCondition.setDry(split, true);
+							Block.dropStack(server, pos, split);
+						}
+						wearWoodAxe(player, hand, held, sp.hardness(), server);
 							player.sendMessage(Text.translatable("project_realism.wood.split_logs", sp.displayName())
 									.formatted(Formatting.YELLOW), true);
 						}
@@ -219,18 +219,49 @@ public final class WoodEvents {
 	}
 
 	private static boolean isAxe(ItemStack stack) {
+		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
+			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 140.0)
+					.effectiveness() >= 0.36;
+		}
 		return !stack.isEmpty() && (stack.isIn(ItemTags.AXES) || stack.getItem() instanceof AxeItem);
 	}
 
 	private static boolean isWoodShaper(ItemStack stack) {
+		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
+			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE, 110.0)
+					.effectiveness() >= 0.32;
+		}
 		return stack.isOf(PrimitiveItems.STONE_KNIFE)
 				|| stack.isOf(AnatomyItems.BONE_BLADE)
 				|| stack.isOf(AnatomyItems.BONE_CHISEL);
 	}
 
+	private static void wearWoodAxe(PlayerEntity player, Hand hand, ItemStack stack,
+									float hardness, ServerWorld server) {
+		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
+			com.projectrealism.knapping.StoneInteractionPhysics.applyContactWear(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP,
+					140.0 * hardness, new java.util.Random(server.random.nextLong()));
+			com.projectrealism.knapping.DynamicStoneItem.writeState(stack, s);
+		} else {
+			ToolCondition.applyWear(player, hand, stack, hardness, server, true);
+		}
+	}
+
 	private static void wearWoodShaper(PlayerEntity player, Hand hand, ItemStack stack,
 									   float hardness, ServerWorld server) {
-		if (ToolCondition.isPrimitiveTool(stack)) {
+		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
+			com.projectrealism.knapping.StoneInteractionPhysics.applyContactWear(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_SHAVE,
+					110.0 * hardness, new java.util.Random(server.random.nextLong()));
+			com.projectrealism.knapping.DynamicStoneItem.writeState(stack, s);
+		} else if (ToolCondition.isPrimitiveTool(stack)) {
 			ToolCondition.applyWear(player, hand, stack, hardness, server, true);
 		} else if (stack.isDamageable() && !player.isCreative()) {
 			stack.damage(1, player, hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);

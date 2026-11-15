@@ -100,8 +100,9 @@ public class ScrapingFrameBlock extends BlockWithEntity {
 			be.mountHide(held, player);
 			return ActionResult.SUCCESS;
 		}
-		// Scrape exact targeted region with Stone Scraper
-		if (be.hasHide() && held.isOf(MaterialItems.STONE_SCRAPER)) {
+		// Scrape exact targeted region with Stone Scraper or dynamically shaped flat stone
+		if (be.hasHide() && (held.isOf(MaterialItems.STONE_SCRAPER)
+				|| held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE))) {
 			be.scrapeAt(player, Hand.MAIN_HAND, held, local.x, local.z, world, pos);
 			return ActionResult.SUCCESS;
 		}

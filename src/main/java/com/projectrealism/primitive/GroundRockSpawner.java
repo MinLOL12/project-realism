@@ -85,20 +85,37 @@ public final class GroundRockSpawner {
 	private static Block pickRock(Block surface, Random random) {
 		int roll = random.nextInt(100);
 
-		// Granite ground yields granite; limestone is the common soft stone; flint hides in gravel.
-		if (surface == Blocks.GRANITE || surface == Blocks.DEEPSLATE || surface == Blocks.TUFF) {
-			return roll < 75 ? PrimitiveBlocks.GRANITE_ROCK : PrimitiveBlocks.FLINT_ROCK;
+		// Granite/deepslate/tuff yield basalt, granite, quartzite & flint nodules
+		if (surface == Blocks.DEEPSLATE || surface == Blocks.TUFF) {
+			if (roll < 42) return com.projectrealism.knapping.DynamicKnappingBlocks.BASALT_ROCK;
+			if (roll < 70) return com.projectrealism.knapping.DynamicKnappingBlocks.QUARTZITE_ROCK;
+			return PrimitiveBlocks.FLINT_ROCK;
+		}
+		if (surface == Blocks.GRANITE) {
+			if (roll < 55) return PrimitiveBlocks.GRANITE_ROCK;
+			if (roll < 82) return com.projectrealism.knapping.DynamicKnappingBlocks.QUARTZITE_ROCK;
+			return PrimitiveBlocks.FLINT_ROCK;
 		}
 		if (surface == Blocks.GRAVEL || surface == Blocks.SAND || surface == Blocks.RED_SAND) {
-			return roll < 60 ? PrimitiveBlocks.FLINT_ROCK : PrimitiveBlocks.GRANITE_ROCK;
+			if (roll < 45) return PrimitiveBlocks.FLINT_ROCK;
+			if (roll < 72) return com.projectrealism.knapping.DynamicKnappingBlocks.CHERT_ROCK;
+			if (roll < 90) return com.projectrealism.knapping.DynamicKnappingBlocks.QUARTZITE_ROCK;
+			return PrimitiveBlocks.GRANITE_ROCK;
 		}
 		if (surface == Blocks.CALCITE) {
-			return PrimitiveBlocks.LIMESTONE_ROCK;
+			return roll < 70 ? PrimitiveBlocks.LIMESTONE_ROCK : com.projectrealism.knapping.DynamicKnappingBlocks.CHERT_ROCK;
 		}
 		if (surface == Blocks.STONE || surface == Blocks.ANDESITE || surface == Blocks.DIORITE) {
-			return roll < 55 ? PrimitiveBlocks.LIMESTONE_ROCK : PrimitiveBlocks.GRANITE_ROCK;
+			if (roll < 35) return PrimitiveBlocks.LIMESTONE_ROCK;
+			if (roll < 58) return com.projectrealism.knapping.DynamicKnappingBlocks.CHERT_ROCK;
+			if (roll < 80) return PrimitiveBlocks.GRANITE_ROCK;
+			return com.projectrealism.knapping.DynamicKnappingBlocks.BASALT_ROCK;
 		}
-		return roll < 50 ? PrimitiveBlocks.LIMESTONE_ROCK : PrimitiveBlocks.GRANITE_ROCK;
+		if (roll < 30) return PrimitiveBlocks.LIMESTONE_ROCK;
+		if (roll < 55) return PrimitiveBlocks.GRANITE_ROCK;
+		if (roll < 75) return com.projectrealism.knapping.DynamicKnappingBlocks.CHERT_ROCK;
+		if (roll < 90) return PrimitiveBlocks.FLINT_ROCK;
+		return com.projectrealism.knapping.DynamicKnappingBlocks.QUARTZITE_ROCK;
 	}
 
 	/** Whether a rock may rest on this block state. Exposed for {@link GroundRockBlock}. */

@@ -10,11 +10,11 @@
     },
     {
       "tag": "minecraft:logs"
-    },
-    {
-      "item": "project_realism:stone_knife"
     }
   ],
+  "tool": {
+    "item": "project_realism:stone_knife"
+  },
   "result": {
     "id": "project_realism:cutting_surface",
     "count": 1

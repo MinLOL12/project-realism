@@ -91,14 +91,21 @@ public final class ToolGate {
 			case HAND -> true;
 			case AXE -> isAxe(held);
 			case PICKAXE -> isPickaxe(held);
-			// Our own stone pickaxe is stone tier and must not open iron.
-			case STRONG_PICKAXE -> isPickaxe(held) && !held.isOf(PrimitiveItems.STONE_PICKAXE);
+			// Stone pickaxes and dynamic stone tools cannot break hard iron/diamond ores.
+			case STRONG_PICKAXE -> isPickaxe(held) && !held.isOf(PrimitiveItems.STONE_PICKAXE)
+					&& !held.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE);
 		};
 	}
 
 	private static boolean isAxe(ItemStack stack) {
 		if (stack.isEmpty()) {
 			return false;
+		}
+		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
+			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.WOOD_CHOP, 140.0)
+					.effectiveness() >= 0.36;
 		}
 		if (stack.isIn(ItemTags.AXES)) {
 			return true;
@@ -110,6 +117,12 @@ public final class ToolGate {
 	private static boolean isPickaxe(ItemStack stack) {
 		if (stack.isEmpty()) {
 			return false;
+		}
+		if (stack.isOf(com.projectrealism.knapping.DynamicKnappingItems.DYNAMIC_STONE)) {
+			var s = com.projectrealism.knapping.DynamicStoneItem.readState(stack);
+			return com.projectrealism.knapping.StoneInteractionPhysics.evaluate(
+					s, com.projectrealism.knapping.StoneInteractionPhysics.TargetMaterial.STONE_MINE, 160.0)
+					.effectiveness() >= 0.36;
 		}
 		if (stack.isIn(ItemTags.PICKAXES)) {
 			return true;
