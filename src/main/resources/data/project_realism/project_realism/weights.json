@@ -781,6 +781,7 @@
     "project_realism:bow_drill": 0.9,
     "project_realism:cordage": 0.05,
     "project_realism:dark_oak_split_wood": 5.5,
+    "project_realism:electrolyte_salts": 0.15,
     "project_realism:fire_drill": 0.5,
     "project_realism:flint_rock": 0.6,
     "project_realism:fresh_birch_log": 6.5,
@@ -803,6 +804,8 @@
     "project_realism:stone_knife": 0.5,
     "project_realism:stone_pickaxe": 0.9,
     "project_realism:tinder_bundle": 0.2,
+    "project_realism:water_filter": 0.6,
+    "project_realism:waterskin": 1.25,
     "project_realism:wood_ash": 0.15
   }
 }

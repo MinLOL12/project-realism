@@ -1,0 +1,24 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:charcoal"
+    },
+    {
+      "item": "minecraft:sand"
+    },
+    {
+      "item": "project_realism:plant_fiber"
+    },
+    {
+      "item": "minecraft:stick"
+    }
+  ],
+  "result": {
+    "id": "project_realism:water_filter",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

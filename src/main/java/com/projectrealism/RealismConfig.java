@@ -121,6 +121,23 @@ public final class RealismConfig {
 	/** Baseline temperate ambient temperature in Kelvin (293.15 K = 20 C). */
 	public double ambientTempKelvin = 293.15;
 
+	// -------------------------------------------------- hydration & physiology ---
+
+	/** Whether multi-compartment body water, GI absorption, electrolytes, and kidneys run. */
+	public boolean hydrationSimulation = true;
+
+	/** Speed multiplier mapping real seconds to physiological seconds (default 12x). */
+	public double hydrationTimeScale = 12.0;
+
+	/** Whether thermoregulatory sweating couples with body temperature, RH, and airflow. */
+	public boolean sweatThermoregulation = true;
+
+	/** Whether water sources carry temperature, salinity, sediment, mineral, microbe, and chemical profiles. */
+	public boolean waterQualitySimulation = true;
+
+	/** Whether the perceived thirst and body temp HUD is rendered. */
+	public boolean hydrationHud = true;
+
 	public static RealismConfig load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		RealismConfig config = new RealismConfig();
@@ -191,6 +208,11 @@ public final class RealismConfig {
 			ambientTempKelvin = 230.0;
 		} else if (ambientTempKelvin > 325.0) {
 			ambientTempKelvin = 325.0;
+		}
+		if (hydrationTimeScale < 0.5) {
+			hydrationTimeScale = 0.5;
+		} else if (hydrationTimeScale > 60.0) {
+			hydrationTimeScale = 60.0;
 		}
 	}
 }

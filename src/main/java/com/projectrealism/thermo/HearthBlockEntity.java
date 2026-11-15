@@ -1,6 +1,10 @@
 package com.projectrealism.thermo;
 
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.hydration.HydrationItems;
+import com.projectrealism.hydration.HydrationManager;
+import com.projectrealism.hydration.WaterQuality;
+import com.projectrealism.hydration.WaterskinItem;
 import com.projectrealism.primitive.ToolCondition;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -110,7 +114,12 @@ public class HearthBlockEntity extends BlockEntity {
 	}
 
 	public boolean addFood(ItemStack stack) {
-		if (!cookingFood.isEmpty() || !CookingPhysics.isFoodTrackable(stack)) {
+		if (!cookingFood.isEmpty()) {
+			return false;
+		}
+		boolean isWater = HydrationManager.isWaterBottle(stack)
+				|| (stack.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(stack) > 0);
+		if (!CookingPhysics.isFoodTrackable(stack) && !isWater) {
 			return false;
 		}
 		cookingFood = stack.copyWithCount(1);
@@ -296,19 +305,35 @@ public class HearthBlockEntity extends BlockEntity {
 			thermo.radiateHeatSource(server, pos, be.temperatureK(), be.isFlaming() ? 1.4 : 0.7, dt);
 		}
 
-		// Advance food cooking if an item sits on the hearth
-		if (!be.cookingFood.isEmpty() && be.temperatureK() > 335.0) {
-			ThermalMath.CookingMethod method = detectCookingMethod(server, pos);
-			ItemStack before = be.cookingFood;
-			ItemStack after = CookingPhysics.stepCooking(before, method, be.temperatureK(), air.speedMS(), dt);
-			be.cookingFood = after;
-			if (after.getItem() != before.getItem()) {
-				server.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.4f, 1.4f);
-			}
-			if (be.tickCounter % 20 == 0) {
-				server.spawnParticles(ParticleTypes.SMOKE,
-						pos.getX() + 0.5, pos.getY() + 0.45, pos.getZ() + 0.5,
-						1, 0.08, 0.05, 0.08, 0.01);
+		// Advance food cooking OR water bottle / waterskin heating & pathogen boiling!
+		if (!be.cookingFood.isEmpty() && be.temperatureK() > 325.0) {
+			boolean isWater = HydrationManager.isWaterBottle(be.cookingFood)
+					|| (be.cookingFood.isOf(HydrationItems.WATERSKIN)
+					&& WaterskinItem.getVolumeMl(be.cookingFood) > 0);
+			if (isWater) {
+				WaterQuality cur = WaterQuality.read(be.cookingFood, WaterQuality.RIVER_WATER);
+				WaterQuality next = cur.stepHeating(be.temperatureK(), ambientK, dt);
+				WaterQuality.write(be.cookingFood, next);
+				if (next.tempK() >= 368.15 && be.tickCounter % 20 == 0) {
+					server.spawnParticles(ParticleTypes.CLOUD,
+							pos.getX() + 0.5, pos.getY() + 0.45, pos.getZ() + 0.5,
+							2, 0.08, 0.08, 0.08, 0.015);
+					server.playSound(null, pos, SoundEvents.BLOCK_BUBBLE_COLUMN_UPWARDS_AMBIENT,
+							SoundCategory.BLOCKS, 0.35f, 1.3f);
+				}
+			} else if (be.temperatureK() > 335.0 && CookingPhysics.isFoodTrackable(be.cookingFood)) {
+				ThermalMath.CookingMethod method = detectCookingMethod(server, pos);
+				ItemStack before = be.cookingFood;
+				ItemStack after = CookingPhysics.stepCooking(before, method, be.temperatureK(), air.speedMS(), dt);
+				be.cookingFood = after;
+				if (after.getItem() != before.getItem()) {
+					server.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.4f, 1.4f);
+				}
+				if (be.tickCounter % 20 == 0) {
+					server.spawnParticles(ParticleTypes.SMOKE,
+							pos.getX() + 0.5, pos.getY() + 0.45, pos.getZ() + 0.5,
+							1, 0.08, 0.05, 0.08, 0.01);
+				}
 			}
 		}
 
@@ -372,6 +397,13 @@ public class HearthBlockEntity extends BlockEntity {
 		double totalChar = storedCharcoalKg + fuels.stream().mapToDouble(f -> f.body.charMassKg).sum();
 		double totalWater = fuels.stream().mapToDouble(f -> f.body.surfaceMoistureKg + f.body.coreMoistureKg).sum();
 		if (!cookingFood.isEmpty()) {
+			if (HydrationManager.isWaterBottle(cookingFood) || cookingFood.isOf(HydrationItems.WATERSKIN)) {
+				WaterQuality wq = WaterQuality.read(cookingFood, WaterQuality.RIVER_WATER);
+				return Text.translatable("project_realism.hearth.status_boiling",
+						tempC,
+						(int) Math.round(ThermalConstants.toCelsius(wq.tempK())),
+						(int) Math.round(wq.microbialLoad() * 100.0)).formatted(Formatting.AQUA);
+			}
 			ThermalMath.FoodThermalState fs = CookingPhysics.readState(cookingFood);
 			return Text.translatable("project_realism.hearth.status_cooking",
 					tempC, cookingFood.getName().getString(),

@@ -1,6 +1,9 @@
 package com.projectrealism.client;
 
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.hydration.HydrationManager;
+import com.projectrealism.hydration.HydrationPayload;
+import com.projectrealism.hydration.WaterQuality;
 import com.projectrealism.primitive.PrimitiveItems;
 import com.projectrealism.primitive.ToolCondition;
 import com.projectrealism.thermo.CookingPhysics;
@@ -23,8 +26,11 @@ public class ProjectRealismClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ClientPlayNetworking.registerGlobalReceiver(WeightPayload.ID, (payload, context) ->
 				context.client().execute(() -> WeightHud.update(payload)));
+		ClientPlayNetworking.registerGlobalReceiver(HydrationPayload.ID, (payload, context) ->
+				context.client().execute(() -> HydrationHud.update(payload)));
 
 		HudRenderCallback.EVENT.register(new WeightHud());
+		HudRenderCallback.EVENT.register(new HydrationHud());
 
 		Identifier dullId = ProjectRealism.id("dull");
 		for (Item tool : new Item[]{
@@ -41,7 +47,11 @@ public class ProjectRealismClient implements ClientModInitializer {
 					(stack, world, entity, seed) -> ToolCondition.isDry(stack) ? 1.0f : 0.0f);
 		}
 
-		ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) ->
-				CookingPhysics.appendFoodTooltip(stack, lines));
+		ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
+			CookingPhysics.appendFoodTooltip(stack, lines);
+			if (HydrationManager.isWaterBottle(stack)) {
+				WaterQuality.appendTooltip(stack, lines);
+			}
+		});
 	}
 }

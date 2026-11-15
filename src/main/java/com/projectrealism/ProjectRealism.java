@@ -1,6 +1,10 @@
 package com.projectrealism;
 
 import com.projectrealism.command.WeightCommand;
+import com.projectrealism.hydration.HydrationEvents;
+import com.projectrealism.hydration.HydrationItems;
+import com.projectrealism.hydration.HydrationManager;
+import com.projectrealism.hydration.HydrationPayload;
 import com.projectrealism.primitive.PrimitiveBlocks;
 import com.projectrealism.primitive.PrimitiveEvents;
 import com.projectrealism.primitive.PrimitiveItems;
@@ -63,13 +67,16 @@ public class ProjectRealism implements ModInitializer {
 		WoodItems.register();
 		ThermoBlocks.register();
 		ThermoItems.register();
+		HydrationItems.register();
 		ModRecipes.register();
 		PrimitiveEvents.register();
 		TreeChopper.register();
 		WoodEvents.register();
 		ThermoEvents.register();
+		HydrationEvents.register();
 
 		PayloadTypeRegistry.playS2C().register(WeightPayload.ID, WeightPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(HydrationPayload.ID, HydrationPayload.CODEC);
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
 				WeightCommand.register(dispatcher, registryAccess));
@@ -80,15 +87,20 @@ public class ProjectRealism implements ModInitializer {
 			WeightManager.get().tick(server);
 			FallingTreeManager.tick(server);
 			ThermoEvents.tick(server);
+			HydrationManager.tick(server);
 		});
 
 		// Logging in must never inherit a stale modifier from a previous session.
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-				WeightManager.get().onJoin(handler.getPlayer()));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			WeightManager.get().onJoin(handler.getPlayer());
+			HydrationManager.get(handler.getPlayer().getServerWorld()).onJoin(handler.getPlayer());
+		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			WeightManager.get().onDisconnect(handler.getPlayer().getUuid());
 			TreeChopper.forget(handler.getPlayer().getUuid());
 			ThermoEvents.onDisconnect(handler.getPlayer());
+			HydrationManager.get(handler.getPlayer().getServerWorld()).onDisconnect(handler.getPlayer().getUuid());
+			HydrationEvents.onDisconnect(handler.getPlayer());
 		});
 
 		// Pack authors can drop JSON weight overrides into a datapack and /reload without a restart.

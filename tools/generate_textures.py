@@ -902,6 +902,91 @@ def make_wood_ash_pile_block() -> Canvas:
 
 
 # ---------------------------------------------------------------------------
+# Hydration & Water Quality Gear Textures
+# ---------------------------------------------------------------------------
+
+def make_waterskin() -> Canvas:
+    c = Canvas(32, 32)
+    # Shoulder strap arc
+    for i in range(36):
+        t = i / 35.0
+        bx = round(7 + t * 18)
+        by = round(10 - math.sin(t * math.pi) * 6.5)
+        c.line(bx, by, bx, by + 1, (112, 74, 42, 255), 1)
+    # Pear-shaped stitched leather flask body
+    for y in range(9, 28):
+        for x in range(6, 26):
+            ny = (y - 19.0) / 8.5
+            width = 7.8 * (1.0 - 0.35 * ny * ny) if y > 13 else 3.2 + (y - 9) * 0.85
+            if abs(x - 16) <= width:
+                n = hash_noise(x, y, 2800)
+                dist_edge = width - abs(x - 16)
+                light = 1.12 - ((x - 14) * 0.028) - max(0.0, (y - 17) * 0.025)
+                base = (146, 86, 46)
+                if dist_edge < 1.3:
+                    base = (96, 54, 28) if (y % 3 != 0) else (206, 186, 134)  # stitched seam
+                c.set(x, y, shade(base, light * (0.94 + 0.12 * n)))
+    # Cordage neck wrap & wooden cork stopper
+    for x in range(13, 20):
+        c.set(x, 8, (186, 162, 108, 255))
+        c.set(x, 9, (148, 124, 78, 255))
+    for y in range(4, 8):
+        for x in range(14, 19):
+            c.set(x, y, shade((176, 132, 78), 1.0 - (x - 14) * 0.06))
+    c.outline()
+    return c
+
+
+def make_water_filter() -> Canvas:
+    c = Canvas(32, 32)
+    # Bamboo / hollowed split-wood purifying tube with internal gravel, sand & charcoal layers
+    for y in range(5, 27):
+        for x in range(10, 22):
+            n = hash_noise(x, y, 2900)
+            if x in (10, 11, 20, 21):
+                # Wooden cylinder casing with cordage bands
+                col = (166, 126, 72) if y not in (9, 10, 21, 22) else (196, 174, 116)
+                c.set(x, y, shade(col, 1.04 - (x - 10) * 0.02))
+            else:
+                if y < 11:
+                    col = (88, 174, 226) if n > 0.35 else (112, 196, 242)  # water at top
+                elif y < 17:
+                    col = (52, 50, 54) if n > 0.25 else (34, 34, 38)  # activated charcoal layer
+                elif y < 23:
+                    col = (212, 194, 144) if n > 0.3 else (184, 166, 118)  # quartz sand bed
+                else:
+                    col = (146, 144, 140) if n > 0.4 else (114, 112, 108)  # gravel base
+                c.set(x, y, shade(col, 0.92 + 0.16 * n))
+    # Clear purified drop below spout
+    for y in range(28, 31):
+        for x in range(14, 18):
+            if math.hypot(x - 15.5, y - 29.0) < 1.8:
+                c.set(x, y, (118, 212, 255, 255))
+    c.outline()
+    return c
+
+
+def make_electrolyte_salts() -> Canvas:
+    c = Canvas(32, 32)
+    # Open woven pouch holding bright crystalline mineral salts
+    c.fill_poly([(7, 13), (25, 13), (27, 27), (5, 27)],
+                lambda x, y: shade((182, 164, 128) if (x + y) % 3 else (154, 136, 102),
+                                   0.94 + 0.12 * hash_noise(x, y, 3000)))
+    # Cordage tie rim
+    c.line(8, 14, 24, 14, (132, 104, 62, 255), 2)
+    # Mound of pale mineral & sea-salt crystals peeking out top
+    for y in range(7, 16):
+        for x in range(9, 23):
+            d = math.hypot((x - 16) * 0.78, y - 13.5)
+            if d < 5.6:
+                n = hash_noise(x, y, 3050)
+                col = (242, 236, 232) if n > 0.55 else ((232, 206, 196) if n > 0.25 else (218, 232, 236))
+                c.set(x, y, shade(col, 1.05 - d * 0.04))
+    c.outline()
+    return c
+
+
+# ---------------------------------------------------------------------------
 # Registry of All Textures
 # ---------------------------------------------------------------------------
 
@@ -924,6 +1009,9 @@ def build_all_textures() -> Dict[str, Canvas]:
         "item/fire_drill.png": make_fire_drill(),
         "item/bow_drill.png": make_bow_drill(),
         "item/wood_ash.png": make_wood_ash_item(),
+        "item/waterskin.png": make_waterskin(),
+        "item/water_filter.png": make_water_filter(),
+        "item/electrolyte_salts.png": make_electrolyte_salts(),
         "block/granite_rock.png": make_rock_block("granite"),
         "block/limestone_rock.png": make_rock_block("limestone"),
         "block/flint_rock.png": make_rock_block("flint"),

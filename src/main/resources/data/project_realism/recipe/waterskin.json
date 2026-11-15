@@ -1,0 +1,24 @@
+{
+  "type": "project_realism:tool_crafting",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:leather"
+    },
+    {
+      "item": "minecraft:leather"
+    },
+    {
+      "item": "project_realism:cordage"
+    },
+    {
+      "item": "minecraft:stick"
+    }
+  ],
+  "result": {
+    "id": "project_realism:waterskin",
+    "count": 1
+  },
+  "keep_tool": false,
+  "damage_tool": false
+}

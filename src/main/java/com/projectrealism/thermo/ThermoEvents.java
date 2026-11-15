@@ -1,6 +1,9 @@
 package com.projectrealism.thermo;
 
 import com.projectrealism.ProjectRealism;
+import com.projectrealism.hydration.HydrationItems;
+import com.projectrealism.hydration.HydrationManager;
+import com.projectrealism.hydration.WaterskinItem;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -48,10 +51,12 @@ public final class ThermoEvents {
 				return ActionResult.PASS;
 			}
 
-			// 2. Hearth fuel / cooking food loading
+			// 2. Hearth fuel / cooking food / water container boiling loading
 			if (state.isOf(ThermoBlocks.HEARTH) && world.getBlockEntity(pos) instanceof HearthBlockEntity be) {
 				if (!held.isEmpty()) {
-					if (CookingPhysics.isFoodTrackable(held)) {
+					boolean isWaterVessel = HydrationManager.isWaterBottle(held)
+							|| (held.isOf(HydrationItems.WATERSKIN) && WaterskinItem.getVolumeMl(held) > 0);
+					if (CookingPhysics.isFoodTrackable(held) || isWaterVessel) {
 						if (world instanceof ServerWorld && be.addFood(held)) {
 							held.decrementUnlessCreative(1, player);
 							world.playSound(null, pos, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 0.6f, 0.9f);
